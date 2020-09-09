@@ -1,0 +1,10 @@
+{
+	"auth": {
+		"bioviewera6a6a2c1": {
+			"service": "Cognito",
+			"providerPlugin": "awscloudformation",
+			"dependsOn": [],
+			"customAuth": false
+		}
+	}
+}

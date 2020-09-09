@@ -1,0 +1,6 @@
+{
+  "app": "npx ts-node bin/aws.ts",
+  "context": {
+    "key0123456789": "value0123456789"
+  }
+}

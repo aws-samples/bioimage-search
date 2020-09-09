@@ -1,0 +1,20 @@
+{
+    "dev": {
+        "awscloudformation": {
+            "AuthRoleName": "amplify-bioviewer-dev-23829-authRole",
+            "UnauthRoleArn": "arn:aws:iam::580829821648:role/amplify-bioviewer-dev-23829-unauthRole",
+            "AuthRoleArn": "arn:aws:iam::580829821648:role/amplify-bioviewer-dev-23829-authRole",
+            "Region": "us-east-1",
+            "DeploymentBucketName": "amplify-bioviewer-dev-23829-deployment",
+            "UnauthRoleName": "amplify-bioviewer-dev-23829-unauthRole",
+            "StackName": "amplify-bioviewer-dev-23829",
+            "StackId": "arn:aws:cloudformation:us-east-1:580829821648:stack/amplify-bioviewer-dev-23829/e58772a0-e5b2-11ea-a462-0ea6b7109c22",
+            "AmplifyAppId": "dw58yknrqnd8d"
+        },
+        "categories": {
+            "auth": {
+                "bioviewera6a6a2c1": {}
+            }
+        }
+    }
+}
