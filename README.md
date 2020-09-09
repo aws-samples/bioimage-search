@@ -15,3 +15,28 @@ See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more inform
 
 This project is licensed under the Apache-2.0 License.
 
+## Setup
+
+For initial setup:
+
+    source ./scripts/source-env.sh
+
+To install python3.8:
+
+    bash ./scripts/source-python.sh
+
+To download the BBBC-021 dataset and install in S3:
+
+    ./deployBbbc021.sh
+
+To deploy main stack set:
+
+    ./deploy.sh
+
+To setup cli:
+
+    cd cli/bioims
+    python3.8 -m venv venv
+    source venv/bin/activate
+    python3.8 -m pip install -r requirements.txt
+
