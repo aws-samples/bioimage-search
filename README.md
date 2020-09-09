@@ -25,7 +25,7 @@ To install python3.8:
 
     bash ./scripts/source-python.sh
 
-To download the BBBC-021 dataset and install in S3:
+To install the BBBC-021 dataset in S3:
 
     ./deployBbbc021.sh
 
