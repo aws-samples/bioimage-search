@@ -29,12 +29,14 @@ To install the BBBC-021 dataset in S3:
 
     ./deployBbbc021.sh
 
-To deploy main stack set:
+To deploy main stack set. This creates IAM user automatically.
+The credentials need to be installed in an aws cli profile.
 
     ./deploy.sh
 
 To setup cli:
 
+    export AWS_PROFILE=<profile name>
     cd cli/bioims
     python3.8 -m venv venv
     source venv/bin/activate
