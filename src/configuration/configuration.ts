@@ -156,12 +156,21 @@ export const handler = async (event: any = {}): Promise<any> => {
   };
 
   if (event.method === "getHistory") {
-    if (!event.key) {
+    try {
+      const rows = await getHistoryRows(event.key);
+      return { statusCode: 200, body: JSON.stringify(rows) };
+    } catch (dbError) {
+      return { statusCode: 500, body: JSON.stringify(dbError) };
+    }
+  }
+  
+  async function getHistoryRows(key: any) {
+    if (!key) {
       return { statusCode: 400, body: `Error: key parameter required` };
     }
     const keyConditionExpression = [PARTITION_KEY] + " = :" + [PARTITION_KEY];
     const expressionAttributeValues =
-      '":' + [PARTITION_KEY] + '" : "' + event.key + '"';
+      '":' + [PARTITION_KEY] + '" : "' + key + '"';
     const params = {
       TableName: TABLE_NAME,
       KeyConditionExpression: keyConditionExpression,
@@ -169,12 +178,9 @@ export const handler = async (event: any = {}): Promise<any> => {
         "{" + expressionAttributeValues + "}"
       ),
     };
-    try {
-      const rows = await getAllQueryData(params);
-      return { statusCode: 200, body: JSON.stringify(rows) };
-    } catch (dbError) {
-      return { statusCode: 500, body: JSON.stringify(dbError) };
-    }
+    const result: any = await getAllQueryData(params);
+    console.log("getHistoryRows result="+result)
+    return result
   }
 
   if (event.method === "getAll") {
@@ -208,14 +214,19 @@ export const handler = async (event: any = {}): Promise<any> => {
     if (!event.key) {
       return { statusCode: 400, body: `Error: key parameter required` };
     }
-    const params = {
-      TableName: TABLE_NAME,
-      Key: {
-        [PARTITION_KEY]: event.key
-      },
-    };
+    // PROBLEM HERE IS MAX LENGTH OF 25
+    let rows: any = await getHistoryRows(event.key)
+    let delarr: any[] = []
+    for (let r of rows) {
+      const pk = r[PARTITION_KEY]
+      const sk = r[SORT_KEY]
+      const dr = { DeleteRequest: { Key: { [PARTITION_KEY]: pk, [SORT_KEY]: sk } } }
+      delarr.push(dr)
+    }
+    const requestItems = { [TABLE_NAME]: delarr }
+    const params = { RequestItems: requestItems }
     try {
-      const response = await db.delete(params).promise();
+      const response = await db.batchWrite(params).promise();
       return { statusCode: 200, body: JSON.stringify(response.Item) };
     } catch (dbError) {
       return { statusCode: 500, body: JSON.stringify(dbError) };
