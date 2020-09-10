@@ -45,6 +45,12 @@ setDefaultTrainId():
         method: 'setDefaultTrainId',
         trainId: trainId
     }
+    
+deleteKey(key):
+  {
+    method: 'deleteKey',
+    key: key
+  }
 
 */
 
@@ -196,6 +202,24 @@ export const handler = async (event: any = {}): Promise<any> => {
 
   if (event.method === "setDefaultTrainId") {
     return setParameter(DEFAULT_TRAIN_ID, event.value);
+  }
+  
+  if (event.method === 'deleteParameter') {
+    if (!event.key) {
+      return { statusCode: 400, body: `Error: key parameter required` };
+    }
+    const params = {
+      TableName: TABLE_NAME,
+      Key: {
+        [PARTITION_KEY]: event.key
+      },
+    };
+    try {
+      const response = await db.delete(params).promise();
+      return { statusCode: 200, body: JSON.stringify(response.Item) };
+    } catch (dbError) {
+      return { statusCode: 500, body: JSON.stringify(dbError) };
+    }
   }
 
   return { statusCode: 400, body: `Error: valid method parameter required` };

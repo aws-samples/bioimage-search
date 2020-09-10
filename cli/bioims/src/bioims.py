@@ -144,6 +144,16 @@ class ConfigurationClient(BioimageSearchClient):
             )
         return response['StatusCode']
     
+    def deleteParameter(self, key):
+        request = '{{ "method": "deleteParameter", "key": "{}" }}'.format(key)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self._resources.getConfigurationLambdaArn(),
+            InvocationType='Event',
+            Payload=payload
+            )
+        return response['StatusCode']
         
         
 
