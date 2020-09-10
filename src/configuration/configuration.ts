@@ -6,6 +6,7 @@ const SORT_KEY = process.env.SORT_KEY || "";
 const VALUE_ATTRIBUTE = "value";
 const LATEST = "LATEST";
 const DEFAULT_TRAIN_ID = "DefaultTrainId";
+const DDB_MAX_BATCH=25
 
 /*
 
@@ -214,8 +215,27 @@ export const handler = async (event: any = {}): Promise<any> => {
     if (!event.key) {
       return { statusCode: 400, body: `Error: key parameter required` };
     }
-    // PROBLEM HERE IS MAX LENGTH OF 25
-    let rows: any = await getHistoryRows(event.key)
+    try {
+      let rows: any = await getHistoryRows(event.key)
+      let p: any[] = []
+      let i=0
+      while (i<rows.length) {
+        let j=i+DDB_MAX_BATCH
+        if (j>rows.length) {
+          j=rows.length
+        }
+        p.push(deleteRows(rows.slice(i,j)))
+        i+=(j-i)
+      }
+      await Promise.all(p)
+      const response = "deleted " + rows.length + " items"
+      return { statusCode: 200, body: response };
+    } catch (dbError) {
+      return { statusCode: 500, body: JSON.stringify(dbError) };
+    }   
+  }
+    
+  async function deleteRows(rows: any[]) {
     let delarr: any[] = []
     for (let r of rows) {
       const pk = r[PARTITION_KEY]
@@ -225,12 +245,7 @@ export const handler = async (event: any = {}): Promise<any> => {
     }
     const requestItems = { [TABLE_NAME]: delarr }
     const params = { RequestItems: requestItems }
-    try {
-      const response = await db.batchWrite(params).promise();
-      return { statusCode: 200, body: JSON.stringify(response.Item) };
-    } catch (dbError) {
-      return { statusCode: 500, body: JSON.stringify(dbError) };
-    }
+    return db.batchWrite(params).promise();
   }
 
   return { statusCode: 400, body: `Error: valid method parameter required` };
