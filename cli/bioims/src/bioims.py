@@ -186,7 +186,61 @@ class ConfigurationClient(BioimageSearchClient):
 # LABEL
 #
 #############################################
-        
+
+
+# createCategory(category, description):
+#     {
+#         method: 'createCategory',
+#         category: category,
+#         description: description
+#     }
+    
+# updateCategoryDescription(category, description):
+#     {
+#         method: 'updateCategoryDescription',
+#         category: category,
+#         description: description
+#     }
+    
+# deleteCategory(category):
+#     {
+#         method: 'deleteCategory',
+#         category: category
+#     }
+    
+# createLabel(category, label):
+#     {
+#         method: 'createLabel',
+#         category: category,
+#         label: label
+#     }
+    
+# updateLabel(category, label):
+#     {
+#         method: 'updateLabel',
+#         category: category,
+#         label: label
+#     }
+    
+# getIndex(category, label):
+#     {
+#         method: 'getIndex',
+#         category: category,
+#         label: label
+#     }
+    
+# listCategories():
+#     {
+#         method: 'listCategories'        
+#     }
+
+# listLabels(category):
+#     {
+#         method: 'listLabels',
+#         category: category
+#     }
+    
+
 class LabelClient(BioimageSearchClient):
     def __init__(self):
         super().__init__()
@@ -205,5 +259,80 @@ class LabelClient(BioimageSearchClient):
             )
         return response['StatusCode']
 
+    def updateCategoryDescription(self, category, description):
+        request = '{{ "method": "updateCategoryDescription", "category": "{}", "description": "{}" }}'.format(category, description)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self._resources.getLabelLambdaArn(),
+            InvocationType='Event',
+            Payload=payload
+            )
+        return response['StatusCode']
 
-        
+    def deleteCategory(self, category):
+        request = '{{ "method": "deleteCategory", "category": "{}" }}'.format(category)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self._resources.getLabelLambdaArn(),
+            InvocationType='Event',
+            Payload=payload
+            )
+        return response['StatusCode']
+
+    def createLabel(self, category, label):
+        request = '{{ "method": "createLabel", "category": "{}", "label": "{}" }}'.format(category, label)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self._resources.getLabelLambdaArn(),
+            InvocationType='Event',
+            Payload=payload
+            )
+        return response['StatusCode']
+
+    def updateLabel(self, category, label):
+        request = '{{ "method": "updateLabel", "category": "{}", "label": "{}" }}'.format(category, label)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self._resources.getLabelLambdaArn(),
+            InvocationType='Event',
+            Payload=payload
+            )
+        return response['StatusCode']
+
+    def getIndex(self, category, label):
+        request = '{{ "method": "getIndex", "category": "{}", "label": "{}" }}'.format(category, label)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self._resources.getLabelLambdaArn(),
+            InvocationType='Event',
+            Payload=payload
+            )
+        return response['StatusCode']
+
+    def listCategories(self):
+        request = '{ "method": "listCategories" }'
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self._resources.getLabelLambdaArn(),
+            InvocationType='Event',
+            Payload=payload
+            )
+        return response['StatusCode']
+
+    def listLabels(self, category):
+        request = '{{ "method": "listLabels", "category": "{}" }}'.format(category)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self._resources.getLabelLambdaArn(),
+            InvocationType='Event',
+            Payload=payload
+            )
+        return response['StatusCode']
+
