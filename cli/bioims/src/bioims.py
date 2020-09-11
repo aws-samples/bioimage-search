@@ -290,7 +290,13 @@ class LabelClient(BioimageSearchClient):
             InvocationType='Event',
             Payload=payload
             )
-        return response['StatusCode']
+        stream = response['Payload']
+        bStrResponse = stream.read()
+        strResponse = bStrResponse.decode("utf-8")
+        jresponse = json.loads(strResponse)
+        jbody = jresponse['body']
+        jvalue = json.loads(jbody)
+        return jvalue['value']
 
     def updateLabel(self, category, label):
         request = '{{ "method": "updateLabel", "category": "{}", "label": "{}" }}'.format(category, label)
@@ -334,5 +340,11 @@ class LabelClient(BioimageSearchClient):
             InvocationType='Event',
             Payload=payload
             )
-        return response['StatusCode']
+        stream = response['Payload']
+        bStrResponse = stream.read()
+        strResponse = bStrResponse.decode("utf-8")
+        jresponse = json.loads(strResponse)
+        jbody = jresponse['body']
+        jvalue = json.loads(jbody)
+        return jvalue
 
