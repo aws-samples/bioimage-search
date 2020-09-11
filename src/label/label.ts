@@ -67,6 +67,69 @@ listLabels(category):
     
 */
 
+//////////////////////////////////////////////
+//
+// COMMON
+//
+//
+//////////////////////////////////////////////
+
+const getAllQueryData = async (params: any) => {
+  const _getAllData = async (params: any, startKey: any) => {
+    if (startKey) {
+      params.ExclusiveStartKey = startKey;
+    }
+    return db.query(params).promise();
+  };
+  let lastEvaluatedKey = null;
+  let rows: any[] = [];
+  do {
+    const result: any = await _getAllData(params, lastEvaluatedKey);
+    rows = rows.concat(result.Items);
+    lastEvaluatedKey = result.LastEvaluatedKey;
+  } while (lastEvaluatedKey);
+  return rows;
+};
+
+const getAllScanData = async (params: any) => {
+  const _getAllData = async (params: any, startKey: any) => {
+    if (startKey) {
+      params.ExclusiveStartKey = startKey;
+    }
+    return db.scan(params).promise();
+  };
+  let lastEvaluatedKey = null;
+  let rows: any[] = [];
+  do {
+    const result: any = await _getAllData(params, lastEvaluatedKey);
+    rows = rows.concat(result.Items);
+    lastEvaluatedKey = result.LastEvaluatedKey;
+  } while (lastEvaluatedKey);
+  return rows;
+};
+
+async function deleteRows(rows: any[]) {
+  let delarr: any[] = [];
+  for (let r of rows) {
+    const pk = r[PARTITION_KEY];
+    const sk = r[SORT_KEY];
+    const dr = {
+      DeleteRequest: { Key: { [PARTITION_KEY]: pk, [SORT_KEY]: sk } },
+    };
+    delarr.push(dr);
+  }
+  const requestItems = { [TABLE_NAME]: delarr };
+  const params = { RequestItems: requestItems };
+  return db.batchWrite(params).promise();
+}
+
+// NEED TO IMPLEMENT THIS
+async function getNextCategoryIndex(category: any) {
+  return 42
+}
+
+//////////////////////////////////////////////
+
 async function createCategory(category: any, description: any) {
   const item = {
     [PARTITION_KEY]: category,
@@ -85,6 +148,81 @@ async function createCategory(category: any, description: any) {
   }
 }
 
+async function updateCategoryDescription(category: any, description: any) {
+  const item = {
+    [PARTITION_KEY]: category,
+    [SORT_KEY]: ORIGIN,
+    [DESCRIPTION_ATTRIBUTE]: description
+  };
+  const params = {
+    TableName: TABLE_NAME,
+    Item: item,
+  };
+  try {
+    await db.update(params).promise();
+    return { statusCode: 201, body: "" };
+  } catch (dbError) {
+    return { statusCode: 500, body: JSON.stringify(dbError) };
+  }
+}
+
+async function getCategoryRows(category: any) {
+  const keyConditionExpression = [PARTITION_KEY] + " = :" + [PARTITION_KEY];
+  const expressionAttributeValues =
+    '":' + [PARTITION_KEY] + '" : "' + category + '"';
+  const params = {
+    TableName: TABLE_NAME,
+    KeyConditionExpression: keyConditionExpression,
+    ExpressionAttributeValues: JSON.parse(
+      "{" + expressionAttributeValues + "}"
+    ),
+  };
+  const result: any = await getAllQueryData(params);
+  return result;
+}
+
+async function deleteCategory(category: any) {
+  try {
+    let rows: any = await getCategoryRows(category);
+    let p: any[] = [];
+    let i = 0;
+    while (i < rows.length) {
+      let j = i + DDB_MAX_BATCH;
+      if (j > rows.length) {
+        j = rows.length;
+      }
+      p.push(deleteRows(rows.slice(i, j)));
+      i += j - i;
+    }
+    await Promise.all(p);
+    const response = "deleted " + rows.length + " items";
+    return { statusCode: 200, body: response };
+  } catch (dbError) {
+    return { statusCode: 500, body: JSON.stringify(dbError) };
+  }
+}
+
+async function createLabel(category: any, label: any) {
+  const index = await getNextCategoryIndex(category)
+  const item = {
+    [PARTITION_KEY]: category,
+    [SORT_KEY]: label,
+    [INDEX_ATTRIBUTE]: index
+  };
+  const params = {
+    TableName: TABLE_NAME,
+    Item: item,
+  };
+  try {
+    await db.put(params).promise();
+    return { statusCode: 201, body: "" };
+  } catch (dbError) {
+    return { statusCode: 500, body: JSON.stringify(dbError) };
+  }
+}
+
+//////////////////////////////////////////////
+
 export const handler = async (event: any = {}): Promise<any> => {
   if (!event.method) {
     console.log("Error: method parameter required - returning statusCode 400");
@@ -97,6 +235,30 @@ export const handler = async (event: any = {}): Promise<any> => {
       } else {
         return { statusCode: 400, body: `Error: category and description required` };
       }
+  }
+  
+  if (event.method === "updateCategoryDescription") {
+      if (event.category && event.description) {
+        return updateCategoryDescription(event.category, event.description);
+      } else {
+        return { statusCode: 400, body: `Error: category and description required` };
+      }
+  }
+  
+  if (event.method === "deleteCategory") {
+      if (event.category) {
+        return deleteCategory(event.category);
+      } else {
+        return { statusCode: 400, body: `Error: category required` };
+      }
+  }
+  
+  if (event.method === "createLabel") {
+    if (event.category && event.label) {
+      return createLabel(event.category, event.description);
+    } else {
+      return { statusCode: 400, body: `Error: category and label required` };
+    }
   }
 
   return { statusCode: 400, body: `Error: valid method parameter required` };

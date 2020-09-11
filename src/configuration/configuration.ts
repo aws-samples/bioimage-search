@@ -55,58 +55,12 @@ deleteKey(key):
 
 */
 
-async function getParameter(key: any) {
-  if (!key) {
-    return { statusCode: 400, body: `Error: key parameter required` };
-  }
-  const params = {
-    TableName: TABLE_NAME,
-    Key: {
-      [PARTITION_KEY]: key,
-      [SORT_KEY]: LATEST,
-    },
-  };
-  try {
-    const response = await db.get(params).promise();
-    return { statusCode: 200, body: JSON.stringify(response.Item) };
-  } catch (dbError) {
-    return { statusCode: 500, body: JSON.stringify(dbError) };
-  }
-}
-
-async function setParameter(key: any, value: any) {
-  if (!(key && value)) {
-    return {
-      statusCode: 400,
-      body: `Error: key and value parameters required`,
-    };
-  }
-  const item = {
-    [PARTITION_KEY]: key,
-    [SORT_KEY]: LATEST,
-    [VALUE_ATTRIBUTE]: value,
-  };
-  const itemTimestamp = {
-    [PARTITION_KEY]: key,
-    [SORT_KEY]: Date.now().toString(),
-    [VALUE_ATTRIBUTE]: value,
-  };
-  const params = {
-    TableName: TABLE_NAME,
-    Item: item,
-  };
-  const paramsTimestamp = {
-    TableName: TABLE_NAME,
-    Item: itemTimestamp,
-  };
-  try {
-    await db.put(params).promise();
-    await db.put(paramsTimestamp).promise();
-    return { statusCode: 201, body: "" };
-  } catch (dbError) {
-    return { statusCode: 500, body: JSON.stringify(dbError) };
-  }
-}
+//////////////////////////////////////////////
+//
+// COMMON
+//
+//
+//////////////////////////////////////////////
 
 const getAllQueryData = async (params: any) => {
   const _getAllData = async (params: any, startKey: any) => {
@@ -142,10 +96,68 @@ const getAllScanData = async (params: any) => {
   return rows;
 };
 
-async function getHistoryRows(key: any) {
-  if (!key) {
-    return { statusCode: 400, body: `Error: key parameter required` };
+async function deleteRows(rows: any[]) {
+  let delarr: any[] = [];
+  for (let r of rows) {
+    const pk = r[PARTITION_KEY];
+    const sk = r[SORT_KEY];
+    const dr = {
+      DeleteRequest: { Key: { [PARTITION_KEY]: pk, [SORT_KEY]: sk } },
+    };
+    delarr.push(dr);
   }
+  const requestItems = { [TABLE_NAME]: delarr };
+  const params = { RequestItems: requestItems };
+  return db.batchWrite(params).promise();
+}
+
+//////////////////////////////////////////////
+
+async function getParameter(key: any) {
+  const params = {
+    TableName: TABLE_NAME,
+    Key: {
+      [PARTITION_KEY]: key,
+      [SORT_KEY]: LATEST,
+    },
+  };
+  try {
+    const response = await db.get(params).promise();
+    return { statusCode: 200, body: JSON.stringify(response.Item) };
+  } catch (dbError) {
+    return { statusCode: 500, body: JSON.stringify(dbError) };
+  }
+}
+
+async function setParameter(key: any, value: any) {
+  const item = {
+    [PARTITION_KEY]: key,
+    [SORT_KEY]: LATEST,
+    [VALUE_ATTRIBUTE]: value,
+  };
+  const itemTimestamp = {
+    [PARTITION_KEY]: key,
+    [SORT_KEY]: Date.now().toString(),
+    [VALUE_ATTRIBUTE]: value,
+  };
+  const params = {
+    TableName: TABLE_NAME,
+    Item: item,
+  };
+  const paramsTimestamp = {
+    TableName: TABLE_NAME,
+    Item: itemTimestamp,
+  };
+  try {
+    await db.put(params).promise();
+    await db.put(paramsTimestamp).promise();
+    return { statusCode: 201, body: "" };
+  } catch (dbError) {
+    return { statusCode: 500, body: JSON.stringify(dbError) };
+  }
+}
+
+async function getHistoryRows(key: any) {
   const keyConditionExpression = [PARTITION_KEY] + " = :" + [PARTITION_KEY];
   const expressionAttributeValues =
     '":' + [PARTITION_KEY] + '" : "' + key + '"';
@@ -157,7 +169,6 @@ async function getHistoryRows(key: any) {
     ),
   };
   const result: any = await getAllQueryData(params);
-  console.log("getHistoryRows result=" + result);
   return result;
 }
 
@@ -200,26 +211,11 @@ async function deleteParameter(key: any) {
   }
 }
 
-async function deleteRows(rows: any[]) {
-  let delarr: any[] = [];
-  for (let r of rows) {
-    const pk = r[PARTITION_KEY];
-    const sk = r[SORT_KEY];
-    const dr = {
-      DeleteRequest: { Key: { [PARTITION_KEY]: pk, [SORT_KEY]: sk } },
-    };
-    delarr.push(dr);
-  }
-  const requestItems = { [TABLE_NAME]: delarr };
-  const params = { RequestItems: requestItems };
-  return db.batchWrite(params).promise();
-}
 
 /////////////////
 
 export const handler = async (event: any = {}): Promise<any> => {
   if (!event.method) {
-    console.log("Error: method parameter required - returning statusCode 400");
     return { statusCode: 400, body: `Error: method parameter required` };
   }
 
