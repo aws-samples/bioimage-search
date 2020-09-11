@@ -123,11 +123,6 @@ async function deleteRows(rows: any[]) {
   return db.batchWrite(params).promise();
 }
 
-// NEED TO IMPLEMENT THIS
-async function getNextCategoryIndex(category: any) {
-  return 42
-}
-
 //////////////////////////////////////////////
 
 async function createCategory(category: any, description: any) {
@@ -221,6 +216,25 @@ async function createLabel(category: any, label: any) {
   }
 }
 
+async function listLabels(category: any) {
+  try {
+    const rows = await getCategoryRows(category);
+    let l: any[] = [];
+    for (let r of rows) {
+      if (!(r[SORT_KEY]==ORIGIN)) {
+        l.push(r)
+      }
+    }
+    return { statusCode: 200, body: JSON.stringify(l) };
+  } catch (dbError) {
+    return { statusCode: 500, body: JSON.stringify(dbError) };
+  }
+}
+
+async function getNextCategoryIndex(category: any) {
+  return 42
+}
+
 //////////////////////////////////////////////
 
 export const handler = async (event: any = {}): Promise<any> => {
@@ -258,6 +272,14 @@ export const handler = async (event: any = {}): Promise<any> => {
       return createLabel(event.category, event.description);
     } else {
       return { statusCode: 400, body: `Error: category and label required` };
+    }
+  }
+
+  if (event.method === "listLabels") {
+    if (event.category) {
+      return listLabels(event.category);
+    } else {
+      return { statusCode: 400, body: `Error: category` };
     }
   }
 
