@@ -198,11 +198,19 @@ async function deleteCategory(category: any) {
 }
 
 async function createLabel(category: any, label: any) {
-  const index = await getNextCategoryIndex(category)
+  const rows = await getCategoryRows(category);
+  // Check if already exists
+  for (let r of rows) {
+    const l1=r[SORT_KEY]
+    if (l1==label) {
+      return { statusCode: 200, body: l1[INDEX_ATTRIBUTE] }
+    }
+  }
+  const nextIndex = rows.length-1;
   const item = {
     [PARTITION_KEY]: category,
     [SORT_KEY]: label,
-    [INDEX_ATTRIBUTE]: index
+    [INDEX_ATTRIBUTE]: nextIndex
   };
   const params = {
     TableName: TABLE_NAME,
@@ -210,7 +218,8 @@ async function createLabel(category: any, label: any) {
   };
   try {
     await db.put(params).promise();
-    return { statusCode: 201, body: "" };
+    const rv = { index: nextIndex }
+    return { statusCode: 201, body: JSON.stringify(rv) };
   } catch (dbError) {
     return { statusCode: 500, body: JSON.stringify(dbError) };
   }
@@ -229,10 +238,6 @@ async function listLabels(category: any) {
   } catch (dbError) {
     return { statusCode: 500, body: JSON.stringify(dbError) };
   }
-}
-
-async function getNextCategoryIndex(category: any) {
-  return 42
 }
 
 //////////////////////////////////////////////
@@ -269,7 +274,7 @@ export const handler = async (event: any = {}): Promise<any> => {
   
   if (event.method === "createLabel") {
     if (event.category && event.label) {
-      return createLabel(event.category, event.description);
+      return await createLabel(event.category, event.label);
     } else {
       return { statusCode: 400, body: `Error: category and label required` };
     }
@@ -277,7 +282,7 @@ export const handler = async (event: any = {}): Promise<any> => {
 
   if (event.method === "listLabels") {
     if (event.category) {
-      return listLabels(event.category);
+      return await listLabels(event.category);
     } else {
       return { statusCode: 400, body: `Error: category` };
     }
