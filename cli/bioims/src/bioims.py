@@ -333,11 +333,13 @@ class LabelClient(BioimageSearchClient):
 
     def listLabels(self, category):
         request = '{{ "method": "listLabels", "category": "{}" }}'.format(category)
+        #print(request)
+        #print(self._resources.getLabelLambdaArn())
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
             FunctionName=self._resources.getLabelLambdaArn(),
-            InvocationType='Event',
+            InvocationType='RequestResponse',
             Payload=payload
             )
         stream = response['Payload']
@@ -346,8 +348,8 @@ class LabelClient(BioimageSearchClient):
         jresponse = json.loads(strResponse)
         jbody = jresponse['body']
         jvalue = json.loads(jbody)
-        l = []
+        a = []
         for j in jvalue:
-            l.append(j['label'])
-        return l
-
+            a.append(j['label'])
+        return a
+        
