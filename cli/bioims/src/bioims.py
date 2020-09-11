@@ -346,5 +346,8 @@ class LabelClient(BioimageSearchClient):
         jresponse = json.loads(strResponse)
         jbody = jresponse['body']
         jvalue = json.loads(jbody)
-        return jvalue
+        l = []
+        for j in jvalue:
+            l.append(j['label'])
+        return l
 
