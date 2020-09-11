@@ -6,6 +6,7 @@ class BioimageSearchResources:
     def __init__(self):
         self._stacksDescription = ""
         self._configurationLambdaArn = ""
+        self._labelLambdaArn = ""
 
     def refresh(self):
         cf = boto3.client('cloudformation')
@@ -26,10 +27,29 @@ class BioimageSearchResources:
             if output_key.startswith('ExportsOutputFnGetAttconfigurationFunction'):
                 return output['OutputValue']
         return ""
+        
+    def getLabelStack(self):
+        stacks = self._stacksDescription['Stacks']
+        for stack in stacks:
+            if stack['StackName'] == 'BioimageSearchLabelStack':
+                return stack
+        return ""
+
+    def getLabelLambdaArn(self):
+        labelStack = self.getLabelStack()
+        outputs = labelStack['Outputs']
+        for output in outputs:
+            output_key = output['OutputKey']
+            if output_key.startswith('ExportsOutputFnGetAttlabelFunction'):
+                return output['OutputValue']
+        return ""
+
 
 def client(serviceName):
     if serviceName == 'configuration':
         return ConfigurationClient()
+    if serviceName == 'label':
+        return LabelClient()
     print('service type {} not recognized'.format(serviceName))
     return False
 
@@ -37,6 +57,12 @@ class BioimageSearchClient:
     def __init__(self):
         self._resources=BioimageSearchResources()
         self._resources.refresh()
+        
+#############################################
+#
+# CONFIGURATION
+#
+#############################################
 
 class ConfigurationClient(BioimageSearchClient):
     def __init__(self):
@@ -155,12 +181,29 @@ class ConfigurationClient(BioimageSearchClient):
             )
         return response['StatusCode']
         
+#############################################
+#
+# LABEL
+#
+#############################################
         
+class LabelClient(BioimageSearchClient):
+    def __init__(self):
+        super().__init__()
 
+    def getLambdaArn(self):
+        return self._resources.getLabelLambdaArn()
 
-    
-        
-        
+    def createCategory(self, category, description):
+        request = '{{ "method": "createCategory", "category": "{}", "description": "{}" }}'.format(category, description)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self._resources.getLabelLambdaArn(),
+            InvocationType='Event',
+            Payload=payload
+            )
+        return response['StatusCode']
 
 
         
