@@ -218,8 +218,8 @@ async function createLabel(category: any, label: any) {
 
 async function listLabels(category: any) {
   try {
+    var l: any[] = [];
     const rows = await getCategoryRows(category);
-    let l: any[] = [];
     for (let r of rows) {
       if (!(r[SORT_KEY]==ORIGIN)) {
         l.push(r)
