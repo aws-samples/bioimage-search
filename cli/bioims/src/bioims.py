@@ -287,7 +287,7 @@ class LabelClient(BioimageSearchClient):
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
             FunctionName=self._resources.getLabelLambdaArn(),
-            InvocationType='Event',
+            InvocationType='RequestResponse',
             Payload=payload
             )
         stream = response['Payload']
@@ -296,7 +296,7 @@ class LabelClient(BioimageSearchClient):
         jresponse = json.loads(strResponse)
         jbody = jresponse['body']
         jvalue = json.loads(jbody)
-        return jvalue['value']
+        return jvalue['index']
 
     def updateLabel(self, category, label):
         request = '{{ "method": "updateLabel", "category": "{}", "label": "{}" }}'.format(category, label)

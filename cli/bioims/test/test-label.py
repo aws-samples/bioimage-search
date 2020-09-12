@@ -10,11 +10,11 @@ labelClient = bioims.client('label')
 
 seed(1)
 
-#labelClient.createCategory("category1", "description1")
+labelClient.createCategory("category2", "description1")
 
-#labelClient.createLabel("category1", "label1")
+for i in range(10):
+    r = labelClient.createLabel("category2", "label"+str(i))
+    print(r)
 
-r = labelClient.listLabels("category1")
-
-print(r)
+#r = labelClient.listLabels("category1")
 
