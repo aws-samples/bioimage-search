@@ -16,5 +16,8 @@ for i in range(10):
     r = labelClient.createLabel("category2", "label"+str(i))
     print(r)
 
-#r = labelClient.listLabels("category1")
+r = labelClient.listLabels("category2")
+print(r)
 
+r = labelClient.updateCategoryDescription("category2", "description3")
+print(r)
