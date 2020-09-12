@@ -144,14 +144,18 @@ async function createCategory(category: any, description: any) {
 }
 
 async function updateCategoryDescription(category: any, description: any) {
-  const item = {
+  const key = {
     [PARTITION_KEY]: category,
-    [SORT_KEY]: ORIGIN,
-    [DESCRIPTION_ATTRIBUTE]: description
+    [SORT_KEY]: ORIGIN
   };
+  const expressionAttributeNames = '"#d" : "'+[DESCRIPTION_ATTRIBUTE]+'"'
+  const expressionAttributeValues = '":d" : "' + description+'"'
   const params = {
     TableName: TABLE_NAME,
-    Item: item,
+    Key: key,
+    UpdateExpression: 'set #d = :d',
+    ExpressionAttributeNames: JSON.parse("{" + expressionAttributeNames + "}"),
+    ExpressionAttributeValues: JSON.parse("{" + expressionAttributeValues + "}") 
   };
   try {
     await db.update(params).promise();
@@ -203,7 +207,8 @@ async function createLabel(category: any, label: any) {
   for (let r of rows) {
     const l1=r[SORT_KEY]
     if (l1==label) {
-      return { statusCode: 200, body: l1[INDEX_ATTRIBUTE] }
+      const indexResponse = { index: r[INDEX_ATTRIBUTE] }
+      return { statusCode: 200, body: JSON.stringify(indexResponse) }
     }
   }
   const nextIndex = rows.length-1;
