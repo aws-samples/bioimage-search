@@ -315,7 +315,7 @@ class LabelClient(BioimageSearchClient):
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
             FunctionName=self._resources.getLabelLambdaArn(),
-            InvocationType='Event',
+            InvocationType='RequestResponse',
             Payload=payload
             )
         return response['StatusCode']
@@ -326,7 +326,7 @@ class LabelClient(BioimageSearchClient):
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
             FunctionName=self._resources.getLabelLambdaArn(),
-            InvocationType='Event',
+            InvocationType='RequestResponse',
             Payload=payload
             )
         return response['StatusCode']
