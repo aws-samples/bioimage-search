@@ -318,7 +318,14 @@ class LabelClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        return response['StatusCode']
+        stream = response['Payload']
+        bStrResponse = stream.read()
+        print(bStrResponse)
+        strResponse = bStrResponse.decode("utf-8")
+        jresponse = json.loads(strResponse)
+        jbody = jresponse['body']
+        jvalue = json.loads(jbody)
+        return jvalue['index']
 
     def listCategories(self):
         request = '{ "method": "listCategories" }'
@@ -329,7 +336,17 @@ class LabelClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        return response['StatusCode']
+        stream = response['Payload']
+        bStrResponse = stream.read()
+        strResponse = bStrResponse.decode("utf-8")
+        jresponse = json.loads(strResponse)
+        jbody = jresponse['body']
+        jvalue = json.loads(jbody)
+        a = []
+        for j in jvalue:
+            a.append(j['category'])
+        return a
+        
 
     def listLabels(self, category):
         request = '{{ "method": "listLabels", "category": "{}" }}'.format(category)

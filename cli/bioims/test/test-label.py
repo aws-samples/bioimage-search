@@ -21,3 +21,9 @@ print(r)
 
 r = labelClient.updateCategoryDescription("category2", "description3")
 print(r)
+
+r = labelClient.listCategories()
+print(r)
+
+r = labelClient.getIndex("category2", "label9")
+print(r)
