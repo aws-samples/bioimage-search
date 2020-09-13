@@ -321,7 +321,9 @@ async function getIndex(category: any, label: any) {
   };
   try {
     const response = await db.get(params).promise();
-    return { statusCode: 200, body: JSON.stringify(response.Item) };
+    const item = response.Item
+    const indexResponse = { index: item[INDEX_ATTRIBUTE] }
+    return { statusCode: 200, body: JSON.stringify(indexResponse) };
   } catch (dbError) {
     return { statusCode: 500, body: JSON.stringify(dbError) };
   }
