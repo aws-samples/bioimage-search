@@ -28,6 +28,7 @@
     "@aws-cdk/custom-resources": "^1.59.0",
     "aws-sdk": "^2.739.0",
     "source-map-support": "^0.5.19",
-    "update": "^0.7.4"
+    "update": "^0.7.4",
+    "uuid": "^8.3.0"
   }
 }

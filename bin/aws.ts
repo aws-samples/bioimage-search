@@ -6,6 +6,7 @@ import { BaseStack } from '../cdk/base-stack';
 import { Bbbc021Stack } from '../cdk/bbbc-021-stack';
 import { ConfigurationStack } from '../cdk/configuration-stack';
 import { LabelStack } from '../cdk/label-stack';
+import { MessageStack } from '../cdk/message-stack';
 
 
 const app = new cdk.App();
@@ -19,6 +20,10 @@ const configurationStack = new ConfigurationStack(app, 'BioimageSearchConfigurat
 })
 
 const labelStack = new LabelStack(app, 'BioimageSearchLabelStack', {
+    bioimageSearchAccessPolicy: baseStack.bioimageSearchAccessPolicy
+})
+
+const messageStack = new MessageStack(app, 'BioimageSearchMessageStack', {
     bioimageSearchAccessPolicy: baseStack.bioimageSearchAccessPolicy
 })
 

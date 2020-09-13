@@ -13,4 +13,5 @@ npm run build
 cdk bootstrap
 cdk deploy BioimageSearchBaseStack --require-approval never
 cdk deploy BioimageSearchConfigurationStack --require-approval never
+cdk deploy BioimageSearchMessageStack --require-approval never
 
