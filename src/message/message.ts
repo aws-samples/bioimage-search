@@ -240,7 +240,7 @@ export const handler = async (event: any = {}): Promise<any> => {
 
   if (event.method === "getMessage") {
     if (event.messageId) {
-      return getMessage(event.messageId);
+      return await getMessage(event.messageId);
     } else {
       return { statusCode: 400, body: `Error: messageId required` };
     }
@@ -248,7 +248,7 @@ export const handler = async (event: any = {}): Promise<any> => {
 
   if (event.method === "createMessage") {
     if (event.message) {
-      return createMessage(event.message);
+      return await createMessage(event.message);
     } else {
       return { statusCode: 400, body: `Error: message required` };
     }
