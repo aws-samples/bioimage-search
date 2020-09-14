@@ -25,7 +25,7 @@ export class MessageStack extends cdk.Stack {
 
     const messageLambda = new lambda.Function(
       this,
-      "messaegFunction",
+      "messageFunction",
       {
         code: new lambda.AssetCode("src/message"),
         handler: "message.handler",
