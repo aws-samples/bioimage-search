@@ -1,0 +1,30 @@
+import sys
+import json
+from random import seed
+from random import randint
+import boto3
+sys.path.insert(0, "../src")
+import bioims
+
+messageClient = bioims.client('message')
+
+seed(1)
+
+r = messageClient.createMessage("hello world")
+print(r)
+
+# for i in range(10):
+#     r = labelClient.createLabel("category2", "label"+str(i))
+#     print(r)
+
+# r = labelClient.listLabels("category2")
+# print(r)
+
+# r = labelClient.updateCategoryDescription("category2", "description3")
+# print(r)
+
+# r = labelClient.listCategories()
+# print(r)
+
+# r = labelClient.getIndex("category2", "label9")
+# print(r)
