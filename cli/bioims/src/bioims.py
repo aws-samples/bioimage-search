@@ -7,6 +7,7 @@ class BioimageSearchResources:
         self._stacksDescription = ""
         self._configurationLambdaArn = ""
         self._labelLambdaArn = ""
+        self._messageLambdaArn = ""
 
     def refresh(self):
         cf = boto3.client('cloudformation')
@@ -35,6 +36,13 @@ class BioimageSearchResources:
                 return stack
         return ""
 
+    def getMessageStack(self):
+        stacks = self._stacksDescription['Stacks']
+        for stack in stacks:
+            if stack['StackName'] == 'BioimageSearchMessageStack':
+                return stack
+        return ""
+
     def getLabelLambdaArn(self):
         labelStack = self.getLabelStack()
         outputs = labelStack['Outputs']
@@ -44,14 +52,25 @@ class BioimageSearchResources:
                 return output['OutputValue']
         return ""
 
+    def getMessageLambdaArn(self):
+        messageStack = self.getMessageStack()
+        outputs = messageStack['Outputs']
+        for output in outputs:
+            output_key = output['OutputKey']
+            if output_key.startswith('ExportsOutputFnGetAttmessageFunction'):
+                return output['OutputValue']
+        return ""
 
 def client(serviceName):
     if serviceName == 'configuration':
         return ConfigurationClient()
-    if serviceName == 'label':
+    elif serviceName == 'label':
         return LabelClient()
-    print('service type {} not recognized'.format(serviceName))
-    return False
+    elif serviceName == 'message':
+        return MessageClient()
+    else:
+        print('service type {} not recognized'.format(serviceName))
+        return False
 
 class BioimageSearchClient:
     def __init__(self):
@@ -188,59 +207,6 @@ class ConfigurationClient(BioimageSearchClient):
 #############################################
 
 
-# createCategory(category, description):
-#     {
-#         method: 'createCategory',
-#         category: category,
-#         description: description
-#     }
-    
-# updateCategoryDescription(category, description):
-#     {
-#         method: 'updateCategoryDescription',
-#         category: category,
-#         description: description
-#     }
-    
-# deleteCategory(category):
-#     {
-#         method: 'deleteCategory',
-#         category: category
-#     }
-    
-# createLabel(category, label):
-#     {
-#         method: 'createLabel',
-#         category: category,
-#         label: label
-#     }
-    
-# updateLabel(category, label):
-#     {
-#         method: 'updateLabel',
-#         category: category,
-#         label: label
-#     }
-    
-# getIndex(category, label):
-#     {
-#         method: 'getIndex',
-#         category: category,
-#         label: label
-#     }
-    
-# listCategories():
-#     {
-#         method: 'listCategories'        
-#     }
-
-# listLabels(category):
-#     {
-#         method: 'listLabels',
-#         category: category
-#     }
-    
-
 class LabelClient(BioimageSearchClient):
     def __init__(self):
         super().__init__()
@@ -369,4 +335,89 @@ class LabelClient(BioimageSearchClient):
         for j in jvalue:
             a.append(j['label'])
         return a
+
+#############################################
+#
+# MESSAGE
+#
+#############################################
+    
+class MessageClient(BioimageSearchClient):
+    def __init__(self):
+        super().__init__()
+
+    def getLambdaArn(self):
+        return self._resources.getMessageLambdaArn()
         
+    def getMessage(self, messageId):
+        request = '{{ "method": "getMessage", "messageId": "{}" }}'.format(messageId)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self._resources.getConfigurationLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        stream = response['Payload']
+        bStrResponse = stream.read()
+        strResponse = bStrResponse.decode("utf-8")
+        jresponse = json.loads(strResponse)
+        jbody = jresponse['body']
+        jvalue = json.loads(jbody)
+        return jvalue['detail']
+
+    def createMessage(self, message):
+        request = '{{ "method": "createMessage", "message": "{}" }}'.format(message)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self._resources.getConfigurationLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        stream = response['Payload']
+        bStrResponse = stream.read()
+        strResponse = bStrResponse.decode("utf-8")
+        jresponse = json.loads(strResponse)
+        jbody = jresponse['body']
+        jvalue = json.loads(jbody)
+        return jvalue['messageId']
+
+    def listMessage(self, messageId):
+        request = '{{ "method": "listMessage", "messageId": "{}" }}'.format(messageId)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self._resources.getConfigurationLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        stream = response['Payload']
+        bStrResponse = stream.read()
+        strResponse = bStrResponse.decode("utf-8")
+        jresponse = json.loads(strResponse)
+        jbody = jresponse['body']
+        jvalue = json.loads(jbody)
+        return jvalue
+
+    def deleteMessage(self, messageId):
+        request = '{{ "method": "deleteMessage", "messageId": "{}" }}'.format(messageId)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self._resources.getLabelLambdaArn(),
+            InvocationType='Event',
+            Payload=payload
+            )
+        return response['StatusCode']
+
+    def addMessage(self, messageId, message):
+        request = '{{ "method": "addMessage", "messageId": "{}", "message": "{}" }}'.format(messageId, message)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self._resources.getLabelLambdaArn(),
+            InvocationType='Event',
+            Payload=payload
+            )
+        return response['StatusCode']
