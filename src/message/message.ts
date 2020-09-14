@@ -253,12 +253,26 @@ export const handler = async (event: any = {}): Promise<any> => {
       return { statusCode: 400, body: `Error: message required` };
     }
   }
+  
+  if (event.method === "addMessage") {
+    if (event.messageId && event.message) {
+      return addMessage(event.messageId, event.message);
+    } else {
+      return { statusCode: 400, body: `Error: messageId and message required` };
+    }
+  }
 
   if (event.method === "listMessage") {
     if (event.messageId) {
       try {
         const rows = await listMessage(event.messageId);
-        return { statusCode: 200, body: JSON.stringify(rows) };
+        const a: any [] = []
+        for (let r of rows) {
+          const message = r['detail']
+          const timestamp = r['timestamp1']
+          a.push({ message: message, timestamp: timestamp })
+        }
+        return { statusCode: 200, body: JSON.stringify(a) };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };
       }
