@@ -10,21 +10,32 @@ messageClient = bioims.client('message')
 
 seed(1)
 
-r = messageClient.createMessage("hello world")
-print(r)
+mids=[]
 
-# for i in range(10):
-#     r = labelClient.createLabel("category2", "label"+str(i))
-#     print(r)
+for i in range(10):
+    r = messageClient.createMessage("message test "+str(i))
+    mids.append(r)
 
-# r = labelClient.listLabels("category2")
-# print(r)
+for i in range(10):
+    r = messageClient.getMessage(mids[i])
+    print(r)
 
-# r = labelClient.updateCategoryDescription("category2", "description3")
-# print(r)
+for i in range(10):
+    print(i)
+    print(mids[i])
+    r = messageClient.addMessage(mids[i], "message test add3 "+str(i))
+    print(r)
 
-# r = labelClient.listCategories()
-# print(r)
+for i in range(10):
+    print(i)
+    print(mids[i])
+    r = messageClient.addMessage(mids[i], "message test add4 "+str(i))
+    print(r)
+    
+for i in range(10):
+    r = messageClient.listMessage(mids[i])
+    print(r)
 
-# r = labelClient.getIndex("category2", "label9")
-# print(r)
+for i in range(10):
+    messageClient.deleteMessage(mids[i])
+

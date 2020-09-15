@@ -354,7 +354,7 @@ class MessageClient(BioimageSearchClient):
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
-            FunctionName=self._resources.getConfigurationLambdaArn(),
+            FunctionName=self._resources.getMessageLambdaArn(),
             InvocationType='RequestResponse',
             Payload=payload
             )
@@ -371,7 +371,7 @@ class MessageClient(BioimageSearchClient):
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
-            FunctionName=self._resources.getConfigurationLambdaArn(),
+            FunctionName=self._resources.getMessageLambdaArn(),
             InvocationType='RequestResponse',
             Payload=payload
             )
@@ -388,7 +388,7 @@ class MessageClient(BioimageSearchClient):
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
-            FunctionName=self._resources.getConfigurationLambdaArn(),
+            FunctionName=self._resources.getMessageLambdaArn(),
             InvocationType='RequestResponse',
             Payload=payload
             )
@@ -405,7 +405,7 @@ class MessageClient(BioimageSearchClient):
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
-            FunctionName=self._resources.getLabelLambdaArn(),
+            FunctionName=self._resources.getMessageLambdaArn(),
             InvocationType='Event',
             Payload=payload
             )
@@ -416,7 +416,7 @@ class MessageClient(BioimageSearchClient):
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
-            FunctionName=self._resources.getLabelLambdaArn(),
+            FunctionName=self._resources.getMessageLambdaArn(),
             InvocationType='Event',
             Payload=payload
             )
