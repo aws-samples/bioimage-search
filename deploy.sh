@@ -10,6 +10,7 @@
 
 source ./scripts/source-nvm.sh
 npm run build
+cd src/message; npm install; cd ../..
 cdk bootstrap
 cdk deploy BioimageSearchBaseStack --require-approval never
 cdk deploy BioimageSearchConfigurationStack --require-approval never

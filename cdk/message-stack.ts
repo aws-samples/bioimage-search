@@ -23,11 +23,13 @@ export class MessageStack extends cdk.Stack {
       tableName: "BioimsMessage",
     });
 
+//        code: new lambda.AssetCode("src/message"),
+
     const messageLambda = new lambda.Function(
       this,
       "messageFunction",
       {
-        code: new lambda.AssetCode("src/message"),
+        code: lambda.Code.fromAsset("src/message"),
         handler: "message.handler",
         runtime: lambda.Runtime.NODEJS_12_X,
         environment: {

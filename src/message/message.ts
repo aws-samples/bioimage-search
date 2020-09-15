@@ -152,10 +152,6 @@ async function createMessage(message: any) {
 }
 
 async function addMessage(messageId: any, message: any) {
-  const validationItem = {
-    [PARTITION_KEY]: messageId,
-    [SORT_KEY]: LATEST,
-  }
   const item = {
     [PARTITION_KEY]: messageId,
     [SORT_KEY]: LATEST,
@@ -168,8 +164,11 @@ async function addMessage(messageId: any, message: any) {
   };
   const validationParams = {
     TableName: TABLE_NAME,
-    Item: validationItem,
-  }
+    Key: {
+      [PARTITION_KEY]: messageId,
+      [SORT_KEY]: LATEST,
+    },
+  };
   const params = {
     TableName: TABLE_NAME,
     Item: item,
@@ -180,7 +179,7 @@ async function addMessage(messageId: any, message: any) {
   };
   try {
     const validation = await db.get(validationParams).promise();
-    if (!validation[PARTITION_KEY]) {
+    if (!validation.Item[PARTITION_KEY]) {
         return { statusCode: 400, body: 'messageId must already exist' }
     }
     const p: any[] = []

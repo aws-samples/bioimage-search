@@ -1,0 +1,7 @@
+{
+  "name": "message-package",
+  "version": "0.1.0",
+  "dependencies": {
+    "uuid": "^8.3.0"
+  }
+}
