@@ -267,8 +267,8 @@ export const handler = async (event: any = {}): Promise<any> => {
         const rows = await listMessage(event.messageId);
         const a: any [] = []
         for (let r of rows) {
-          const message = r['detail']
-          const timestamp = r['timestamp1']
+          const message = r[DETAIL_ATTRIBUTE]
+          const timestamp = r[SORT_KEY]
           a.push({ message: message, timestamp: timestamp })
         }
         return { statusCode: 200, body: JSON.stringify(a) };
