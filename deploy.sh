@@ -16,4 +16,4 @@ cdk deploy BioimageSearchBaseStack --require-approval never
 cdk deploy BioimageSearchConfigurationStack --require-approval never
 cdk deploy BioimageSearchLabelStack --require-approval never
 cdk deploy BioimageSearchMessageStack --require-approval never
-
+cdk deploy BioimageSearchImageArtifactStack --require-approval never
