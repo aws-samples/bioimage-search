@@ -1,0 +1,1 @@
+# Build script for default-artifact lambda
