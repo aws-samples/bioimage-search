@@ -18,6 +18,7 @@ export class ImageArtifactStack extends cdk.Stack {
         code: lambda.Code.fromAsset("src/image-artifact/lambda/default-artifact/build"),
         handler: "default-artifact.handler",
         runtime: lambda.Runtime.PYTHON_3_8,
+        memorySize: 3008,
         environment: {
           MEDIUM_2D_MAX_DIM: "1000",
           THUMBNAIL_MAX_DIM: "100",
