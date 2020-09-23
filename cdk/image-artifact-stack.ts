@@ -4,6 +4,7 @@ import cdk = require("@aws-cdk/core");
 
 export interface ImageArtifactStackProps extends cdk.StackProps {
   bioimageSearchAccessPolicy: iam.Policy;
+  externalResourcesPolicy: iam.Policy;
 }
 
 export class ImageArtifactStack extends cdk.Stack {
@@ -14,7 +15,7 @@ export class ImageArtifactStack extends cdk.Stack {
       this,
       "defaultArtifactFunction",
       {
-        code: lambda.Code.fromAsset("src/image-artifact/lambda/default-artifact"),
+        code: lambda.Code.fromAsset("src/image-artifact/lambda/default-artifact/build"),
         handler: "default-artifact.handler",
         runtime: lambda.Runtime.PYTHON_3_8,
         environment: {
@@ -23,6 +24,10 @@ export class ImageArtifactStack extends cdk.Stack {
         },
       }
     );
+    
+    if (defaultArtifactLambda.role) {
+      defaultArtifactLambda.role.attachInlinePolicy(props.externalResourcesPolicy);
+    }
 
     const defaultArtifactLambdaArn = defaultArtifactLambda.functionArn
     

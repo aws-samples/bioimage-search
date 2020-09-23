@@ -8,11 +8,14 @@ import fs = require("fs");
 
 export class BaseStack extends cdk.Stack {
   public bioimageSearchAccessPolicy: iam.Policy;
+  public externalResourcesPolicy: iam.Policy;
 
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
     this.bioimageSearchAccessPolicy = new iam.Policy(this, "biomageSearchAccessPolicy");
+    
+    this.externalResourcesPolicy = new iam.Policy(this, "externalResourcesPolicy");
     
     const cloudFormationPolicyStatement = new iam.PolicyStatement({
       actions: [
