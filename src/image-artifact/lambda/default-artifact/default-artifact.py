@@ -1,3 +1,5 @@
+import math
+from io import StringIO, BytesIO
 import boto3
 from PIL import Image
 import numpy as np
@@ -115,29 +117,161 @@ def getColors(n):
         ca.append(colors[i])
     return ca
     
+def checkPixShape(pix_shape):
+    for d in pix_shape:
+        if d != pix_shape[0]:
+            return False
+    return True
+    
+def normInputData(input_data):
+    max = input_data.max()
+    if max > 65535.0:
+        return input_data/max
+    elif max > 255.0:
+        return input_data/65535.0
+    elif max > 1.0:
+        return input_data/255.0
+    else:
+        return input_data/max
+        
+def findHistCutoff(h, p):
+    totalPixels=0.0
+    ca=h[0]
+    cv=h[1]
+    for c in ca:
+        totalPixels += c
+    th=totalPixels*p
+    i=0
+    cutOffPixels=0.0
+    for c in ca:
+        if cutOffPixels >= th:
+            return cv[i]
+        cutOffPixels += c
+        i+=1
+    return cv[i-1]        
+    
+def applyImageCutoff(nda, cv):
+    for idx, v in np.ndenumerate(nda):
+        if (v>cv):
+            nda[idx]=cv
+            
+def findCutoffAvg(nda, cv):
+    total = 0.0
+    for v in np.nditer(nda):
+        if (v>cv):
+            total += cv
+        else:
+            total += v
+    avg = total / nda.size
+    return avg
+    
+def normalizeChannel(bval, nda):
+    for idx, v in np.ndenumerate(nda):
+        n = nda[idx] / bval
+        if n < 1.0:
+            n=1.0
+        l = math.log(n)
+        if (l>5.0):
+            l=5.0
+        nda[idx]=l
+    min=nda.min()
+    max=nda.max()
+    zeroFlag=False
+    if min==max:
+        nda=0.0
+    else:
+        s = (max-min)
+        for idx, v in np.enumerate(nda):
+            n = (v-min)/s
+            nda[idx]=n
+
 def handler(event, context):
     s3c = boto3.client('s3')
     input_bucket = event['input_bucket']
     input_keys = event['input_keys']
-    print("input_bucket=", input_bucket, " input_keys=", input_keys)
-    
-    pix_shape = []
 
-    for input_key in input_keys:
+    input_data = []
+
+    if len(input_keys)==0:
+        return {
+            'success' : "False",
+            'errorMsg' : "one or more input keys required"
+        }
+        
+    elif len(input_keys)==1:
+        input_key = input_keys[0]
         fileObject = s3c.get_object(Bucket=input_bucket, Key=input_key)
         file_stream = fileObject['Body']
         im = Image.open(file_stream)
-        pix = np.array(im)
-        pix_shape.append(pix.shape)
+        input_data = np.array(im)
 
-    ca = getColors(3)
-    for c in ca:
-        print(c)
+    else:
+        input_arr = []
+        input_shape = []
+        for input_key in input_keys:
+            fileObject = s3c.get_object(Bucket=input_bucket, Key=input_key)
+            file_stream = fileObject['Body']
+            im = Image.open(file_stream)
+            pix = np.array(im)
+            input_shape.append(pix.shape)
+            input_arr.append(pix)
+
+        if not checkPixShape(input_shape):
+            return {
+                'success' : "False",
+                'errorMsg' : "input channel dimensions do not match"
+            }
+            
+        input_data = np.array(input_arr)
+        
+    input_data = normInputData(input_data)
+    
+    for c in input_data.shape[0]:
+        channelData = input_data[c]
+        h1 = histogram(channelData, 100)
+        bcut = findHistCutoff(h1, 0.20)
+        bavg = findCutoffAvg(channelData, bcut)
+        normalizeChannel(bavg, channelData)
+        
+    # Need to create 2D MIP
+    height = input_data.shape[-2]
+    width = input_data.shape[-1]
+    mip = np.array(shape=(width, height, 3), dtype=np.uint8)
+    mipMax = np.zeros(shape=(width, height), dtype=np.float32)
+    mipLabel = np.array(shape=(width, height), dtype=np.uint8)
+    
+    ca = getColors(input_data.shape[0])
+
+    for c in input_data.shape[0]:
+        channelData = input_data[c]
+        for idx, v in np.ndenumerate(channelData):
+            w0=idx[-1]
+            h0=idx[-2]
+            vmax = mipMax[w0][h0]
+            if v>vmax:
+                mipMax[w0][h0]=v
+                mipLabel[w0][h0]=c
+                
+    for idx, v in np.ndenumerate(mipMax):
+        w0=idx[0]
+        h0=idx[1]
+        c=mipLabel[w0][h0]
+        cav = ca[c]
+        mip[w0][h0][0]=cav[0]*v
+        mip[w0][h0][1]=cav[1]*v
+        mip[w0][h0][2]=cav[2]*v
+
+    img=Image.fromarray(mip)
+    buffer = BytesIO()
+    img.save(buffer, "PNG")
+    
+    output_bucket = event['output_bucket']
+    output_key = event['output_key']
+    s3c.upload_fileobj(buffer, output_bucket, output_key)    
 
     return { 
         'input_bucket' : event['input_bucket'],
         'input_keys' : input_keys,
-        'input_shapes' : pix_shape,
         'output_bucket' : event['output_bucket'],
         'output_key' : event['output_key']
     }  
