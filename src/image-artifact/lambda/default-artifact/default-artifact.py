@@ -181,7 +181,7 @@ def normalizeChannel(bval, nda):
         nda=0.0
     else:
         s = (max-min)
-        for idx, v in np.enumerate(nda):
+        for idx, v in np.ndenumerate(nda):
             n = (v-min)/s
             nda[idx]=n
 
@@ -204,6 +204,9 @@ def handler(event, context):
         file_stream = fileObject['Body']
         im = Image.open(file_stream)
         input_data = np.array(im)
+        if len(input_data.shape)==2:
+            input_data = np.expand_dims(input_data, axis=0)
+        
 
     else:
         input_arr = []
@@ -224,9 +227,10 @@ def handler(event, context):
             
         input_data = np.array(input_arr)
         
+    print("input_data shape=", input_data.shape)
     input_data = normInputData(input_data)
     
-    for c in input_data.shape[0]:
+    for c in range(input_data.shape[0]):
         channelData = input_data[c]
         h1 = histogram(channelData, 100)
         bcut = findHistCutoff(h1, 0.20)
@@ -236,13 +240,14 @@ def handler(event, context):
     # Need to create 2D MIP
     height = input_data.shape[-2]
     width = input_data.shape[-1]
-    mip = np.array(shape=(width, height, 3), dtype=np.uint8)
+    print("height=", height, " width=", width)
+    mip = np.zeros(shape=(width, height, 3), dtype=np.uint8)
     mipMax = np.zeros(shape=(width, height), dtype=np.float32)
-    mipLabel = np.array(shape=(width, height), dtype=np.uint8)
+    mipLabel = np.zeros(shape=(width, height), dtype=np.uint8)
     
     ca = getColors(input_data.shape[0])
 
-    for c in input_data.shape[0]:
+    for c in range(input_data.shape[0]):
         channelData = input_data[c]
         for idx, v in np.ndenumerate(channelData):
             w0=idx[-1]
@@ -263,11 +268,12 @@ def handler(event, context):
 
     img=Image.fromarray(mip)
     buffer = BytesIO()
-    img.save(buffer, "PNG")
+    img.save(buffer, format='PNG')
+    buffer.seek(0)
     
     output_bucket = event['output_bucket']
     output_key = event['output_key']
-    s3c.upload_fileobj(buffer, output_bucket, output_key)    
+    s3c.upload_fileobj(buffer, output_bucket, output_key)
 
     return { 
         'input_bucket' : event['input_bucket'],

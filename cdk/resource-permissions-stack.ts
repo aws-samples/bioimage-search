@@ -1,6 +1,7 @@
 import iam = require("@aws-cdk/aws-iam");
 import cdk = require("@aws-cdk/core");
 import s3 = require("@aws-cdk/aws-s3");
+import crs = require("crypto-random-string")
 
 export interface ResourcePermissionsStackProps extends cdk.StackProps {
   bioimageSearchAccessPolicy: iam.Policy,
@@ -10,22 +11,46 @@ export interface ResourcePermissionsStackProps extends cdk.StackProps {
 export class ResourcePermissionsStack extends cdk.Stack {
   constructor(app: cdk.App, id: string, props: ResourcePermissionsStackProps) {
     super(app, id, props);
-
-    const bbbc021Bucket = s3.Bucket.fromBucketName(this, 'Bbbc021Bucket', 'bioimagesearchbbbc021stack-bbbc021bucket544c3e64-1t2bv8cktyrtq');
     
-    const bbbc021PolicyStatement = new iam.PolicyStatement({
+    this.addBucketResourceReadOnly('bioimagesearchbbbc021stack-bbbc021bucket544c3e64-1t2bv8cktyrtq', props.bioimageSearchAccessPolicy);
+    this.addBucketResourceReadOnly('bioimagesearchbbbc021stack-bbbc021bucket544c3e64-1t2bv8cktyrtq', props.resourcePermissionsPolicy);
+
+    this.addBucketResourceFullPermissions('bioimage-search-output', props.bioimageSearchAccessPolicy);
+    this.addBucketResourceFullPermissions('bioimage-search-output', props.resourcePermissionsPolicy);
+
+  }
+  
+  addBucketResourceReadOnly(bucketname: string, policy: iam.Policy) {
+    const rs = crs({length: 10})
+    const bucket = s3.Bucket.fromBucketName(this, bucketname+"-"+rs, bucketname);
+    
+    const policyStatement = new iam.PolicyStatement({
       actions: [
           "s3:ListBucket",
           "s3:GetObject",
       ],
       effect: iam.Effect.ALLOW,
-      resources: [ bbbc021Bucket.bucketArn, bbbc021Bucket.bucketArn + '/*' ]
+      resources: [ bucket.bucketArn, bucket.bucketArn + '/*' ]
     })
 
-    props.bioimageSearchAccessPolicy.addStatements(bbbc021PolicyStatement);
-    props.resourcePermissionsPolicy.addStatements(bbbc021PolicyStatement);
-    
+    policy.addStatements(policyStatement);
   }
+  
+  addBucketResourceFullPermissions(bucketname: string, policy: iam.Policy) {
+    const rs = crs({length: 10})
+    const bucket = s3.Bucket.fromBucketName(this, bucketname+"-"+rs, bucketname);
+    
+    const policyStatement = new iam.PolicyStatement({
+      actions: [
+          "s3:*",
+      ],
+      effect: iam.Effect.ALLOW,
+      resources: [ bucket.bucketArn, bucket.bucketArn + '/*' ]
+    })
+
+    policy.addStatements(policyStatement);
+  }
+
 }
 
 

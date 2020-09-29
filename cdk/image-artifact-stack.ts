@@ -19,6 +19,7 @@ export class ImageArtifactStack extends cdk.Stack {
         handler: "default-artifact.handler",
         runtime: lambda.Runtime.PYTHON_3_8,
         memorySize: 3008,
+        timeout: cdk.Duration.seconds(300),
         environment: {
           MEDIUM_2D_MAX_DIM: "1000",
           THUMBNAIL_MAX_DIM: "100",
