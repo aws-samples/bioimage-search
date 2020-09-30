@@ -460,10 +460,12 @@ class ImageArtifactClient(BioimageSearchClient):
     def getLambdaArn(self):
         return self._resources.getDefaultArtifactLambdaArn()
         
-    def generateDefaultArtifacts(self, inputBucket, inputKeys, outputBucket, mediumArtifactKey, thumbnailArtifactKey):
+    def generateDefaultArtifacts(self, inputBucket, inputKeys, outputBucket, artifactKeys, artifactSizes):
         inputKeysJson = json.dumps(inputKeys)
-        request = '{{ "input_bucket": "{}", "input_keys": {}, "output_bucket": "{}", "medium_artifact_key": "{}", "thumbnail_artifact_key": "{}" }}'.format(
-            inputBucket, inputKeysJson, outputBucket, mediumArtifactKey, thumbnailArtifactKey)
+        artifactKeysJson = json.dumps(artifactKeys)
+        artifactSizesJson = json.dumps(artifactSizes)
+        request = '{{ "input_bucket": "{}", "input_keys": {}, "output_bucket": "{}", "artifact_keys": {}, "artifact_sizes": {} }}'.format(
+            inputBucket, inputKeysJson, outputBucket, artifactKeysJson, artifactSizesJson)
         print("request=", request)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')

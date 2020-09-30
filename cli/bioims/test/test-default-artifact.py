@@ -23,6 +23,10 @@ input_key_list = [                                                              
     "Week10_40111/Week10_200907_B02_s1_w436D0A3BC-098D-4271-B5AA-361CA0A7DC88.tif"                                                                                                                                 
   ]
 
-r = imageArtifactClient.generateDefaultArtifacts("bioimagesearchbbbc021stack-bbbc021bucket544c3e64-1t2bv8cktyrtq", input_key_list, "bioimage-search-output", "test2-medium.png", "test2-thumbnail.png")
+artifact_keys = [ "test-medium.png", "test-thumbnail.png" ]
+
+artifact_sizes = [ 1000, 200 ]
+
+r = imageArtifactClient.generateDefaultArtifacts("bioimagesearchbbbc021stack-bbbc021bucket544c3e64-1t2bv8cktyrtq", input_key_list, "bioimage-search-output", artifact_keys, artifact_sizes)
 print(r)
 
