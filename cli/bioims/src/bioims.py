@@ -8,10 +8,13 @@ class BioimageSearchResources:
         self._configurationLambdaArn = ""
         self._labelLambdaArn = ""
         self._messageLambdaArn = ""
+        self._defaultArtifactLambdaArn = ""
 
     def refresh(self):
         cf = boto3.client('cloudformation')
         self._stacksDescription = cf.describe_stacks()
+        
+##### STACKS        
 
     def getConfigurationStack(self):
         stacks = self._stacksDescription['Stacks']
@@ -20,15 +23,6 @@ class BioimageSearchResources:
                 return stack
         return ""
 
-    def getConfigurationLambdaArn(self):
-        configurationStack = self.getConfigurationStack()
-        outputs = configurationStack['Outputs']
-        for output in outputs:
-            output_key = output['OutputKey']
-            if output_key.startswith('ExportsOutputFnGetAttconfigurationFunction'):
-                return output['OutputValue']
-        return ""
-        
     def getLabelStack(self):
         stacks = self._stacksDescription['Stacks']
         for stack in stacks:
@@ -41,6 +35,24 @@ class BioimageSearchResources:
         for stack in stacks:
             if stack['StackName'] == 'BioimageSearchMessageStack':
                 return stack
+        return ""
+        
+    def getImageArtifactStack(self):
+        stacks = self._stacksDescription['Stacks']
+        for stack in stacks:
+            if stack['StackName'] == 'BioimageSearchImageArtifactStack':
+                return stack
+        return ""
+        
+##### FUNCTIONS
+
+    def getConfigurationLambdaArn(self):
+        configurationStack = self.getConfigurationStack()
+        outputs = configurationStack['Outputs']
+        for output in outputs:
+            output_key = output['OutputKey']
+            if output_key.startswith('ExportsOutputFnGetAttconfigurationFunction'):
+                return output['OutputValue']
         return ""
 
     def getLabelLambdaArn(self):
@@ -60,6 +72,17 @@ class BioimageSearchResources:
             if output_key.startswith('ExportsOutputFnGetAttmessageFunction'):
                 return output['OutputValue']
         return ""
+        
+    def getDefaultArtifactLambdaArn(self):
+        imageArtifactStack = self.getImageArtifactStack()
+        outputs = messageStack['Outputs']
+        for output in outputs:
+            output_key = output['OutputKey']
+            if output_key.startswith('ExportsOutputFnGetAttmessageFunction'):
+                return output['OutputValue']
+        return ""
+        
+####### CLIENTS
 
 def client(serviceName):
     if serviceName == 'configuration':
@@ -68,6 +91,8 @@ def client(serviceName):
         return LabelClient()
     elif serviceName == 'message':
         return MessageClient()
+    elif serviceName == 'image-artifact':
+        return ImageArtifactClient()
     else:
         print('service type {} not recognized'.format(serviceName))
         return False
@@ -421,3 +446,29 @@ class MessageClient(BioimageSearchClient):
             Payload=payload
             )
         return response['StatusCode']
+        
+#############################################
+#
+# IMAGE ARTIFACT
+#
+#############################################
+    
+class ImageArtifactClient(BioimageSearchClient):
+    def __init__(self):
+        super().__init__()
+
+    def getLambdaArn(self):
+        return self._resources.getDefaultArtifactLambdaArn()
+        
+    def generateDefaultArtifacts(self, inputBucket, inputKeys, outputBucket, mediumArtifactKey, thumbnailArtifactKey):
+        request = '{{ "input_bucket": "{}", "input_keys": "{}", "output_bucket": "{}", "medium_artifact_key": {}, "thumbnail_artifact_key": {} }}'.format(
+            inputBucket, inputKeys, outputBucket, mediumArtifactKey, thumbnailArtifactKey)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self._resources.getDefaultArtifactLambdaArn(),
+            InvocationType='Event',
+            Payload=payload
+            )
+        return response['StatusCode']
+
