@@ -241,9 +241,9 @@ def handler(event, context):
     height = input_data.shape[-2]
     width = input_data.shape[-1]
     print("height=", height, " width=", width)
-    mip = np.zeros(shape=(width, height, 3), dtype=np.uint8)
-    mipMax = np.zeros(shape=(width, height), dtype=np.float32)
-    mipLabel = np.zeros(shape=(width, height), dtype=np.uint8)
+    mip = np.zeros(shape=(height, width, 3), dtype=np.uint8)
+    mipMax = np.zeros(shape=(height, width), dtype=np.float32)
+    mipLabel = np.zeros(shape=(height, width), dtype=np.uint8)
     
     ca = getColors(input_data.shape[0])
 
@@ -252,28 +252,31 @@ def handler(event, context):
         for idx, v in np.ndenumerate(channelData):
             w0=idx[-1]
             h0=idx[-2]
-            vmax = mipMax[w0][h0]
+            vmax = mipMax[h0][w0]
             if v>vmax:
-                mipMax[w0][h0]=v
-                mipLabel[w0][h0]=c
+                mipMax[h0][w0]=v
+                mipLabel[h0][w0]=c
                 
     for idx, v in np.ndenumerate(mipMax):
-        w0=idx[0]
-        h0=idx[1]
-        c=mipLabel[w0][h0]
+        h0=idx[0]
+        w0=idx[1]
+        c=mipLabel[h0][w0]
         cav = ca[c]
-        mip[w0][h0][0]=cav[0]*v
-        mip[w0][h0][1]=cav[1]*v
-        mip[w0][h0][2]=cav[2]*v
+        mip[h0][w0][0]=cav[0]*v*255.99
+        mip[h0][w0][1]=cav[1]*v*255.99
+        mip[h0][w0][2]=cav[2]*v*255.99
 
     img=Image.fromarray(mip)
     buffer = BytesIO()
     img.save(buffer, format='PNG')
+    #img.save('/tmp/tmp.png')
     buffer.seek(0)
     
     output_bucket = event['output_bucket']
     output_key = event['output_key']
     s3c.upload_fileobj(buffer, output_bucket, output_key)
+    #with open('/tmp/tmp.png', 'rb') as fdata:
+    #    s3c.upload_fileobj(fdata, output_bucket, output_key)
 
     return { 
         'input_bucket' : event['input_bucket'],
