@@ -190,9 +190,8 @@ def handler(event, context):
     s3c = boto3.client('s3')
     input_bucket = event['input_bucket']
     input_keys = event['input_keys']
-    
-    MEDIUM_2D_MAX_DIM = int(os.environ['MEDIUM_2D_MAX_DIM'])
-    THUMBNAIL_MAX_DIM = int(os.environ['THUMBNAIL_MAX_DIM'])
+    artifact_keys = event['artifact_keys']
+    artifact_sizes = event['artifact_sizes']
     
     input_data = []
 
@@ -200,6 +199,18 @@ def handler(event, context):
         return {
             'success' : "False",
             'errorMsg' : "one or more input keys required"
+        }
+        
+    if len(artifact_keys)==0:
+        return {
+            'success' : "False",
+            'errorMsg' : "one or more artifact_keys required"
+        }
+
+    if len(artifact_sizes)!=len(artifact_keys):
+        return {
+            'success' : "False",
+            'errorMsg' : "each artifact_key must have corresponding artifact_size"
         }
         
     elif len(input_keys)==1:
@@ -271,39 +282,29 @@ def handler(event, context):
         mip[h0][w0][2]=cav[2]*v*255.99
 
     img=Image.fromarray(mip)
-    
-    if height > width:
-        medium_height = MEDIUM_2D_MAX_DIM
-        medium_width = int((width/height)*medium_height)
-        thumbnail_height = THUMBNAIL_MAX_DIM
-        thumbnail_width = (width/height)*thumbnail_height
-    else:
-        medium_width = MEDIUM_2D_MAX_DIM
-        medium_height = int((height/width)*medium_width)
-        thumbnail_width = THUMBNAIL_MAX_DIM
-        thumbnail_height = int((height/width)*thumbnail_width)
-        
-    medium_img = img.resize((medium_width, medium_height))
-    thumbnail_img = img.resize((thumbnail_width, thumbnail_height))
-
-    medium_buffer = BytesIO()
-    medium_img.save(medium_buffer, format='PNG')
-    medium_buffer.seek(0)
-    
-    thumbnail_buffer = BytesIO()
-    thumbnail_img.save(thumbnail_buffer, format='PNG')
-    thumbnail_buffer.seek(0)
-
     output_bucket = event['output_bucket']
+    
+    for artifact_key, artifact_size in zip(artifact_keys, artifact_sizes):
+        image_type = artifact_key[-3:]
+        asize = float(artifact_size)
+        if height > width:
+            artifact_height = int(asize)
+            artifact_width = int((width/height)*artifact_height)
+        else:
+            artifact_width = int(asize)
+            artifact_height = int((height/width)*artifact_width)
 
-    s3c.upload_fileobj(medium_buffer, output_bucket, event['medium_artifact_key'])
-    s3c.upload_fileobj(thumbnail_buffer, output_bucket, event['thumbnail_artifact_key'])
+        artifact_img = img.resize((artifact_width, artifact_height))
+        artifact_buffer = BytesIO()
+        artifact_img.save(artifact_buffer, format=image_type)
+        artifact_buffer.seek(0)
+        s3c.upload_fileobj(artifact_buffer, output_bucket, artifact_key)
 
     return { 
         'input_bucket' : event['input_bucket'],
         'input_keys' : input_keys,
         'output_bucket' : event['output_bucket'],
-        'medium_artifact_key' : event['medium_artifact_key'],
-        'thumbnail_artifact_key': event['thumbnail_artifact_key']
+        'artifact_keys' : artifact_keys,
+        'artifact_sizes' : artifact_sizes
     }  
     
