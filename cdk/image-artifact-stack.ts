@@ -22,7 +22,7 @@ export class ImageArtifactStack extends cdk.Stack {
         timeout: cdk.Duration.seconds(300),
         environment: {
           MEDIUM_2D_MAX_DIM: "1000",
-          THUMBNAIL_MAX_DIM: "100",
+          THUMBNAIL_MAX_DIM: "200",
         },
       }
     );

@@ -1,4 +1,5 @@
 import math
+import os
 from io import StringIO, BytesIO
 import boto3
 from PIL import Image
@@ -189,7 +190,10 @@ def handler(event, context):
     s3c = boto3.client('s3')
     input_bucket = event['input_bucket']
     input_keys = event['input_keys']
-
+    
+    MEDIUM_2D_MAX_DIM = int(os.environ['MEDIUM_2D_MAX_DIM'])
+    THUMBNAIL_MAX_DIM = int(os.environ['THUMBNAIL_MAX_DIM'])
+    
     input_data = []
 
     if len(input_keys)==0:
@@ -267,21 +271,39 @@ def handler(event, context):
         mip[h0][w0][2]=cav[2]*v*255.99
 
     img=Image.fromarray(mip)
-    buffer = BytesIO()
-    img.save(buffer, format='PNG')
-    #img.save('/tmp/tmp.png')
-    buffer.seek(0)
     
+    if height > width:
+        medium_height = MEDIUM_2D_MAX_DIM
+        medium_width = int((width/height)*medium_height)
+        thumbnail_height = THUMBNAIL_MAX_DIM
+        thumbnail_width = (width/height)*thumbnail_height
+    else:
+        medium_width = MEDIUM_2D_MAX_DIM
+        medium_height = int((height/width)*medium_width)
+        thumbnail_width = THUMBNAIL_MAX_DIM
+        thumbnail_height = int((height/width)*thumbnail_width)
+        
+    medium_img = img.resize((medium_width, medium_height))
+    thumbnail_img = img.resize((thumbnail_width, thumbnail_height))
+
+    medium_buffer = BytesIO()
+    medium_img.save(medium_buffer, format='PNG')
+    medium_buffer.seek(0)
+    
+    thumbnail_buffer = BytesIO()
+    thumbnail_img.save(thumbnail_buffer, format='PNG')
+    thumbnail_buffer.seek(0)
+
     output_bucket = event['output_bucket']
-    output_key = event['output_key']
-    s3c.upload_fileobj(buffer, output_bucket, output_key)
-    #with open('/tmp/tmp.png', 'rb') as fdata:
-    #    s3c.upload_fileobj(fdata, output_bucket, output_key)
+
+    s3c.upload_fileobj(medium_buffer, output_bucket, event['medium_artifact_key'])
+    s3c.upload_fileobj(thumbnail_buffer, output_bucket, event['thumbnail_artifact_key'])
 
     return { 
         'input_bucket' : event['input_bucket'],
         'input_keys' : input_keys,
         'output_bucket' : event['output_bucket'],
-        'output_key' : event['output_key']
+        'medium_artifact_key' : event['medium_artifact_key'],
+        'thumbnail_artifact_key': event['thumbnail_artifact_key']
     }  
     
