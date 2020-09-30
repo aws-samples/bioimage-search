@@ -75,10 +75,10 @@ class BioimageSearchResources:
         
     def getDefaultArtifactLambdaArn(self):
         imageArtifactStack = self.getImageArtifactStack()
-        outputs = messageStack['Outputs']
+        outputs = imageArtifactStack['Outputs']
         for output in outputs:
             output_key = output['OutputKey']
-            if output_key.startswith('ExportsOutputFnGetAttmessageFunction'):
+            if output_key.startswith('ExportsOutputFnGetAttdefaultArtifactFunction'):
                 return output['OutputValue']
         return ""
         
@@ -461,8 +461,10 @@ class ImageArtifactClient(BioimageSearchClient):
         return self._resources.getDefaultArtifactLambdaArn()
         
     def generateDefaultArtifacts(self, inputBucket, inputKeys, outputBucket, mediumArtifactKey, thumbnailArtifactKey):
-        request = '{{ "input_bucket": "{}", "input_keys": "{}", "output_bucket": "{}", "medium_artifact_key": {}, "thumbnail_artifact_key": {} }}'.format(
-            inputBucket, inputKeys, outputBucket, mediumArtifactKey, thumbnailArtifactKey)
+        inputKeysJson = json.dumps(inputKeys)
+        request = '{{ "input_bucket": "{}", "input_keys": {}, "output_bucket": "{}", "medium_artifact_key": "{}", "thumbnail_artifact_key": "{}" }}'.format(
+            inputBucket, inputKeysJson, outputBucket, mediumArtifactKey, thumbnailArtifactKey)
+        print("request=", request)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
