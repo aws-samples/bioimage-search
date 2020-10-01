@@ -27,19 +27,26 @@ export class BatchSetupStack extends cdk.Stack {
     
     this.batchVpc = new ec2.Vpc(this, 'Batch-VPC');
     
+   const batchInstanceProfile = new iam.CfnInstanceProfile(this, "Batch-Instance-Profile", {
+      instanceProfileName: "batchInstanceProfile",
+      roles: [
+          this.batchInstanceRole.roleName
+      ]
+    });
+    
     const managedSpotBatchEnvironment = new batch.ComputeEnvironment(this, 'Managed-Spot-Batch-ComputeEnv', {
       computeResources: {
         type: batch.ComputeResourceType.SPOT,
         vpc: this.batchVpc,
-        instanceRole: this.batchInstanceRole.roleName
+        instanceRole: batchInstanceProfile.attrArn
       }
     });
-    
+
     const managedOnDemandBatchEnvironment = new batch.ComputeEnvironment(this, 'Managed-OnDemand-Batch-ComputeEnv', {
       computeResources: {
         type: batch.ComputeResourceType.ON_DEMAND,
         vpc: this.batchVpc,
-        instanceRole: this.batchInstanceRole.roleName
+        instanceRole: batchInstanceProfile.attrArn
       }
     });
     

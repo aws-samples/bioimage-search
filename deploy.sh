@@ -14,6 +14,7 @@ cd src/message; npm install; cd ../..
 cd src/image-artifact/lambda/default-artifact; ./build.sh; cd ../../../..
 cdk bootstrap
 cdk deploy BioimageSearchBaseStack --require-approval never
+cdk deploy BioimageSearchBatchSetupStack --require-approval never
 cdk deploy BioimageSearchConfigurationStack --require-approval never
 cdk deploy BioimageSearchLabelStack --require-approval never
 cdk deploy BioimageSearchMessageStack --require-approval never
