@@ -66,12 +66,12 @@ export class BatchSetupStack extends cdk.Stack {
     this.batchOnDemandQueue = new batch.JobQueue(this, 'Batch-OnDemand-Queue', {
       computeEnvironments: [
           {
-            computeEnvironment: managedSpotBatchEnvironment,
-            order: 1
-          },
-          {
             computeEnvironment: managedOnDemandBatchEnvironment,
             order: 2
+          },
+          {
+            computeEnvironment: managedSpotBatchEnvironment,
+            order: 1
           }
         ]
     });
