@@ -10,7 +10,7 @@ import { LabelStack } from '../cdk/label-stack';
 import { MessageStack } from '../cdk/message-stack';
 import { ImageArtifactStack } from '../cdk/image-artifact-stack';
 import { ResourcePermissionsStack } from '../cdk/resource-permissions-stack';
-
+import { PlatePreprocessingStack } from '../cdk/plate-preprocessing-stack';
 
 const app = new cdk.App();
 
@@ -42,6 +42,10 @@ const messageStack = new MessageStack(app, 'BioimageSearchMessageStack', {
 const imageArtifactStack = new ImageArtifactStack(app, 'BioimageSearchImageArtifactStack', {
     bioimageSearchAccessPolicy: baseStack.bioimageSearchAccessPolicy,
     externalResourcesPolicy: baseStack.externalResourcesPolicy
+})
+
+const platePreprocessingStack = new PlatePreprocessingStack(app, 'BioimageSearchPlatePreprocessingStack', {
+    bioimageSearchAccessPolicy: baseStack.bioimageSearchAccessPolicy,
 })
 
 

@@ -19,3 +19,4 @@ cdk deploy BioimageSearchConfigurationStack --require-approval never
 cdk deploy BioimageSearchLabelStack --require-approval never
 cdk deploy BioimageSearchMessageStack --require-approval never
 cdk deploy BioimageSearchImageArtifactStack --require-approval never
+cdk deploy BioimageSearchPlatePreprocessingStack --require-approval never
