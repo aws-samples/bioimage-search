@@ -11,9 +11,9 @@ export interface ResourcePermissionsStackProps extends cdk.StackProps {
 export class ResourcePermissionsStack extends cdk.Stack {
   constructor(app: cdk.App, id: string, props: ResourcePermissionsStackProps) {
     super(app, id, props);
-    
-    this.addBucketResourceReadOnly('bioimagesearchbbbc021stack-bbbc021bucket544c3e64-1t2bv8cktyrtq', props.bioimageSearchAccessPolicy);
-    this.addBucketResourceReadOnly('bioimagesearchbbbc021stack-bbbc021bucket544c3e64-1t2bv8cktyrtq', props.resourcePermissionsPolicy);
+
+    this.addBucketResourceReadOnly('bioimagesearchbbbc021stack-bbbc021bucket544c3e64-10ecnwo51127', props.bioimageSearchAccessPolicy);
+    this.addBucketResourceReadOnly('bioimagesearchbbbc021stack-bbbc021bucket544c3e64-10ecnwo51127', props.resourcePermissionsPolicy);
 
     this.addBucketResourceFullPermissions('bioimage-search-output', props.bioimageSearchAccessPolicy);
     this.addBucketResourceFullPermissions('bioimage-search-output', props.resourcePermissionsPolicy);
