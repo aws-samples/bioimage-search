@@ -64,16 +64,12 @@ def findHistCutoff(h, p):
         cutOffPixels += c
         i+=1
     return cv[i-1]
-
+    
 def applyImageCutoff(nda, cv):
-    d0=nda.shape[0]
-    d1=nda.shape[1]
-    for i0 in range(d0):
-        for i1 in range(d1):
-            v0=nda[i0][i1]
-            if (v0>cv):
-                nda[i0][i1]=cv
-
+    for idx, v in np.ndenumerate(nda):
+        if (v>cv):
+            nda[idx]=cv
+            
 imageObjectList = getImageListFromS3(args.imageListBucket, args.imageListKey)
 
 plateImgArr=[]
@@ -92,7 +88,10 @@ npAllImages=np.array(plateImgArr).astype(np.float32)
 
 npAllImages = npAllImages / 65536.0
 
-npAvg = np.zeros(shape=(npAllImages.shape[1],npAllImages.shape[2]), dtype=np.float32);
+s1 = npAllImages.shape
+s2 = s1[1:]
+
+npAvg = np.zeros(shape=s2, dtype=np.float32);
 
 for ni in range(npAllImages.shape[0]):
     npAvg = npAvg+(npAllImages[ni]/(npAllImages.shape[0]))
