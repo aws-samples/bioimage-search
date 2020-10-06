@@ -5,17 +5,11 @@ import argparse
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument('--bucket', type=str, default='', help='bucket with BBBC-021 data')
-parser.add_argument('--channel', type=str, default='', choices=['dapi', 'tubulin', 'actin'], help='must be dapi, tubulin, or actin')
-parser.add_argument('--plate', type=str, default='', help='plate label, e.g., Week_2241')
+parser.add_argument('--bucket', type=str, help='bucket with BBBC-021 data')
+parser.add_argument('--channel', type=str, choices=['dapi', 'tubulin', 'actin'], help='must be dapi, tubulin, or actin')
+parser.add_argument('--plate', type=str, help='plate label, e.g., Week_2241')
 
 args = parser.parse_args()
-
-if len(args.bucket) < 1 or\
-    len(args.channel) < 1 or\
-    len(args.plate) < 1:
-    print(args.usage)    
-    exit(1)
 
 imageMetadataKey='BBBC021_v1_image.csv'
 
