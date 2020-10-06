@@ -17,21 +17,21 @@ from io import StringIO, BytesIO
 # <bucket> <key>
 # ...
 
+print("Check1")
+l=len(sys.argv)
+print("Check2 l=", l)
+for se in sys.argv:
+    print(se)
+print("Check3")
+
 parser = argparse.ArgumentParser()
 
-parser.add_argument('--imageListBucket', type=str, default='', help='bucket for image list')
-parser.add_argument('--imageListkey', type=str, default='', help='key for image list')
-parser.add_argument('--flatFieldBucket', type=str, default='', help='bucket for flat field result')
-parser.add_argument('--flatFieldKey', type=str, default='', help='key for flat field result')
+parser.add_argument('--imageListBucket', type=str, help='bucket for image list')
+parser.add_argument('--imageListKey', type=str, help='key for image list')
+parser.add_argument('--flatFieldBucket', type=str, help='bucket for flat field result')
+parser.add_argument('--flatFieldKey', type=str, help='key for flat field result')
 
 args = parser.parse_args()
-
-if len(args.imageListBucket) < 1 or\
-    len(args.imageListKey) < 1 or\
-    len(args.flatFieldBucket) < 1 or\
-    len(args.flatFieldKey) < 1:
-    print(args.usage)    
-    exit(1)
 
 s3c = boto3.client('s3')
 
@@ -102,6 +102,9 @@ applyImageCutoff(npAvg, pcut)
 g1 = gaussian(npAvg, 50)
 
 img=Image.fromarray(g1)
+
+img = img.convert('RGB')
+
 image_type = args.flatFieldKey[-3:]
 
 buffer = BytesIO()
