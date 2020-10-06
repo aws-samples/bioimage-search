@@ -6,7 +6,8 @@ RUN apt-get update && \
     pip3 install boto3 && \
     pip3 install pandas && \
     pip3 install pillow && \
-    pip3 install scikit-image
+    pip3 install scikit-image && \
+    pip3 install shortuuid
 
 COPY plate-preprocessing.py /
 

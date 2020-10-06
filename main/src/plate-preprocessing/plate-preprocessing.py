@@ -12,17 +12,11 @@ from skimage.exposure import histogram
 import math
 from pathlib import Path
 from io import StringIO, BytesIO
+import shortuuid as su
 
 # Image file list format:
 # <bucket> <key>
 # ...
-
-print("Check1")
-l=len(sys.argv)
-print("Check2 l=", l)
-for se in sys.argv:
-    print(se)
-print("Check3")
 
 parser = argparse.ArgumentParser()
 
@@ -34,6 +28,16 @@ parser.add_argument('--flatFieldKey', type=str, help='key for flat field result'
 args = parser.parse_args()
 
 s3c = boto3.client('s3')
+
+tmpDir="/tmp"
+
+ec2homePath=Path("/home/ec2-user")
+if ec2homePath.exists():
+    tmpDir="/home/ec2-user/tmp"
+
+tmpPath=Path(tmpDir)
+if not tmpPath.exists():
+    tmpPath.mkdir()
 
 def getImageListFromS3(bucket, key):
     fileObject = s3c.get_object(Bucket=args.imageListBucket, Key=args.imageListKey)
@@ -101,13 +105,22 @@ applyImageCutoff(npAvg, pcut)
 
 g1 = gaussian(npAvg, 50)
 
-img=Image.fromarray(g1)
-
-img = img.convert('RGB')
-
 image_type = args.flatFieldKey[-3:]
+fn = tmpDir + '/' + su.uuid() + '.' + image_type
 
-buffer = BytesIO()
-img.save(buffer, format=image_type)
-buffer.seek(0)
-s3c.upload_fileobj(buffer, args.flatFieldBucket, args.flatFieldKey)
+if image_type.lower() == 'npy':
+    with open(fn, 'wb') as f:
+        np.save(f, g1)
+    with open(fn, 'rb') as fdata:
+        s3c.upload_fileobj(fdata, args.flatFieldBucket, args.flatFieldKey)
+else:
+    max1=np.max(g1)
+    min1=np.min(g1)
+    g1 = (g1-min1)/(max1-min1)
+    img=Image.fromarray(g1)
+    img.save(fn)
+    with open(fn, 'rb') as fdata:
+        s3c.upload_fileobj(fdata, args.flatFieldBucket, args.flatFieldKey)
+        
+fnPath = Path(fn)
+fnPath.unlink()
