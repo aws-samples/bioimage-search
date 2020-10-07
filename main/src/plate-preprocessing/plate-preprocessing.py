@@ -14,9 +14,10 @@ from pathlib import Path
 from io import StringIO, BytesIO
 import shortuuid as su
 
-# Image file list format:
-# <bucket> <key>
-# ...
+# This script computes the flat-field background image from a set of source images.
+# The typical use case is a multiwell plate from which one or more images where taken
+# from each well. The flat field then describes the background image for the imaging 
+# system. A separate flat-field image is typically computed separately for each channel.
 
 parser = argparse.ArgumentParser()
 
@@ -39,7 +40,7 @@ tmpPath=Path(tmpDir)
 if not tmpPath.exists():
     tmpPath.mkdir()
 
-def getImageListFromS3(bucket, key):
+def getImageListFromS3():
     fileObject = s3c.get_object(Bucket=args.imageListBucket, Key=args.imageListKey)
     text = fileObject['Body'].read().decode('utf-8')
     objectStringList = text.splitlines()
@@ -70,7 +71,7 @@ def applyImageCutoff(nda, cv):
         if (v>cv):
             nda[idx]=cv
             
-imageObjectList = getImageListFromS3(args.imageListBucket, args.imageListKey)
+imageObjectList = getImageListFromS3()
 
 plateImgArr=[]
 

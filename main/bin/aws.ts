@@ -10,6 +10,7 @@ import { MessageStack } from '../cdk/message-stack';
 import { ImageArtifactStack } from '../cdk/image-artifact-stack';
 import { ResourcePermissionsStack } from '../cdk/resource-permissions-stack';
 import { PlatePreprocessingStack } from '../cdk/plate-preprocessing-stack';
+import { ImagePreprocessingStack } from '../cdk/image-preprocessing-stack';
 
 const app = new cdk.App();
 
@@ -42,6 +43,10 @@ const imageArtifactStack = new ImageArtifactStack(app, 'BioimageSearchImageArtif
 })
 
 const platePreprocessingStack = new PlatePreprocessingStack(app, 'BioimageSearchPlatePreprocessingStack', {
+    bioimageSearchAccessPolicy: baseStack.bioimageSearchAccessPolicy,
+})
+
+const imagePreprocessingStack = new ImagePreprocessingStack(app, 'BioimageSearchImagePreprocessingStack', {
     bioimageSearchAccessPolicy: baseStack.bioimageSearchAccessPolicy,
 })
 
