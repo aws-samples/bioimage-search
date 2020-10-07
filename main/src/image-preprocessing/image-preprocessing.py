@@ -8,6 +8,13 @@ from PIL import Image
 import math
 import shortuuid as su
 import json
+from skimage import io
+from skimage.filters import gaussian
+from skimage.exposure import histogram
+from skimage.filters import threshold_otsu
+from skimage.morphology import binary_opening
+from skimage.morphology import label
+from skimage.exposure import histogram
 
 """
 This script takes as input a multi-channel image and computes ROIs within that image
@@ -39,8 +46,8 @@ Input example:
             channelBucket: xxx,
             nuclearChannelKey: xxx,
             additionalChannels: [
-                channelKey1: xxx,
-                channelKey2: xxx,
+                xxx,
+                xxx,
                 ...
             ]
         },
@@ -81,19 +88,11 @@ testJsonObject = getManifestFromS3()
 print("TestObject=", testJsonObject)
     
 """    
-
 bucketName='phis-data-bbbc021-1'
 imageMetadataKey='BBBC021_v1_image.csv'
 segmentKeyPrefix='segmentation'
 normedKeyPrefix='normed-imagery'
-cellImagePrefix='cell-images'
 tmpDir="/tmp"
-
-minPixelCount=200
-size_i0=128
-size_i1=128
-size_d0=1024
-size_d1=1280
 
 ec2homePath=Path("/home/ec2-user")
 if ec2homePath.exists():
@@ -118,9 +117,9 @@ def getCsvDfFromS3(bucket, key):
 
 image_df = getCsvDfFromS3(bucketName, imageMetadataKey)
 
-dapiKeys=[]
-tubulinKeyDict={}
-actinKeyDict={}
+dapiFiles=[]
+tubulinFileDict={}
+actinFileDict={}
 
 weekPrefix = platePrefix.split('_')[0]
 imagePathnameDapi = weekPrefix + '/' + platePrefix
@@ -130,10 +129,9 @@ plate_df = image_df.loc[image_df['Image_PathName_DAPI']==imagePathnameDapi]
 for p in range(len(plate_df.index)):
     r = plate_df.iloc[p]
     dapiFile=r['Image_FileName_DAPI']
-    dapiKey=platePrefix + '/' + dapiFile
-    dapiKeys.append(dapiKey)
-    tubulinKeyDict[dapiKey]=platePrefix + '/' + r['Image_FileName_Tubulin']
-    actinKeyDict[dapiKey]=platePrefix + '/' + r['Image_FileName_Actin']
+    dapiFiles.append(platePrefix + '/' + dapiFile)
+    tubulinFileDict[dapiFile]=platePrefix + '/' + r['Image_FileName_Tubulin']
+    actinFileDict[dapiFile]=platePrefix + '/' + r['Image_FileName_Actin']
 
 def getNormedPath(origPath):
     ip2 = origPath[:-4]
@@ -149,78 +147,49 @@ def getSegmentedCsvPath(origPath):
     csvKey=segmentKeyPrefix + '/' + ip2c[0] + '/' + csvName
     return csvName, csvKey
 
-def loadImageAsNdArray(imageKey):
-    imageObject=s3c.get_object(Bucket=bucketName, Key=imageKey)
-    file_stream=imageObject['Body']
-    img=Image.open(file_stream)
-    return np.array(img)
+def find2DCentersFromLabels(labels):
+    centers=[]
+    maxLabel=labels.max()
+    d0=labels.shape[0]
+    d1=labels.shape[1]
+    labelCounts=np.zeros(shape=(maxLabel+1), dtype=np.int)
+    labelPositionsD0=np.zeros(shape=(maxLabel+1), dtype=np.int)
+    labelPositionsD1=np.zeros(shape=(maxLabel+1), dtype=np.int)
+    for i0 in range(d0):
+        for i1 in range(d1):
+            l=labels[i0][i1]
+            labelCounts[l] += 1
+            labelPositionsD0[l] += i0
+            labelPositionsD1[l] += i1
+    for lp in range(maxLabel+1):
+        avgD0=labelPositionsD0[lp]/labelCounts[lp]
+        avgD1=labelPositionsD1[lp]/labelCounts[lp]
+        lpr = (lp, labelCounts[lp], avgD0, avgD1)
+        centers.append(lpr)
+    return centers
 
-# This is not needed since we are just writing np arrays
-def writeImageToS3(img_array, keyPath):
-    keySuffix=keyPath.split('/')[-1]
-    img=Image.fromarray(img_array)
-    fn = tmpDir + '/' + keySuffix
-    img.save(fn)
-    with open(fn, 'rb') as fdata:
-        s3c.upload_fileobj(fdata, bucketName, keyPath)
-    fnPath=Path(fn)
-    fnPath.unlink()
+def computeCellCenters(imageFilekey):
+    imgObject = s3c.get_object(Bucket=bucketName, Key=imageFilekey)
+    file_stream = imgObject['Body']
+    img = Image.open(file_stream)
+    pixels = np.array(img)
+    otsuThreshold = threshold_otsu(pixels)
+    binaryPixels = pixels >= otsuThreshold
+    ed1=binary_opening(binaryPixels)
+    ed2=binary_opening(ed1)
+    ed2int = ed2.astype(np.int)
+    ed2intLabels = label(ed2int)
+    centers=find2DCentersFromLabels(ed2intLabels)
+    return centers
 
-def writeNumpyToS3(data_array, keyPath):
-    keySuffix=keyPath.split('/')[-1]
-    fn = tmpDir + '/' + keySuffix
-    np.save(fn, data_array)
-    with open(fn, 'rb') as fdata:
-        s3c.upload_fileobj(fdata, bucketName, keyPath)
-    fnPath=Path(fn)
-    fnPath.unlink()
+for dfk in dapiFiles:
+    c1 = computeCellCenters(dfk)
+    csvName, csvKey=getSegmentedCsvPath(dfk)
+    print("Writing " + csvKey)
+    cellList=''
+    for c in c1:
+        cellList += (str(c[0]) + ',' + str(c[1]) + ',' + str(c[2]) + ',' + str(c[3]) + '\n')
+    s3c.put_object(Body=cellList, Bucket=bucketName, Key=csvKey)
 
-for dapiKey in dapiKeys:
-    print("*** dapiKey=", dapiKey)
-    tubulinKey = tubulinKeyDict[dapiKey]
-    actinKey = actinKeyDict[dapiKey]
-    _, dapiNormedKey = getNormedPath(dapiKey)
-    _, tubulinNormedKey = getNormedPath(tubulinKey)
-    _, actinNormedKey = getNormedPath(actinKey)
-    dapiImage = loadImageAsNdArray(dapiNormedKey)
-    tubulinImage = loadImageAsNdArray(tubulinNormedKey)
-    actinImage = loadImageAsNdArray(actinNormedKey)
-    csvName, csvKey = getSegmentedCsvPath(dapiKey)
-    cell_df = getCsvDfFromS3(bucketName, csvKey)
-    cellDataPath = cellImagePrefix+'/'+dapiKey[:-4]+'-cell.npy'
-    cellData = np.zeros( (len(cell_df.index), 3, size_i0, size_i1), dtype=float)
-    non_zero_count=0
-    for ci in range(len(cell_df.index)):
-        cr=cell_df.loc[ci]
-        label=cr[0]
-        pixelCount=cr[1]
-        p0=cr[2]
-        p1=cr[3]
-        print("label=", label, " pixels=", pixelCount, " p0=", p0, " p1=", p1)
-        if ( (p0 < size_i0/2) or (p0 > (size_d0-(size_i0/2)))):
-            print ("skipping due to d0 edge")
-            continue
-        if ( (p1 < size_i1/2) or (p1 > (size_d1-(size_i0/2)))):
-            print("skipping due to d1 edge")
-            continue
-        if ( pixelCount < minPixelCount):
-            print("skipping due to min pixel count")
-            continue
-        print(dapiKey)
-        print(tubulinKey)
-        print(actinKey)
-        d0_start=int(p0-size_i0/2)
-        d0_end=d0_start + size_i0
-        d1_start=int(p1-size_i1/2)
-        d1_end=d1_start + size_i1
-        dapi_cell = dapiImage[d0_start:d0_end, d1_start:d1_end]
-        tubulin_cell = tubulinImage[d0_start:d0_end, d1_start:d1_end]
-        actin_cell = actinImage[d0_start:d0_end, d1_start:d1_end]
-        cellData[non_zero_count][0]=dapi_cell
-        cellData[non_zero_count][1]=tubulin_cell
-        cellData[non_zero_count][2]=actin_cell
-        non_zero_count += 1
-    writeNumpyToS3(cellData[:non_zero_count], cellDataPath)
-    
     """
     
