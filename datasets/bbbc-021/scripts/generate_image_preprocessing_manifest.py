@@ -78,7 +78,8 @@ for dapiFile in dapiFiles:
     dapiPrefix = dapiFile[(len(platePrefix)+1):]
     imageDict = {}
     imageDict["outputBucket"]=args.outputBucket
-    imageDict["outputKey"]=args.outputKeyPrefix + '/' + dapiFile[:-4] + '_roi.npy'
+    imageDict["outputRoiDataKey"]=args.outputKeyPrefix + '/' + dapiFile[:-4] + '_roi.npy'
+    imageDict["outputRoiCoordinateKey"]=args.outputKeyPrefix + '/' + dapiFile[:-4] + '_roi.coord'
     imageDict["flatFieldBucket"]=args.flatFieldBucket
     imageDict["flatFieldkey"]=args.flatFieldKey
     imageDict["channelBucket"]=args.bucket

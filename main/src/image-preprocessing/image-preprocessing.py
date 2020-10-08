@@ -40,7 +40,8 @@ Input example:
     images: [
         {
             outputBucket: xxx,
-            outputKey: xxx,
+            outputRoiDataKey: xxx,
+            outputRoiCoordinateKey: xxx,
             flatFieldBucket: xxx,
             flatFieldKey: xxx,
             channelBucket: xxx,
