@@ -508,7 +508,7 @@ class PlatePreprocessingClient(BioimageSearchClient):
     def getBatchJobDefinitionArn(self):
         return self._resources.getPlatePreprocessingJobDefnArn()
         
-    def preprocessPlate(self, inputManifestBucket, inputManifestKey, outputFlatFieldBucket, outputFlatFieldKey, queueName):
+    def preprocessPlate(self, inputListBucket, inputListKey, outputFlatFieldBucket, outputFlatFieldKey, queueName):
         batchClient = boto3.client('batch')
         jobName1 = 'preprocessPlateJobName-' + shortuuid.uuid()
         response = batchClient.submit_job(
@@ -517,9 +517,9 @@ class PlatePreprocessingClient(BioimageSearchClient):
             jobDefinition=self._resources.getPlatePreprocessingJobDefnArn(),
             parameters = {
                 'p1': '--imageListBucket',
-                'p2': inputManifestBucket,
+                'p2': inputListBucket,
                 'p3': '--imageListKey',
-                'p4': inputManifestKey,
+                'p4': inputListKey,
                 'p5': '--flatFieldBucket',
                 'p6': outputFlatFieldBucket,
                 'p7': '--flatFieldKey',

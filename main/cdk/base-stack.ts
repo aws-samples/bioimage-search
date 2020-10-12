@@ -29,21 +29,35 @@ export class BaseStack extends cdk.Stack {
       resources: [ "*" ]
     })
     
+    this.testBucket = new s3.Bucket(this, 'BioimageSearchTestBucket', {
+          blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL
+    });
+
+    const testBucketPolicyStatement = new iam.PolicyStatement({
+      actions: [
+          "s3:*",
+      ],
+      effect: iam.Effect.ALLOW,
+      resources: [  
+        this.testBucket.bucketArn,
+        this.testBucket.bucketArn + '/*'
+        ]
+    })
+
     this.bioimageSearchAccessPolicy.addStatements(cloudFormationPolicyStatement)
+    
+    this.bioimageSearchAccessPolicy.addStatements(testBucketPolicyStatement)
     
     const bioimageSearchUser = new iam.User(this, "bioimageSearchUser");
     
     this.bioimageSearchAccessPolicy.attachToUser(bioimageSearchUser)
     
-    this.testBucket = new s3.Bucket(this, 'BioimageSearchTestBucket', {
-          blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL
-    });
+    // this.testBucketRole = new iam.Role(this, 'testBucketRole', {
+    //   assumedBy: bioimageSearchUser
+    // })
     
-    this.testBucketRole = new iam.Role(this, 'testBucketRole', {
-      assumedBy: bioimageSearchUser
-    })
+    // this.testBucket.grantReadWrite(this.testBucketRole)
     
-    this.testBucket.grantReadWrite(this.testBucketRole)
     const testBucketOutput = new cdk.CfnOutput(this, 'testBucket', { value: this.testBucket.bucketName } )
 
     // VPC will go here

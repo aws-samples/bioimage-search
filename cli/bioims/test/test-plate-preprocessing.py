@@ -15,16 +15,17 @@ BBBC_021_BUCKET = 'bioimagesearchbbbc021stack-bbbc021bucket544c3e64-10ecnwo51127
 TEST_BUCKET = 'bioimagesearchbasestack-bioimagesearchtestbucket3-djdwcbvul5zb'
 
 testId = shortuuid.uuid()
-
-platePreprocessingClient = bioims.client('plate-preprocessing')
 testPlateName = 'Week10_40111'
+platePreprocessingClient = bioims.client('plate-preprocessing')
+
 testDir = '/home/ec2-user/tmp/' + testId
 os.system('mkdir -p ' + testDir)
 generateImageListScript = PROJECT_TOP_DIR + '/datasets/bbbc-021/scripts/list_plate_image_keys_for_channel.py'
 channelList = [ 'dapi', 'tubulin', 'actin']
 
 for channel in channelList:
-    imageFilename = testPlateName + '_image-list-' + channel + '.txt'
+    imageFilePrefix = testPlateName + '_image-list-' + channel
+    imageFilename =  imageFilePrefix + '.txt'
     imageListLocalFile = testDir + '/' + imageFilename
     cmdList = []
     cmdList.append(PYTHON)
@@ -41,16 +42,13 @@ for channel in channelList:
     f = open(imageListLocalFile, "w")
     f.write(output)
     f.close()
-    testKey = 'Plate_Preprocessing/' + testId + '/' + imageFilename
+    testKeyPrefix = 'Plate_Preprocessing/' + testId + '/' 
+    testKey = testKeyPrefix + imageFilename
     with open(imageListLocalFile, 'rb') as fdata:
         s3c.upload_fileobj(fdata, TEST_BUCKET, testKey)
     print("Uploaded Bucket=", TEST_BUCKET, " Key=", testKey)
+    flatFieldKey = testKeyPrefix + imageFilePrefix + '.tif' 
+    platePreprocessingClient.preprocessPlate(TEST_BUCKET, testKey, TEST_BUCKET, flatFieldKey, platePreprocessingClient.getBatchOnDemandQueueName())
+    print("Computing Flat-Field Image Bucket=", TEST_BUCKET, " Key=", flatFieldKey)
         
 os.system('rm -r ' + testDir)
-
-
-
-    
-    
-
-
