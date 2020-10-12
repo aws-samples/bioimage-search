@@ -1,14 +1,20 @@
 import boto3
 import json
 import base64
+import shortuuid
 
 class BioimageSearchResources:
     def __init__(self):
         self._stacksDescription = ""
-        self._configurationLambdaArn = ""
-        self._labelLambdaArn = ""
-        self._messageLambdaArn = ""
-        self._defaultArtifactLambdaArn = ""
+
+        # self._configurationLambdaArn = ""
+        # self._labelLambdaArn = ""
+        # self._messageLambdaArn = ""
+        # self._defaultArtifactLambdaArn = ""
+        # self._onDemandQueueName = ""
+        # self._spotQueueName = ""
+        # self._platePreprocessingJobDefnName = ""
+        # self._imagePreprocessingJobDefnName = ""
 
     def refresh(self):
         cf = boto3.client('cloudformation')
@@ -16,72 +22,77 @@ class BioimageSearchResources:
         
 ##### STACKS        
 
-    def getConfigurationStack(self):
+    def getStackByName(self, stackName):
         stacks = self._stacksDescription['Stacks']
         for stack in stacks:
-            if stack['StackName'] == 'BioimageSearchConfigurationStack':
-                return stack
-        return ""
-
-    def getLabelStack(self):
-        stacks = self._stacksDescription['Stacks']
-        for stack in stacks:
-            if stack['StackName'] == 'BioimageSearchLabelStack':
-                return stack
-        return ""
-
-    def getMessageStack(self):
-        stacks = self._stacksDescription['Stacks']
-        for stack in stacks:
-            if stack['StackName'] == 'BioimageSearchMessageStack':
+            if stack['StackName'] == stackName:
                 return stack
         return ""
         
+    def getBaseStack(self):
+        return self.getStackByName('BioimageSearchBaseStack')
+        
+    def getConfigurationStack(self):
+        return self.getStackByName('BioimageSearchConfigurationStack')
+
+    def getLabelStack(self):
+        return self.getStackByName('BioimageSearchLabelStack')
+
+    def getMessageStack(self):
+        return self.getStackByName('BioimageSearchMessageStack')
+
     def getImageArtifactStack(self):
-        stacks = self._stacksDescription['Stacks']
-        for stack in stacks:
-            if stack['StackName'] == 'BioimageSearchImageArtifactStack':
-                return stack
-        return ""
+        return self.getStackByName('BioimageSearchImageArtifactStack')
+        
+    def getBatchSetupStack(self):
+        return self.getStackByName('BioimageSearchBatchSetupStack')
+
+    def getPlatePreprocessingStack(self):
+        return self.getStackByName('BioimageSearchPlatePreprocessingStack')
         
 ##### FUNCTIONS
 
-    def getConfigurationLambdaArn(self):
-        configurationStack = self.getConfigurationStack()
-        outputs = configurationStack['Outputs']
+    def getStackOutputByPrefix(self, stack, prefix):
+        outputs = stack['Outputs']
         for output in outputs:
             output_key = output['OutputKey']
-            if output_key.startswith('ExportsOutputFnGetAttconfigurationFunction'):
+            if output_key.startswith(prefix):
                 return output['OutputValue']
         return ""
+
+##### BUCKETS        
+
+    def getTestBucketName(self):
+        return self.getStackOutputByPrefix(self.getBaseStack(), 'testBucket')
+        
+##### LAMBDA
+
+    def getConfigurationLambdaArn(self):
+        return self.getStackOutputByPrefix(self.getConfigurationStack(), 'ExportsOutputFnGetAttconfigurationFunction')
 
     def getLabelLambdaArn(self):
-        labelStack = self.getLabelStack()
-        outputs = labelStack['Outputs']
-        for output in outputs:
-            output_key = output['OutputKey']
-            if output_key.startswith('ExportsOutputFnGetAttlabelFunction'):
-                return output['OutputValue']
-        return ""
-
+        return self.getStackOutputByPrefix(self.getLabelStack(), 'ExportsOutputFnGetAttlabelFunction')
+        
     def getMessageLambdaArn(self):
-        messageStack = self.getMessageStack()
-        outputs = messageStack['Outputs']
-        for output in outputs:
-            output_key = output['OutputKey']
-            if output_key.startswith('ExportsOutputFnGetAttmessageFunction'):
-                return output['OutputValue']
-        return ""
-        
+        return self.getStackOutputByPrefix(self.getMessageStack(), 'ExportsOutputFnGetAttmessageFunction')
+
     def getDefaultArtifactLambdaArn(self):
-        imageArtifactStack = self.getImageArtifactStack()
-        outputs = imageArtifactStack['Outputs']
-        for output in outputs:
-            output_key = output['OutputKey']
-            if output_key.startswith('ExportsOutputFnGetAttdefaultArtifactFunction'):
-                return output['OutputValue']
-        return ""
+        return self.getStackOutputByPrefix(self.getImageArtifactStack(), 'ExportsOutputFnGetAttdefaultArtifactFunction')
         
+##### BATCH QUEUE
+
+    def getBatchOnDemandQueueName(self):
+        return self.getStackOutputByPrefix(self.getBatchSetupStack(), 'batchOnDemandQueueName')
+        
+    def getBatchSpotQueueName(self):
+        return self.getStackOutputByPrefix(self.getBatchSetupStack(), 'batchSpotQueueName')
+        
+##### BATCH JOB DEFINITIONS
+
+    def getPlatePreprocessingJobDefnArn(self):
+        return self.getStackOutputByPrefix(self.getPlatePreprocessingStack(), 'platePreprocessingJobDefinitionArn')
+
+
 ####### CLIENTS
 
 def client(serviceName):
@@ -93,6 +104,8 @@ def client(serviceName):
         return MessageClient()
     elif serviceName == 'image-artifact':
         return ImageArtifactClient()
+    elif serviceName == 'plate-preprocessing':
+        return PlatePreprocessingClient()
     else:
         print('service type {} not recognized'.format(serviceName))
         return False
@@ -101,6 +114,12 @@ class BioimageSearchClient:
     def __init__(self):
         self._resources=BioimageSearchResources()
         self._resources.refresh()
+        
+    def getBatchOnDemandQueueName(self):
+        return self._resources.getBatchOnDemandQueueName()
+        
+    def getBatchSpotQueueName(self):
+        return self._resources.getBatchSpotQueueName()
         
 #############################################
 #
@@ -475,4 +494,36 @@ class ImageArtifactClient(BioimageSearchClient):
             Payload=payload
             )
         return response['StatusCode']
+        
+#############################################
+#
+# PLATE PREPROCESSING
+#
+#############################################
+    
+class PlatePreprocessingClient(BioimageSearchClient):
+    def __init__(self):
+        super().__init__()
 
+    def getBatchJobDefinitionArn(self):
+        return self._resources.getPlatePreprocessingJobDefnArn()
+        
+    def preprocessPlate(self, inputManifestBucket, inputManifestKey, outputFlatFieldBucket, outputFlatFieldKey, queueName):
+        batchClient = boto3.client('batch')
+        jobName1 = 'preprocessPlateJobName-' + shortuuid.uuid()
+        response = batchClient.submit_job(
+            jobName=jobName1,
+            jobQueue=queueName,
+            jobDefinition=self._resources.getPlatePreprocessingJobDefnArn(),
+            parameters = {
+                'p1': '--imageListBucket',
+                'p2': inputManifestBucket,
+                'p3': '--imageListKey',
+                'p4': inputManifestKey,
+                'p5': '--flatFieldBucket',
+                'p6': outputFlatFieldBucket,
+                'p7': '--flatFieldKey',
+                'p8': outputFlatFieldKey
+            }
+        )
+        print(response)

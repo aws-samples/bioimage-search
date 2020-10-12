@@ -14,7 +14,9 @@ export class BatchSetupStack extends cdk.Stack {
   public batchVpc: ec2.Vpc;
   public batchSpotQueue: batch.JobQueue;
   public batchOnDemandQueue: batch.JobQueue;
-  
+  public spotQueueOutput: cdk.CfnOutput
+  public onDemandQueueOutput: cdk.CfnOutput
+
   constructor(app: cdk.App, id: string, props: BatchSetupStackProps) {
     super(app, id, props);
     
@@ -75,6 +77,9 @@ export class BatchSetupStack extends cdk.Stack {
           }
         ]
     });
+    
+    this.spotQueueOutput = new cdk.CfnOutput(this, 'batchSpotQueueName', { value: this.batchSpotQueue.jobQueueName } )
+    this.onDemandQueueOutput = new cdk.CfnOutput(this, 'batchOnDemandQueueName', { value: this.batchOnDemandQueue.jobQueueName } )
 
   }
   

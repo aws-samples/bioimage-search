@@ -9,6 +9,8 @@ import fs = require("fs");
 export class BaseStack extends cdk.Stack {
   public bioimageSearchAccessPolicy: iam.Policy;
   public externalResourcesPolicy: iam.Policy;
+  public testBucket: s3.Bucket;
+  public testBucketRole: iam.Role;
 
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -33,6 +35,16 @@ export class BaseStack extends cdk.Stack {
     
     this.bioimageSearchAccessPolicy.attachToUser(bioimageSearchUser)
     
+    this.testBucket = new s3.Bucket(this, 'BioimageSearchTestBucket', {
+          blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL
+    });
+    
+    this.testBucketRole = new iam.Role(this, 'testBucketRole', {
+      assumedBy: bioimageSearchUser
+    })
+    
+    this.testBucket.grantReadWrite(this.testBucketRole)
+    const testBucketOutput = new cdk.CfnOutput(this, 'testBucket', { value: this.testBucket.bucketName } )
 
     // VPC will go here
   }

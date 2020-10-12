@@ -12,6 +12,7 @@ export interface PlatePreprocessingStackProps extends cdk.StackProps {
 
 export class PlatePreprocessingStack extends cdk.Stack {
   public platePreprocessingJobDefinition: batch.JobDefinition;
+  public platePreprocessingJobDefinitionArn: cdk.CfnOutput;
   
   constructor(app: cdk.App, id: string, props: PlatePreprocessingStackProps) {
     super(app, id, props);
@@ -37,6 +38,8 @@ export class PlatePreprocessingStack extends cdk.Stack {
         retryAttempts: 3,
         timeout: cdk.Duration.minutes(30)
     })
+    
+    this.platePreprocessingJobDefinitionArn = new cdk.CfnOutput(this, 'platePreprocessingJobDefinitionArn', { value: this.platePreprocessingJobDefinition.jobDefinitionArn} )
 
   }
     
