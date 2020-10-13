@@ -5,25 +5,38 @@ import argparse
 import json
 
 """
-Example mainfest (output):
+For consistency, this script assumes the following S3 object layout for the BBBC-021 dataset:
+
+BBBC-021 raw imagery:
+
+    <bbbc-021 bucket>/<Plate, e.g., Week10_40111>/<tif images>
+
+Flat Field compute:
+
+    <test bucket>/FlatField/<Plate>-<channel>-flatfield.tif
+    
+ROI compute:
+
+    <test bucket>/ROI/<Plate>/<raw DAPI tif prefix>-roi.npy (contains normalized multichannel ROI data ready for training)
+    <test bucket>/ROI/<Plate>/<raw DAPI tif prefix>-roi.json (contains list of ROI coordinates wrt raw image, ordered wrt the npy file)
+
+With this in mind, for a given Plate prefix, it generates the following manifest for use with the image-preprocessing service:
 
 {
     images: [
         {
             outputBucket: xxx,
-            outputKey: xxx,
-            flatFieldBucket: xxx,
-            flatFieldKey: xxx,
-            channelBucket: xxx,
-            nuclearChannelKey: xxx,
-            additionalChannels: [
-                xxx,
-                xxx,
-                ...
+            outputKeyPrefix: xxx,
+            inputFlatfieldBucket: xxx,
+            inputChannelBucket: xxx,
+            segmentationChannelName: xxx,
+            inputChannels: [
+                {
+                    name: xxx,
+                    imageKey: xxx,
+                    flatfieldKey: xxx
+                }
             ]
-        },
-        {
-        ...
         }
     ]
 }
@@ -31,12 +44,9 @@ Example mainfest (output):
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument('--bucket', type=str, help='bucket with BBBC-021 data')
+parser.add_argument('--bbbc021Bucket', type=str, help='bucket with BBBC-021 data')
+parser.add_argument('--testBucket', type-str, help='test bucket')
 parser.add_argument('--plate', type=str, help='plate label, e.g., Week_2241')
-parser.add_argument('--flatFieldBucket', type=str, help='flat field bucket')
-parser.add_argument('--flatFieldKey', type=str, help='flat field key')
-parser.add_argument('--outputBucket', type=str, help='output bucket for ROI numpy output')
-parser.add_argument('--outputKeyPrefix', type=str, help='output key prefix for ROI numpy output')
 
 args = parser.parse_args()
 
