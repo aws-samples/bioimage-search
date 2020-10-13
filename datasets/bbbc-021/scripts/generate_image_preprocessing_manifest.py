@@ -3,6 +3,7 @@ import boto3
 import pandas as pd
 import argparse
 import json
+import bbbc021common as bb
 
 """
 For consistency, this script assumes the following S3 object layout for the BBBC-021 dataset:
@@ -17,8 +18,8 @@ Flat Field compute:
     
 ROI compute:
 
-    <test bucket>/ROI/<Plate>/<raw DAPI tif prefix>-roi.npy (contains normalized multichannel ROI data ready for training)
-    <test bucket>/ROI/<Plate>/<raw DAPI tif prefix>-roi.json (contains list of ROI coordinates wrt raw image, ordered wrt the npy file)
+    <output bucket>/ROI/<Plate>/<raw DAPI tif prefix>-roi.npy (contains normalized multichannel ROI data ready for training)
+    <output bucket>/ROI/<Plate>/<raw DAPI tif prefix>-roi.json (contains list of ROI coordinates wrt raw image, ordered wrt the npy file)
 
 With this in mind, for a given Plate prefix, it generates the following manifest for use with the image-preprocessing service:
 
@@ -45,59 +46,51 @@ With this in mind, for a given Plate prefix, it generates the following manifest
 parser = argparse.ArgumentParser()
 
 parser.add_argument('--bbbc021Bucket', type=str, help='bucket with BBBC-021 data')
-parser.add_argument('--testBucket', type-str, help='test bucket')
+parser.add_argument('--outputBucket', type=str, help='output bucket')
 parser.add_argument('--plate', type=str, help='plate label, e.g., Week_2241')
 
 args = parser.parse_args()
 
-imageMetadataKey='BBBC021_v1_image.csv'
+plateName = args.plate
 
-s3c = boto3.client('s3')
+bb1 = bb.Bbbc021PlateInfo(args.bbbc021Bucket, plateName)
+dapiFiles = bb1.getDapiFileList()
 
-def getCsvDfFromS3(bucket, key):
-    csvObject = s3c.get_object(Bucket=bucket, Key=key)
-    file_stream = csvObject['Body']
-    df = pd.read_csv(file_stream)
-    return df
-
-image_df = getCsvDfFromS3(args.bucket, imageMetadataKey)
-
-dapiFiles=[]
-tubulinFileDict={}
-actinFileDict={}
-
-platePrefix = args.plate
-
-weekPrefix = platePrefix.split('_')[0]
-imagePathnameDapi = weekPrefix + '/' + platePrefix
-
-plate_df = image_df.loc[image_df['Image_PathName_DAPI']==imagePathnameDapi]
-
-for p in range(len(plate_df.index)):
-    r = plate_df.iloc[p]
-    dapiFile=r['Image_FileName_DAPI']
-    dapiFiles.append(platePrefix + '/' + dapiFile)
-    tubulinFileDict[dapiFile]=platePrefix + '/' + r['Image_FileName_Tubulin']
-    actinFileDict[dapiFile]=platePrefix + '/' + r['Image_FileName_Actin']
-    
 manifestDict = {}
-
 images = []
 
 for dapiFile in dapiFiles:
-    dapiPrefix = dapiFile[(len(platePrefix)+1):]
+    tubulinFile = bb1.getTubulinFileByDapi(dapiFile)
+    actinFile = bb1.getActinFileByDapi(dapiFile)
     imageDict = {}
+    dapiFileName = dapiFile[(len(plateName)+1):]
+    dapiFilePrefix = dapiFileName[:-4]
     imageDict["outputBucket"]=args.outputBucket
-    imageDict["outputRoiDataKey"]=args.outputKeyPrefix + '/' + dapiFile[:-4] + '_roi.npy'
-    imageDict["outputRoiCoordinateKey"]=args.outputKeyPrefix + '/' + dapiFile[:-4] + '_roi.coord'
-    imageDict["flatFieldBucket"]=args.flatFieldBucket
-    imageDict["flatFieldkey"]=args.flatFieldKey
-    imageDict["channelBucket"]=args.bucket
-    imageDict["nuclearChannelKey"]=dapiFile
-    additionalChannels = []
-    additionalChannels.append(tubulinFileDict[dapiPrefix])
-    additionalChannels.append(actinFileDict[dapiPrefix])
-    imageDict["additionalChannels"] = additionalChannels
+    imageDict["outputKeyPrefix"] = 'ROI/' + plateName + '/' + dapiFilePrefix
+    imageDict["inputFlatfieldBucket"] = args.outputBucket
+    imageDict["inputChannelBucket"] = args.bbbc021Bucket
+    imageDict["segmentationChannelName"] = 'dapi'
+    inputChannels = []
+
+    dapiDict = {}
+    dapiDict['name'] = 'dapi'
+    dapiDict['imageKey'] = dapiFile
+    dapiDict['flatfieldKey'] = 'FlatField/' + plateName + '-dapi-flatfield.tif'
+    inputChannels.append(dapiDict)
+    
+    tubulinDict = {}
+    tubulinDict['name'] = 'tubulin'
+    tubulinDict['imageKey'] = tubulinFile
+    tubulinDict['flatfieldKey'] = 'FlatField/' + plateName + '-tubulin-flatfield.tif'
+    inputChannels.append(tubulinDict)
+    
+    actinDict = {}
+    actinDict['name'] = 'actin'
+    actinDict['imageKey'] = actinFile
+    actinDict['flatfieldKey'] = 'FlatField/' + plateName + '-actin-flatfield.tif'
+    inputChannels.append(actinDict)    
+
+    imageDict["inputChannels"] = inputChannels
     images.append(imageDict)
     
 manifestDict["images"] = images
