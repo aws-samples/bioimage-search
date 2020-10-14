@@ -30,7 +30,11 @@ Basic steps for this process include:
 
 The input is a JSON manifest with a list of such images to process.
 
-The output is a numpy array with all ROIs for a given image, each of which in turn is a multi-channel data structure.
+The output has two components:
+
+    1) a numpy array with all ROIs for a given image, each of which in turn is a multi-channel data structure
+
+    2) a json file listing the ROI coordinates for each ROI image wrt its source image
 
 The above output is generated for each image in the input manifest.
 
@@ -40,20 +44,36 @@ Input example:
     images: [
         {
             outputBucket: xxx,
-            outputRoiDataKey: xxx,
-            outputRoiCoordinateKey: xxx,
-            flatFieldBucket: xxx,
-            flatFieldKey: xxx,
-            channelBucket: xxx,
-            nuclearChannelKey: xxx,
-            additionalChannels: [
-                xxx,
-                xxx,
-                ...
+            outputKeyPrefix: xxx,
+            inputFlatfieldBucket: xxx,
+            inputChannelBucket: xxx,
+            segmentationChannelName: xxx,
+            inputChannels: [
+                {
+                    name: xxx,
+                    imageKey: xxx,
+                    flatfieldKey: xxx
+                }
             ]
-        },
+        }
+    ]
+}
+
+Output ROI coordinate example:
+
+{
+    sourceImageBucket: xxx,
+    roisize: [ // channel, z, y, x
+        z: xxx,
+        y: xxx,
+        x: xxx
+    ],
+    roi: [
         {
-        ...
+            sourceImageKey: xxx,
+            z: xxx,
+            y: xxx,
+            x: xxx
         }
     ]
 }
@@ -64,82 +84,235 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument('--imageManifestBucket', type=str, help='bucket for image manifest')
 parser.add_argument('--imageManifestKey', type=str, help='key for image manifest')
+parser.add_argument('--roisize', type=int, help='ROI crop size in pixels')
 
 args = parser.parse_args()
-
 s3c = boto3.client('s3')
 
-tmpDir="/tmp"
-
-ec2homePath=Path("/home/ec2-user")
-if ec2homePath.exists():
-    tmpDir="/home/ec2-user/tmp"
-
-tmpPath=Path(tmpDir)
-if not tmpPath.exists():
-    tmpPath.mkdir()
+def setupTmpDir():
+    tmpDir="/tmp"
+    ec2homePath=Path("/home/ec2-user")
+    if ec2homePath.exists():
+        tmpDir="/home/ec2-user/tmp"
+    tmpPath=Path(tmpDir)
+    if not tmpPath.exists():
+        tmpPath.mkdir()
+    return tmpDir
+    
+tmpDir = setupTmpDir()
 
 def getManifestFromS3():
     fileObject = s3c.get_object(Bucket=args.imageManifestBucket, Key=args.imageManifestKey)
     text = fileObject['Body'].read().decode('utf-8')
     return json.loads(text)
     
-testJsonObject = getManifestFromS3()
+def checkPixShape(pix_shape):
+    for d in pix_shape:
+        if d != pix_shape[0]:
+            return False
+    return True
+    
+def normImageData(image_data):
+    max = image_data.max()
+    if max > 65535.0:
+        return image_data/max
+    elif max > 255.0:
+        return image_data/65535.0
+    elif max > 1.0:
+        return image_data/255.0
+    else:
+        return image_data/max
+        
+def findHistCutoff(h, p):
+    totalPixels=0.0
+    ca=h[0]
+    cv=h[1]
+    for c in ca:
+        totalPixels += c
+    th=totalPixels*p
+    i=0
+    cutOffPixels=0.0
+    for c in ca:
+        if cutOffPixels >= th:
+            return cv[i]
+        cutOffPixels += c
+        i+=1
+    return cv[i-1]        
+    
+def applyImageCutoff(nda, cv):
+    for idx, v in np.ndenumerate(nda):
+        if (v>cv):
+            nda[idx]=cv
+            
+def findCutoffAvg(nda, cv):
+    total = 0.0
+    for v in np.nditer(nda):
+        if (v>cv):
+            total += cv
+        else:
+            total += v
+    avg = total / nda.size
+    return avg
+    
+def normalizeChannel(bval, nda):
+    for idx, v in np.ndenumerate(nda):
+        n = nda[idx] / bval
+        if n < 1.0:
+            n=1.0
+        l = math.log(n)
+        if (l>5.0):
+            l=5.0
+        nda[idx]=l
+    min=nda.min()
+    max=nda.max()
+    zeroFlag=False
+    if min==max:
+        nda=0.0
+    else:
+        s = (max-min)
+        for idx, v in np.ndenumerate(nda):
+            n = (v-min)/s
+            nda[idx]=n
 
-print("TestObject=", testJsonObject)
+def computeNormedImage(imageBucket, imageKey, flatfieldBucket, flatfieldKey):
+    fileObject = s3c.get_object(Bucket=imageBucket, Key=imageKey)
+    file_stream = fileObject['Body']
+    im = Image.open(file_stream)
+    input_data = np.array(im)
+    if len(input_data.shape)==2:
+        input_data = np.expand_dims(input_data, axis=0)
+    return normImageData(input_data)
+    
+def findCentersFromLabels(labels):
+    centers=[]
+    maxLabel=labels.max()
+    labelCounts=np.zeros(shape=(maxLabel+1), dtype=np.int)
+    labelPositions=[]
+    for d in range(len(labels.shape)):
+        labelPositions.append(np.zeros(shape=(maxLabel+1), dtype=np.int))
+    for idx, v in np.ndenumerate(labels):
+        labelCounts[v] += 1
+        ix=0
+        for iv in idx:
+            labelPositions[ix][v] += iv
+            ix += 1
+    for lp in range(maxLabel+1):
+        ca = []
+        ca.append(lp)
+        ca.append(labelCounts[lp])
+        for d in range(len(labels.shape)):
+            na = labelPositions[d]
+            ca.append(na[lp]/labelCounts[lp])
+        centers.append(ca)
+    return centers    
+
+def writeNumpyToS3(data_array, bucketName, keyPath):
+    keySuffix=keyPath.split('/')[-1]
+    fn = tmpDir + '/' + keySuffix
+    np.save(fn, data_array)
+    with open(fn, 'rb') as fdata:
+        s3c.upload_fileobj(fdata, bucketName, keyPath)
+    fnPath=Path(fn)
+    fnPath.unlink()
+    
+def computeCellCenters(pixels):
+    otsuThreshold = threshold_otsu(pixels)
+    binaryPixels = pixels >= otsuThreshold
+    ed1=binary_opening(binaryPixels)
+    ed2=binary_opening(ed1)
+    ed2int = ed2.astype(np.int)
+    ed2intLabels = label(ed2int)
+    centers=findCentersFromLabels(ed2intLabels)
+    return centers
+        
+manifest = getManifestFromS3()
+
+images = manifest['images']
+
+roisize = args.roisize
+
+for image in images:
+    normedImages = {}
+    inputChannelBucket = image['inputChannelBucket']
+    inputFlatfieldBucket = image['inputFlatfieldBucket']
+    inputChannels = image['inputChannels']
+    segmentationChannelName = image['segmentationChannelName']
+    pix_shape = []
+    input_arr = []
+    segment_index = 0
+    i=0
+    for inputChannel in inputChannels:
+        normedImage = computeNormedImage(
+            inputChannelBucket,
+            inputChannel['imageKey'],
+            inputFlatfieldBucket,
+            inputChannel['flatfieldKey'])
+        pix_shape.append(normedImage.shape)
+        input_arr.append(normedImage)
+        if inputChannel['name']==segmentationChannelName:
+            segment_index=i
+        i+=1
+    if not checkPixShape(pix_shape):
+        sys.exit("Error: image shapes of channels do not match")
+    input_data = np.fromarray(input_arr)
+    for c in range(input_data.shape[0]):
+        channelData = input_data[c]
+        h1 = histogram(channelData, 100)
+        bcut = findHistCutoff(h1, 0.20)
+        bavg = findCutoffAvg(channelData, bcut)
+        normalizeChannel(bavg, channelData)
+    centers = computeCellCenters(input_data[segment_index])
+    roiDimArr = []
+    roiDimArr.append(len(centers))
+    roiDimArr.append(len(inputChannels))
+    for d in range(len(input_data.shape)-1):
+        roiDimArr.append(roisize)
+    roiDimTuple = tuple(roiDimArr)
+    roiData = np.zeros(roiDimTuple, dtype=float)
+    r2 = roisize/2
+    count=0
+    for center in centers:
+        label=center[0]
+        labelCount=center[1]
+        position=center[2:]
+        edgeFlag=False
+        for d in range(len(position)):
+            p=position[d]
+            pMax=input_data.shape[d+1]
+            if ( (p < r2) or (p > (pMax-r2)) ):
+                edgeFlag=True
+                break
+        if edgeFlag:
+            continue
+        sarr = []
+        for d in range(len(position)):
+            p=position[d]
+            p0=p-r2
+            p1=p+r2
+            sarr.append(np.s_[p0:p1])
+        atu = tuple(sarr)
+        for c in range(input_data.shape[0]):
+            roiData[count][c]=input_data[c][atu]
+        count+=1
+    roiKey = image['outputKeyPrefix'] + '.npy'
+    writeNumpyToS3(roiData, image['outputBucket'], roiKey)
+    roiCoordInfo = {}
+    roiCoordInfo['sourceImageBucket'] = inputChannelBucket
+    roiSizeArr=[]
+
+    # Need to handle small outer dim issue, e.g., small Z for uniform roi crop            
+        
+            
+
+            
+            
+                
+        
+
+
     
 """    
-bucketName='phis-data-bbbc021-1'
-imageMetadataKey='BBBC021_v1_image.csv'
-segmentKeyPrefix='segmentation'
-normedKeyPrefix='normed-imagery'
-tmpDir="/tmp"
-
-ec2homePath=Path("/home/ec2-user")
-if ec2homePath.exists():
-    tmpDir="/home/ec2-user/tmp"
-
-tmpPath=Path(tmpDir)
-if not tmpPath.exists():
-    tmpPath.mkdir()
     
-if len(sys.argv) < 2:
-    usage()
-
-platePrefix=sys.argv[1]
-
-s3c = boto3.client('s3', region_name='us-east-1')
-
-def getCsvDfFromS3(bucket, key):
-    csvObject = s3c.get_object(Bucket=bucket, Key=key)
-    file_stream = csvObject['Body']
-    df = pd.read_csv(file_stream)
-    return df
-
-image_df = getCsvDfFromS3(bucketName, imageMetadataKey)
-
-dapiFiles=[]
-tubulinFileDict={}
-actinFileDict={}
-
-weekPrefix = platePrefix.split('_')[0]
-imagePathnameDapi = weekPrefix + '/' + platePrefix
-
-plate_df = image_df.loc[image_df['Image_PathName_DAPI']==imagePathnameDapi]
-
-for p in range(len(plate_df.index)):
-    r = plate_df.iloc[p]
-    dapiFile=r['Image_FileName_DAPI']
-    dapiFiles.append(platePrefix + '/' + dapiFile)
-    tubulinFileDict[dapiFile]=platePrefix + '/' + r['Image_FileName_Tubulin']
-    actinFileDict[dapiFile]=platePrefix + '/' + r['Image_FileName_Actin']
-
-def getNormedPath(origPath):
-    ip2 = origPath[:-4]
-    ip2c = ip2.split('/')
-    normName=ip2c[1] + '-norm.tif'
-    normKey=normedKeyPrefix + '/' + ip2c[0] + '/' + normName
-    return normName, normKey
 
 def getSegmentedCsvPath(origPath):
     ip2 = origPath[:-4]
@@ -148,26 +321,6 @@ def getSegmentedCsvPath(origPath):
     csvKey=segmentKeyPrefix + '/' + ip2c[0] + '/' + csvName
     return csvName, csvKey
 
-def find2DCentersFromLabels(labels):
-    centers=[]
-    maxLabel=labels.max()
-    d0=labels.shape[0]
-    d1=labels.shape[1]
-    labelCounts=np.zeros(shape=(maxLabel+1), dtype=np.int)
-    labelPositionsD0=np.zeros(shape=(maxLabel+1), dtype=np.int)
-    labelPositionsD1=np.zeros(shape=(maxLabel+1), dtype=np.int)
-    for i0 in range(d0):
-        for i1 in range(d1):
-            l=labels[i0][i1]
-            labelCounts[l] += 1
-            labelPositionsD0[l] += i0
-            labelPositionsD1[l] += i1
-    for lp in range(maxLabel+1):
-        avgD0=labelPositionsD0[lp]/labelCounts[lp]
-        avgD1=labelPositionsD1[lp]/labelCounts[lp]
-        lpr = (lp, labelCounts[lp], avgD0, avgD1)
-        centers.append(lpr)
-    return centers
 
 def computeCellCenters(imageFilekey):
     imgObject = s3c.get_object(Bucket=bucketName, Key=imageFilekey)

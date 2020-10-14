@@ -222,7 +222,6 @@ def handler(event, context):
         if len(input_data.shape)==2:
             input_data = np.expand_dims(input_data, axis=0)
         
-
     else:
         input_arr = []
         input_shape = []
