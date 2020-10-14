@@ -28,6 +28,25 @@ Basic steps for this process include:
 2. Use of a logorithmic normalization function to better distribute variance across the intensity range
 3. Use of traditional methods for identifying cell centers (e.g., Otsu's method and dialtion/erosion)
 
+Edge-case handling for cell centers is handled as follows:
+
+The size for the ROI is specified, which is uniformly applied to each dimension. Edge handling can be considered in three different cases.
+'r' is the roisize, and r/2 is half of roisize.
+
+Case 1: the dimension is much larger than ROI size:
+
+    If the entire ROI does not fit (i.e., if the center is closer than r/2 to the edge, then the ROI is discarded).
+    
+Case 2: the dimension is smaller than the ROI size:
+
+    Then the generated ROI object is simply limited in this dimension to the maximum size, and includes the full range, regardless of where the 
+    center is in that dimension.
+    
+Case 3: the dimension is slightly larger than the ROI size:
+
+    Then the generated ROI object is full-size, but the effective center is shifted to accomplish this. The "maximum shift" will be computed
+    as follows: min( (r - DimSize/4), 0)
+
 The input is a JSON manifest with a list of such images to process.
 
 The output has two components:
@@ -63,14 +82,18 @@ Output ROI coordinate example:
 
 {
     sourceImageBucket: xxx,
-    roisize: [ // channel, z, y, x
+    sourceChannelKeys: {
+      <name>:xxx,
+      <name>:xxx,
+      <name>:xxx
+    },
+    roisize: { // channel, z, y, x
         z: xxx,
         y: xxx,
         x: xxx
-    ],
-    roi: [
+    },
+    roi: [ 
         {
-            sourceImageKey: xxx,
             z: xxx,
             y: xxx,
             x: xxx
@@ -269,81 +292,84 @@ for image in images:
         roiDimArr.append(roisize)
     roiDimTuple = tuple(roiDimArr)
     roiData = np.zeros(roiDimTuple, dtype=float)
+    roiCoordinates = []
     r2 = roisize/2
     count=0
+    maxEdgeShift = []
+    for d in range (len(input_data.shape)-1):
+        dl = input_data.shape[d+1]
+        maxEdgeShift[d] = min( (roisize - dl/4), 0)
     for center in centers:
         label=center[0]
         labelCount=center[1]
         position=center[2:]
         edgeFlag=False
         for d in range(len(position)):
+            m = maxEdgeShift[d]
             p=position[d]
-            pMax=input_data.shape[d+1]
-            if ( (p < r2) or (p > (pMax-r2)) ):
+            pMax=input_data.shape[d+1]-1
+            if ((p+m) < r2) or ((p-m) > (pMax-r2)):
                 edgeFlag=True
                 break
         if edgeFlag:
             continue
         sarr = []
+        rc = []
         for d in range(len(position)):
+            pMax=input_data.shape[d+1]
             p=position[d]
             p0=p-r2
+            if (p0<0):
+                p -= p0
+                p0=0
             p1=p+r2
+            if (p1>pMax):
+                p0 -= (p1-pMax)
+                p1=pMax
+                if (p0<0):
+                    p0=0
+            # Size check
+            l = p1-p0
+            if ( (l!=roisize) and (l!=pMax) ):
+                sys.exit("ROI dimension invalid: p0=", p0, " p1=", p1)
             sarr.append(np.s_[p0:p1])
+            rc.append( (p0, p1))
         atu = tuple(sarr)
         for c in range(input_data.shape[0]):
             roiData[count][c]=input_data[c][atu]
+        roiCoordinates.append(rc)
         count+=1
     roiKey = image['outputKeyPrefix'] + '.npy'
     writeNumpyToS3(roiData, image['outputBucket'], roiKey)
     roiCoordInfo = {}
     roiCoordInfo['sourceImageBucket'] = inputChannelBucket
-    roiSizeArr=[]
-
-    # Need to handle small outer dim issue, e.g., small Z for uniform roi crop            
-        
-            
-
-            
-            
-                
-        
-
-
-    
-"""    
-    
-
-def getSegmentedCsvPath(origPath):
-    ip2 = origPath[:-4]
-    ip2c = ip2.split('/')
-    csvName=ip2c[1] + '-cell-locations.csv'
-    csvKey=segmentKeyPrefix + '/' + ip2c[0] + '/' + csvName
-    return csvName, csvKey
-
-
-def computeCellCenters(imageFilekey):
-    imgObject = s3c.get_object(Bucket=bucketName, Key=imageFilekey)
-    file_stream = imgObject['Body']
-    img = Image.open(file_stream)
-    pixels = np.array(img)
-    otsuThreshold = threshold_otsu(pixels)
-    binaryPixels = pixels >= otsuThreshold
-    ed1=binary_opening(binaryPixels)
-    ed2=binary_opening(ed1)
-    ed2int = ed2.astype(np.int)
-    ed2intLabels = label(ed2int)
-    centers=find2DCentersFromLabels(ed2intLabels)
-    return centers
-
-for dfk in dapiFiles:
-    c1 = computeCellCenters(dfk)
-    csvName, csvKey=getSegmentedCsvPath(dfk)
-    print("Writing " + csvKey)
-    cellList=''
-    for c in c1:
-        cellList += (str(c[0]) + ',' + str(c[1]) + ',' + str(c[2]) + ',' + str(c[3]) + '\n')
-    s3c.put_object(Body=cellList, Bucket=bucketName, Key=csvKey)
-
-    """
+    sourceChannelKeys = {}
+    for chan in inputChannels:
+        sourceChannelKeys[chan['name']] = chan['imageKey']
+    roiCoordInfo['sourceChannelKeys'] = sourceChannelKeys
+    roiSize = {}
+    zSize=roisize
+    if (input_data.shape[1]<roisize):
+        zSize=input_data.shape[1]
+    ySize=roisize
+    if (input_data.shape[2]<roisize):
+        ySize=input_data.shape[2]
+    xSize=roisize
+    if (input_data.shape[3]<roisize):
+        xSize=input_data.shape[3]
+    roiSize['z']=zSize
+    roiSize['y']=ySize
+    roiSize['x']=xSize
+    roiCoordInfo['roisize'] = roiSize
+    roiArr = []
+    for rc in roiCoordinates:
+        roi = {}
+        roi['z'] = rc[0][0]
+        roi['y'] = rc[1][0]
+        roi['x'] = rc[2][0]
+        roiArr.append(roi)
+    roiCoordInfo['roi'] = roiArr
+    roiCoordInfoJson = json.dumps(roiCoordInfo)
+    roiCoordKey = image['outputKeyPrefix'] + '.json'
+    s3c.put_object(Body=roiCoordInfoJson, Bucket=image['outputBucket'], Key=roiCoordKey)
     
