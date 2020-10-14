@@ -26,7 +26,9 @@ export class ImagePreprocessingStack extends cdk.Stack {
               "Ref::p1",
               "Ref::p2",
               "Ref::p3",
-              "Ref::p4"
+              "Ref::p4",
+              "Ref::p5",
+              "Ref::p6"
               ],
         },
         retryAttempts: 3,
