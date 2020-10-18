@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ubuntu:18.04
 
 RUN apt-get update && \
     apt-get install -y \
@@ -6,6 +6,7 @@ RUN apt-get update && \
     pip3 install boto3 && \
     pip3 install pandas && \
     pip3 install pillow && \
+    pip3 install scipy && \
     pip3 install scikit-image && \
     pip3 install shortuuid
 

@@ -1,4 +1,5 @@
 import sys
+import traceback
 import boto3
 import numpy as np
 import io
@@ -8,6 +9,7 @@ from PIL import Image
 import math
 import shortuuid as su
 import json
+import scipy.ndimage as nd
 from skimage import io
 from skimage.filters import gaussian
 from skimage.exposure import histogram
@@ -108,6 +110,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--imageManifestBucket', type=str, help='bucket for image manifest')
 parser.add_argument('--imageManifestKey', type=str, help='key for image manifest')
 parser.add_argument('--roisize', type=int, help='ROI crop size in pixels')
+parser.add_argument('--minvoxels', type=int, help='Exclude objects smaller than this voxel count')
 
 args = parser.parse_args()
 s3c = boto3.client('s3')
@@ -220,13 +223,14 @@ def findCentersFromLabels(labels):
             labelPositions[ix][v] += iv
             ix += 1
     for lp in range(maxLabel+1):
-        ca = []
-        ca.append(lp)
-        ca.append(labelCounts[lp])
-        for d in range(len(labels.shape)):
-            na = labelPositions[d]
-            ca.append(na[lp]/labelCounts[lp])
-        centers.append(ca)
+        if (labelCounts[lp]>=args.minvoxels):
+            ca = []
+            ca.append(lp)
+            ca.append(labelCounts[lp])
+            for d in range(len(labels.shape)):
+                na = labelPositions[d]
+                ca.append(na[lp]/labelCounts[lp])
+            centers.append(ca)
     return centers    
 
 def writeNumpyToS3(data_array, bucketName, keyPath):
@@ -244,8 +248,8 @@ def computeCellCenters(pixels):
     ed1=binary_opening(binaryPixels)
     ed2=binary_opening(ed1)
     ed2int = ed2.astype(np.int)
-    ed2intLabels = label(ed2int)
-    centers=findCentersFromLabels(ed2intLabels)
+    ed2Labels, labelCount = nd.label(ed2int)
+    centers=findCentersFromLabels(ed2Labels)
     return centers
         
 manifest = getManifestFromS3()
@@ -277,7 +281,7 @@ for image in images:
         i+=1
     if not checkPixShape(pix_shape):
         sys.exit("Error: image shapes of channels do not match")
-    input_data = np.fromarray(input_arr)
+    input_data = np.array(input_arr)
     for c in range(input_data.shape[0]):
         channelData = input_data[c]
         h1 = histogram(channelData, 100)
@@ -289,7 +293,10 @@ for image in images:
     roiDimArr.append(len(centers))
     roiDimArr.append(len(inputChannels))
     for d in range(len(input_data.shape)-1):
-        roiDimArr.append(roisize)
+        dl = roisize
+        if (input_data.shape[d+1] < roisize):
+            dl = input_data.shape[d+1]
+        roiDimArr.append(dl)
     roiDimTuple = tuple(roiDimArr)
     roiData = np.zeros(roiDimTuple, dtype=float)
     roiCoordinates = []
@@ -298,7 +305,7 @@ for image in images:
     maxEdgeShift = []
     for d in range (len(input_data.shape)-1):
         dl = input_data.shape[d+1]
-        maxEdgeShift[d] = min( (roisize - dl/4), 0)
+        maxEdgeShift.append(max( (roisize - dl/4), 0))
     for center in centers:
         label=center[0]
         labelCount=center[1]
@@ -329,9 +336,12 @@ for image in images:
                 if (p0<0):
                     p0=0
             # Size check
+            p0 = int(p0)
+            p1 = int(p1)
             l = p1-p0
             if ( (l!=roisize) and (l!=pMax) ):
-                sys.exit("ROI dimension invalid: p0=", p0, " p1=", p1)
+                errorMsg = "ROI dimension invalid: p0={} p1={}".format(p0, p1)
+                sys.exit(errorMsg)
             sarr.append(np.s_[p0:p1])
             rc.append( (p0, p1))
         atu = tuple(sarr)

@@ -28,11 +28,13 @@ export class ImagePreprocessingStack extends cdk.Stack {
               "Ref::p3",
               "Ref::p4",
               "Ref::p5",
-              "Ref::p6"
+              "Ref::p6",
+              "Ref::p7",
+              "Ref::p8"
               ],
         },
         retryAttempts: 3,
-        timeout: cdk.Duration.minutes(60)
+        timeout: cdk.Duration.minutes(180)
     })
 
   }
