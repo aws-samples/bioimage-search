@@ -17,6 +17,7 @@ from skimage.filters import threshold_otsu
 from skimage.morphology import binary_opening
 from skimage.morphology import label
 from skimage.exposure import histogram
+import bioimage-image
 
 """
 This script takes as input a multi-channel image and computes ROIs within that image
@@ -138,76 +139,7 @@ def checkPixShape(pix_shape):
             return False
     return True
     
-def normImageData(image_data):
-    max = image_data.max()
-    if max > 65535.0:
-        return image_data/max
-    elif max > 255.0:
-        return image_data/65535.0
-    elif max > 1.0:
-        return image_data/255.0
-    else:
-        return image_data/max
-        
-def findHistCutoff(h, p):
-    totalPixels=0.0
-    ca=h[0]
-    cv=h[1]
-    for c in ca:
-        totalPixels += c
-    th=totalPixels*p
-    i=0
-    cutOffPixels=0.0
-    for c in ca:
-        if cutOffPixels >= th:
-            return cv[i]
-        cutOffPixels += c
-        i+=1
-    return cv[i-1]        
-    
-def applyImageCutoff(nda, cv):
-    for idx, v in np.ndenumerate(nda):
-        if (v>cv):
-            nda[idx]=cv
-            
-def findCutoffAvg(nda, cv):
-    total = 0.0
-    for v in np.nditer(nda):
-        if (v>cv):
-            total += cv
-        else:
-            total += v
-    avg = total / nda.size
-    return avg
-    
-def normalizeChannel(bval, nda):
-    for idx, v in np.ndenumerate(nda):
-        n = nda[idx] / bval
-        if n < 1.0:
-            n=1.0
-        l = math.log(n)
-        if (l>5.0):
-            l=5.0
-        nda[idx]=l
-    min=nda.min()
-    max=nda.max()
-    zeroFlag=False
-    if min==max:
-        nda=0.0
-    else:
-        s = (max-min)
-        for idx, v in np.ndenumerate(nda):
-            n = (v-min)/s
-            nda[idx]=n
 
-def computeNormedImage(imageBucket, imageKey, flatfieldBucket, flatfieldKey):
-    fileObject = s3c.get_object(Bucket=imageBucket, Key=imageKey)
-    file_stream = fileObject['Body']
-    im = Image.open(file_stream)
-    input_data = np.array(im)
-    if len(input_data.shape)==2:
-        input_data = np.expand_dims(input_data, axis=0)
-    return normImageData(input_data)
     
 def findCentersFromLabels(labels):
     centers=[]
