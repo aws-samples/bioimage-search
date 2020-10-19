@@ -7,11 +7,7 @@ import numpy as np
 from skimage.exposure import histogram
 import sys
 
-# Cloud9
-if os.path.isdir('/home/ec2-user/environment'):
-    sys.path.insert(0, "../../../common")
-
-import bbbc021common as bb
+import bioimageimage as bi
 
 def handler(event, context):
     s3c = boto3.client('s3')
@@ -60,7 +56,7 @@ def handler(event, context):
             input_shape.append(pix.shape)
             input_arr.append(pix)
 
-        if not bb.checkPixShape(input_shape):
+        if not bi.checkPixShape(input_shape):
             return {
                 'success' : "False",
                 'errorMsg' : "input channel dimensions do not match"
@@ -69,17 +65,17 @@ def handler(event, context):
         input_data = np.array(input_arr)
         
     print("input_data shape=", input_data.shape)
-    input_data = bb.normImageData(input_data)
+    input_data = bi.normImageData(input_data)
     
     for c in range(input_data.shape[0]):
         channelData = input_data[c]
         h1 = histogram(channelData, 100)
-        bcut = bb.findHistCutoff(h1, 0.20)
-        bavg = bb.findCutoffAvg(channelData, bcut)
-        bb.normalizeChannel(bavg, channelData)
+        bcut = bi.findHistCutoff(h1, 0.20)
+        bavg = bi.findCutoffAvg(channelData, bcut)
+        bi.normalizeChannel(bavg, channelData)
         
-    ca = bb.getColors(input_data.shape[0])
-    mip = bb.calcMip(input_data, ca)
+    ca = bi.getColors(input_data.shape[0])
+    mip = bi.calcMip(input_data, ca)
     img=Image.fromarray(mip)
 
     output_bucket = event['output_bucket']

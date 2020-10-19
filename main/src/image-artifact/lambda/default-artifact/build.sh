@@ -1,7 +1,7 @@
 # Build script for default-artifact lambda
 mkdir -p build
 cp default-artifact.py ./build
-cp ../../../common/bioimage-image.py ./build
+cp ../../../common/bioimageimage.py ./build
 cd build
 python3.8 -m venv venv
 source venv/bin/activate

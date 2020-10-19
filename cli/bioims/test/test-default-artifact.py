@@ -27,6 +27,6 @@ artifact_keys = [ "test-medium.png", "test-thumbnail.png" ]
 
 artifact_sizes = [ 1000, 200 ]
 
-r = imageArtifactClient.generateDefaultArtifacts("bioimagesearchbbbc021stack-bbbc021bucket544c3e64-1t2bv8cktyrtq", input_key_list, "bioimage-search-output", artifact_keys, artifact_sizes)
+r = imageArtifactClient.generateDefaultArtifacts("bioimagesearchbbbc021stack-bbbc021bucket544c3e64-10ecnwo51127", input_key_list, "bioimage-search-output", artifact_keys, artifact_sizes)
 print(r)
 

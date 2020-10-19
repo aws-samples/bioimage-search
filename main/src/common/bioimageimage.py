@@ -115,6 +115,12 @@ def getColors(n):
             i=99
         ca.append(colors[i])
     return ca
+    
+def checkPixShape(pix_shape):
+    for d in pix_shape:
+        if d != pix_shape[0]:
+            return False
+    return True
 
 def normImageData(image_data):
     max = image_data.max()

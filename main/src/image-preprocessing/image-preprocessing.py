@@ -17,7 +17,7 @@ from skimage.filters import threshold_otsu
 from skimage.morphology import binary_opening
 from skimage.morphology import label
 from skimage.exposure import histogram
-import bioimage-image
+import bioimageimage as bi
 
 """
 This script takes as input a multi-channel image and computes ROIs within that image
@@ -133,14 +133,6 @@ def getManifestFromS3():
     text = fileObject['Body'].read().decode('utf-8')
     return json.loads(text)
     
-def checkPixShape(pix_shape):
-    for d in pix_shape:
-        if d != pix_shape[0]:
-            return False
-    return True
-    
-
-    
 def findCentersFromLabels(labels):
     centers=[]
     maxLabel=labels.max()
@@ -201,7 +193,7 @@ for image in images:
     segment_index = 0
     i=0
     for inputChannel in inputChannels:
-        normedImage = computeNormedImage(
+        normedImage = bi.computeNormedImage(
             inputChannelBucket,
             inputChannel['imageKey'],
             inputFlatfieldBucket,
@@ -211,15 +203,15 @@ for image in images:
         if inputChannel['name']==segmentationChannelName:
             segment_index=i
         i+=1
-    if not checkPixShape(pix_shape):
+    if not bi.checkPixShape(pix_shape):
         sys.exit("Error: image shapes of channels do not match")
     input_data = np.array(input_arr)
     for c in range(input_data.shape[0]):
         channelData = input_data[c]
         h1 = histogram(channelData, 100)
-        bcut = findHistCutoff(h1, 0.20)
-        bavg = findCutoffAvg(channelData, bcut)
-        normalizeChannel(bavg, channelData)
+        bcut = bi.findHistCutoff(h1, 0.20)
+        bavg = bi.findCutoffAvg(channelData, bcut)
+        bi.normalizeChannel(bavg, channelData)
     centers = computeCellCenters(input_data[segment_index])
     roiDimArr = []
     roiDimArr.append(len(centers))
