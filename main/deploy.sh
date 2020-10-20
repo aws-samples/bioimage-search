@@ -12,6 +12,8 @@ source ./scripts/source-nvm.sh
 npm run build
 cd src/message; npm install; cd ../..
 cd src/image-artifact/lambda/default-artifact; ./build.sh; cd ../../../..
+cd src/plate-preprocessing; ./build.sh; cd ../..
+cd src/image-preprocessing; ./build.sh; cd ../..
 cdk bootstrap
 cdk deploy BioimageSearchBaseStack --require-approval never
 cdk deploy BioimageSearchBatchSetupStack --require-approval never

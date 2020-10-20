@@ -35,7 +35,7 @@ With this in mind, for a given Plate prefix, it generates the following manifest
                 {
                     name: xxx,
                     imageKey: xxx,
-                    flatfieldKey: xxx
+                    flatFieldKey: xxx
                 }
             ]
         }
@@ -75,19 +75,19 @@ for dapiFile in dapiFiles:
     dapiDict = {}
     dapiDict['name'] = 'dapi'
     dapiDict['imageKey'] = dapiFile
-    dapiDict['flatfieldKey'] = 'FlatField/' + plateName + '-dapi-flatfield.tif'
+    dapiDict['flatFieldKey'] = 'FlatField/' + plateName + '-dapi-flatfield.tif'
     inputChannels.append(dapiDict)
     
     tubulinDict = {}
     tubulinDict['name'] = 'tubulin'
     tubulinDict['imageKey'] = tubulinFile
-    tubulinDict['flatfieldKey'] = 'FlatField/' + plateName + '-tubulin-flatfield.tif'
+    tubulinDict['flatFieldKey'] = 'FlatField/' + plateName + '-tubulin-flatfield.tif'
     inputChannels.append(tubulinDict)
     
     actinDict = {}
     actinDict['name'] = 'actin'
     actinDict['imageKey'] = actinFile
-    actinDict['flatfieldKey'] = 'FlatField/' + plateName + '-actin-flatfield.tif'
+    actinDict['flatFieldKey'] = 'FlatField/' + plateName + '-actin-flatfield.tif'
     inputChannels.append(actinDict)    
 
     imageDict["inputChannels"] = inputChannels

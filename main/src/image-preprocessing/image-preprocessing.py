@@ -3,7 +3,6 @@ import traceback
 import boto3
 import numpy as np
 import io
-from pathlib import Path
 import argparse
 from PIL import Image
 import math
@@ -74,7 +73,7 @@ Input example:
                 {
                     name: xxx,
                     imageKey: xxx,
-                    flatfieldKey: xxx
+                    flatFieldKey: xxx
                 }
             ]
         }
@@ -116,18 +115,6 @@ parser.add_argument('--minvoxels', type=int, help='Exclude objects smaller than 
 args = parser.parse_args()
 s3c = boto3.client('s3')
 
-def setupTmpDir():
-    tmpDir="/tmp"
-    ec2homePath=Path("/home/ec2-user")
-    if ec2homePath.exists():
-        tmpDir="/home/ec2-user/tmp"
-    tmpPath=Path(tmpDir)
-    if not tmpPath.exists():
-        tmpPath.mkdir()
-    return tmpDir
-    
-tmpDir = setupTmpDir()
-
 def getManifestFromS3():
     fileObject = s3c.get_object(Bucket=args.imageManifestBucket, Key=args.imageManifestKey)
     text = fileObject['Body'].read().decode('utf-8')
@@ -157,15 +144,6 @@ def findCentersFromLabels(labels):
             centers.append(ca)
     return centers    
 
-def writeNumpyToS3(data_array, bucketName, keyPath):
-    keySuffix=keyPath.split('/')[-1]
-    fn = tmpDir + '/' + keySuffix
-    np.save(fn, data_array)
-    with open(fn, 'rb') as fdata:
-        s3c.upload_fileobj(fdata, bucketName, keyPath)
-    fnPath=Path(fn)
-    fnPath.unlink()
-    
 def computeCellCenters(pixels):
     otsuThreshold = threshold_otsu(pixels)
     binaryPixels = pixels >= otsuThreshold
@@ -177,12 +155,15 @@ def computeCellCenters(pixels):
     return centers
         
 manifest = getManifestFromS3()
-
 images = manifest['images']
-
 roisize = args.roisize
 
+flatFieldImageDict = {}
+
+# For each image we normalize, find centers, and extract ROI data
 for image in images:
+
+    # Initialize vars
     normedImages = {}
     inputChannelBucket = image['inputChannelBucket']
     inputFlatfieldBucket = image['inputFlatfieldBucket']
@@ -192,27 +173,42 @@ for image in images:
     input_arr = []
     segment_index = 0
     i=0
+    
+    # For each channel, do an initial linear normalizations, and find the segmentation channel index
+    flatFieldImages = []
     for inputChannel in inputChannels:
         normedImage = bi.computeNormedImage(
             inputChannelBucket,
-            inputChannel['imageKey'],
-            inputFlatfieldBucket,
-            inputChannel['flatfieldKey'])
+            inputChannel['imageKey'])
         pix_shape.append(normedImage.shape)
         input_arr.append(normedImage)
         if inputChannel['name']==segmentationChannelName:
             segment_index=i
+        flatFieldKey = inputChannel['flatFieldKey']
+        if flatFieldImageDict[flatFieldKey]:
+            flatFieldImages.append(flatFieldImageDict[flatFieldKey])
+        else:
+            flatFieldImage = bi.getImageFromS3(inputFlatfieldBucket, flatFieldKey)
+            flatFieldImageDict[flatFieldKey] = flatFieldImage
+            flatFieldImages.append(flatFieldImage)
         i+=1
     if not bi.checkPixShape(pix_shape):
         sys.exit("Error: image shapes of channels do not match")
+        
+    # For each channel, independently do logarithmic normalization using its flatfield image
     input_data = np.array(input_arr)
     for c in range(input_data.shape[0]):
+        flatFieldImage = flatFieldImages[c]
         channelData = input_data[c]
         h1 = histogram(channelData, 100)
-        bcut = bi.findHistCutoff(h1, 0.20)
-        bavg = bi.findCutoffAvg(channelData, bcut)
-        bi.normalizeChannel(bavg, channelData)
+        pc2 = bi.findHistCutoff(h1, 0.99)
+        bi.applyImageCutoff(channelData, pc2)
+        bi.normalizeChannel(flatFieldImage, channelData)
+
+    # Find ROIs
     centers = computeCellCenters(input_data[segment_index])
+    
+    # Construct shape tuple to create np array for roi data
     roiDimArr = []
     roiDimArr.append(len(centers))
     roiDimArr.append(len(inputChannels))
@@ -223,6 +219,8 @@ for image in images:
         roiDimArr.append(dl)
     roiDimTuple = tuple(roiDimArr)
     roiData = np.zeros(roiDimTuple, dtype=float)
+    
+    # Add ROI centers, but validate and modify if needed for dimension boundary
     roiCoordinates = []
     r2 = roisize/2
     count=0
@@ -273,8 +271,12 @@ for image in images:
             roiData[count][c]=input_data[c][atu]
         roiCoordinates.append(rc)
         count+=1
+        
+    # Write the ROI metadata
     roiKey = image['outputKeyPrefix'] + '.npy'
-    writeNumpyToS3(roiData, image['outputBucket'], roiKey)
+    bi.writeNumpyToS3(roiData, image['outputBucket'], roiKey)
+    
+    # Construct and write the ROI json file
     roiCoordInfo = {}
     roiCoordInfo['sourceImageBucket'] = inputChannelBucket
     sourceChannelKeys = {}

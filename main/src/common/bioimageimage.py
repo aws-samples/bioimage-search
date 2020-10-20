@@ -2,7 +2,8 @@ import numpy as np
 import math 
 import boto3
 from PIL import Image
-
+from pathlib import Path
+import shortuuid as su
 
 # seaborn color_palette("husl", 100)
 colors =[(0.9677975592919913, 0.44127456009157356, 0.5358103155058701),
@@ -166,7 +167,7 @@ def findCutoffAvg(nda, cv):
     
 def normalizeChannel(bval, nda):
     for idx, v in np.ndenumerate(nda):
-        n = nda[idx] / bval
+        n = nda[idx] / bval[idx]
         if n < 1.0:
             n=1.0
         l = math.log(n)
@@ -183,12 +184,39 @@ def normalizeChannel(bval, nda):
         for idx, v in np.ndenumerate(nda):
             n = (v-min)/s
             nda[idx]=n
-
-def computeNormedImage(imageBucket, imageKey, flatfieldBucket, flatfieldKey):
+            
+def getImageFromS3(bucket, key):
     s3c = boto3.client('s3')
-    fileObject = s3c.get_object(Bucket=imageBucket, Key=imageKey)
+    fileObject = s3c.get_object(Bucket=bucket, Key=key)
     file_stream = fileObject['Body']
     im = Image.open(file_stream)
+    return im
+    
+def getTmpDir():
+    tmpDir="/tmp"
+    ec2homePath=Path("/home/ec2-user")
+    if ec2homePath.exists():
+        tmpDir="/home/ec2-user/tmp"
+    t2 = tmpDir + '/' + su.uuid()    
+    tmpPath=Path(t2)
+    tmpPath.mkdir()
+    return t2
+
+def writeNumpyToS3(data_array, bucketName, keyPath):
+    tmpDir = getTmpDir()
+    s3c = boto3.client('s3')
+    keySuffix=keyPath.split('/')[-1]
+    fn = tmpDir + '/' + keySuffix
+    np.save(fn, data_array)
+    with open(fn, 'rb') as fdata:
+        s3c.upload_fileobj(fdata, bucketName, keyPath)
+    fnPath=Path(fn)
+    fnPath.unlink()
+    tPath=Path(tmpDir)
+    tPath.rmdir()
+    
+def computeNormedImage(imageBucket, imageKey):
+    im = getImageFromS3(imageBucket, imageKey)
     input_data = np.array(im)
     if len(input_data.shape)==2:
         input_data = np.expand_dims(input_data, axis=0)

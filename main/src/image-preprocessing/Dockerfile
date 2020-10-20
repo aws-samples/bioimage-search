@@ -10,6 +10,7 @@ RUN apt-get update && \
     pip3 install scikit-image && \
     pip3 install shortuuid
 
+COPY ./build/bioimageimage.py /
 COPY image-preprocessing.py /
 
 ENTRYPOINT ["python3", "/image-preprocessing.py"]

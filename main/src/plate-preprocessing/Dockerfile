@@ -9,6 +9,7 @@ RUN apt-get update && \
     pip3 install scikit-image && \
     pip3 install shortuuid
 
+COPY ./build/bioimageimage.py /
 COPY plate-preprocessing.py /
 
 ENTRYPOINT ["python3", "/plate-preprocessing.py"]

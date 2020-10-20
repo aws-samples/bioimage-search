@@ -13,6 +13,7 @@ import math
 from pathlib import Path
 from io import StringIO, BytesIO
 import shortuuid as su
+import bioimageimage as bi
 
 # This script computes the flat-field background image from a set of source images.
 # The typical use case is a multiwell plate from which one or more images where taken
@@ -30,16 +31,6 @@ args = parser.parse_args()
 
 s3c = boto3.client('s3')
 
-tmpDir="/tmp"
-
-ec2homePath=Path("/home/ec2-user")
-if ec2homePath.exists():
-    tmpDir="/home/ec2-user/tmp"
-
-tmpPath=Path(tmpDir)
-if not tmpPath.exists():
-    tmpPath.mkdir()
-
 def getImageListFromS3():
     fileObject = s3c.get_object(Bucket=args.imageListBucket, Key=args.imageListKey)
     text = fileObject['Body'].read().decode('utf-8')
@@ -50,27 +41,6 @@ def getImageListFromS3():
         objectList.append((bucket, key))        
     return objectList
     
-def findHistCutoff(h, p):
-    totalPixels=0.0
-    ca=h[0]
-    cv=h[1]
-    for c in ca:
-        totalPixels += c
-    th=totalPixels*p
-    i=0
-    cutOffPixels=0.0
-    for c in ca:
-        if cutOffPixels >= th:
-            return cv[i]
-        cutOffPixels += c
-        i+=1
-    return cv[i-1]
-    
-def applyImageCutoff(nda, cv):
-    for idx, v in np.ndenumerate(nda):
-        if (v>cv):
-            nda[idx]=cv
-            
 imageObjectList = getImageListFromS3()
 
 plateImgArr=[]
@@ -99,13 +69,14 @@ for ni in range(npAllImages.shape[0]):
 
 h1 = histogram(npAvg, 100)
 
-pcut = findHistCutoff(h1, 0.30)
+pcut = bi.findHistCutoff(h1, 0.30)
 
-applyImageCutoff(npAvg, pcut)
+bi.applyImageCutoff(npAvg, pcut)
 
 g1 = gaussian(npAvg, 50)
 
 image_type = args.flatFieldKey[-3:]
+tmpDir = bi.getTmpDir()
 fn = tmpDir + '/' + su.uuid() + '.' + image_type
 
 if image_type.lower() == 'npy':
@@ -124,3 +95,5 @@ else:
         
 fnPath = Path(fn)
 fnPath.unlink()
+tPath = Path(tmpDir)
+tPath.rmdir()

@@ -66,13 +66,15 @@ def handler(event, context):
         
     print("input_data shape=", input_data.shape)
     input_data = bi.normImageData(input_data)
-    
+
+    bavgFill = np.zeros(shape=input_data[0].shape, dtype=input_data.dtype)
     for c in range(input_data.shape[0]):
         channelData = input_data[c]
         h1 = histogram(channelData, 100)
         bcut = bi.findHistCutoff(h1, 0.20)
         bavg = bi.findCutoffAvg(channelData, bcut)
-        bi.normalizeChannel(bavg, channelData)
+        bavgFill.fill(bavg)
+        bi.normalizeChannel(bavgFill, channelData)
         
     ca = bi.getColors(input_data.shape[0])
     mip = bi.calcMip(input_data, ca)
