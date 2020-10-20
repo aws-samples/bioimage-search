@@ -158,7 +158,7 @@ manifest = getManifestFromS3()
 images = manifest['images']
 roisize = args.roisize
 
-flatFieldImageDict = {}
+flatFieldDataDict = {}
 
 # For each image we normalize, find centers, and extract ROI data
 for image in images:
@@ -175,7 +175,7 @@ for image in images:
     i=0
     
     # For each channel, do an initial linear normalizations, and find the segmentation channel index
-    flatFieldImages = []
+    flatFieldData = []
     for inputChannel in inputChannels:
         normedImage = bi.computeNormedImage(
             inputChannelBucket,
@@ -185,12 +185,15 @@ for image in images:
         if inputChannel['name']==segmentationChannelName:
             segment_index=i
         flatFieldKey = inputChannel['flatFieldKey']
-        if flatFieldImageDict[flatFieldKey]:
-            flatFieldImages.append(flatFieldImageDict[flatFieldKey])
+        if flatFieldKey in flatFieldDataDict:
+            flatFieldData.append(flatFieldDataDict[flatFieldKey])
         else:
             flatFieldImage = bi.getImageFromS3(inputFlatfieldBucket, flatFieldKey)
-            flatFieldImageDict[flatFieldKey] = flatFieldImage
-            flatFieldImages.append(flatFieldImage)
+            flatFieldData1 = np.array(flatFieldImage)            
+            if len(flatFieldData1.shape)==2:
+                flatFieldData1 = np.expand_dims(flatFieldData1, axis=0)
+            flatFieldDataDict[flatFieldKey] = flatFieldData1
+            flatFieldData.append(flatFieldData1)
         i+=1
     if not bi.checkPixShape(pix_shape):
         sys.exit("Error: image shapes of channels do not match")
@@ -198,7 +201,7 @@ for image in images:
     # For each channel, independently do logarithmic normalization using its flatfield image
     input_data = np.array(input_arr)
     for c in range(input_data.shape[0]):
-        flatFieldImage = flatFieldImages[c]
+        flatFieldImage = flatFieldData[c]
         channelData = input_data[c]
         h1 = histogram(channelData, 100)
         pc2 = bi.findHistCutoff(h1, 0.99)
