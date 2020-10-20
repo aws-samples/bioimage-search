@@ -188,10 +188,11 @@ for image in images:
         if flatFieldKey in flatFieldDataDict:
             flatFieldData.append(flatFieldDataDict[flatFieldKey])
         else:
-            flatFieldImage = bi.getImageFromS3(inputFlatfieldBucket, flatFieldKey)
-            flatFieldData1 = np.array(flatFieldImage)            
+            flatFieldData1 = bi.getNumpyArrayFromS3(inputFlatfieldBucket, flatFieldKey)
             if len(flatFieldData1.shape)==2:
                 flatFieldData1 = np.expand_dims(flatFieldData1, axis=0)
+            fmin = flatFieldData1.min()
+            fmax = flatFieldData1.max()
             flatFieldDataDict[flatFieldKey] = flatFieldData1
             flatFieldData.append(flatFieldData1)
         i+=1
@@ -210,7 +211,7 @@ for image in images:
 
     # Find ROIs
     centers = computeCellCenters(input_data[segment_index])
-    
+
     # Construct shape tuple to create np array for roi data
     roiDimArr = []
     roiDimArr.append(len(centers))
@@ -275,9 +276,9 @@ for image in images:
         roiCoordinates.append(rc)
         count+=1
         
-    # Write the ROI metadata
+    # Write the ROI image data
     roiKey = image['outputKeyPrefix'] + '.npy'
-    bi.writeNumpyToS3(roiData, image['outputBucket'], roiKey)
+    bi.writeNumpyToS3(roiData[:count], image['outputBucket'], roiKey)
     
     # Construct and write the ROI json file
     roiCoordInfo = {}

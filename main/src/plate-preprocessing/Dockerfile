@@ -4,6 +4,7 @@ RUN apt-get update && \
     apt-get install -y \
     python3-pip && \
     pip3 install boto3 && \
+    pip3 install s3fs && \
     pip3 install pandas && \
     pip3 install pillow && \
     pip3 install scikit-image && \

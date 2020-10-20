@@ -12,6 +12,7 @@ s3c = boto3.client('s3')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--plate', type=str, help='bbbc-021 test plate')
+parser.add_argument('--extension', type=str, help='either tif or npy')
 args = parser.parse_args()
 
 PYTHON = 'python3.8'
@@ -52,7 +53,7 @@ for channel in channelList:
     with open(imageListLocalFile, 'rb') as fdata:
         s3c.upload_fileobj(fdata, TEST_BUCKET, testImageListKey)
     print("Uploaded Bucket=", TEST_BUCKET, " Key=", testImageListKey)
-    flatFieldKey = 'FlatField/' + imageFilePrefix + '.tif'
+    flatFieldKey = 'FlatField/' + imageFilePrefix + '.' + args.extension
     platePreprocessingClient.preprocessPlate(TEST_BUCKET, testImageListKey, TEST_BUCKET, flatFieldKey, platePreprocessingClient.getBatchOnDemandQueueName())
     print("Computing Flat-Field Image Bucket=", TEST_BUCKET, " Key=", flatFieldKey)
         

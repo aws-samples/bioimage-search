@@ -75,19 +75,19 @@ for dapiFile in dapiFiles:
     dapiDict = {}
     dapiDict['name'] = 'dapi'
     dapiDict['imageKey'] = dapiFile
-    dapiDict['flatFieldKey'] = 'FlatField/' + plateName + '-dapi-flatfield.tif'
+    dapiDict['flatFieldKey'] = 'FlatField/' + plateName + '-dapi-flatfield.npy'
     inputChannels.append(dapiDict)
     
     tubulinDict = {}
     tubulinDict['name'] = 'tubulin'
     tubulinDict['imageKey'] = tubulinFile
-    tubulinDict['flatFieldKey'] = 'FlatField/' + plateName + '-tubulin-flatfield.tif'
+    tubulinDict['flatFieldKey'] = 'FlatField/' + plateName + '-tubulin-flatfield.npy'
     inputChannels.append(tubulinDict)
     
     actinDict = {}
     actinDict['name'] = 'actin'
     actinDict['imageKey'] = actinFile
-    actinDict['flatFieldKey'] = 'FlatField/' + plateName + '-actin-flatfield.tif'
+    actinDict['flatFieldKey'] = 'FlatField/' + plateName + '-actin-flatfield.npy'
     inputChannels.append(actinDict)    
 
     imageDict["inputChannels"] = inputChannels
