@@ -5,6 +5,7 @@ import s3fs
 from PIL import Image
 from pathlib import Path
 import shortuuid as su
+import json
 
 # seaborn color_palette("husl", 100)
 colors =[(0.9677975592919913, 0.44127456009157356, 0.5358103155058701),
@@ -109,6 +110,7 @@ colors =[(0.9677975592919913, 0.44127456009157356, 0.5358103155058701),
  (0.9673068486894055, 0.43760373463479557, 0.5661632485543318)]
  
 s3f = s3fs.S3FileSystem(anon=False)
+s3c = s3c = boto3.client('s3')
  
 def getColors(n):
     cd = 100.0/n
@@ -257,3 +259,8 @@ def calcMip(image_data, color_arr):
         mip[h0][w0][2]=cav[2]*v*255.99
         
     return mip
+    
+def loadJsonObjectFromS3(key, bucket):
+    fileObject = s3c.get_object(Bucket=bucket, Key=key)
+    text = fileObject['Body'].read().decode('utf-8')
+    return json.loads(text)

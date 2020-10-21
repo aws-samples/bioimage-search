@@ -116,9 +116,7 @@ args = parser.parse_args()
 s3c = boto3.client('s3')
 
 def getManifestFromS3():
-    fileObject = s3c.get_object(Bucket=args.imageManifestBucket, Key=args.imageManifestKey)
-    text = fileObject['Body'].read().decode('utf-8')
-    return json.loads(text)
+    return bi.loadJsonObjectFromS3(args.imageManifestKey, args.imageManifestBucket)
     
 def findCentersFromLabels(labels):
     centers=[]
