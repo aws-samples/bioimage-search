@@ -66,7 +66,7 @@ for dapiFile in dapiFiles:
     dapiFileName = dapiFile[(len(plateName)+1):]
     dapiFilePrefix = dapiFileName[:-4]
     imageDict["outputBucket"]=args.outputBucket
-    imageDict["outputKeyPrefix"] = 'ROI/' + plateName + '/' + dapiFilePrefix
+    imageDict["outputKeyPrefix"] = 'ROI/' + plateName + '/' + dapiFilePrefix + '-roi'
     imageDict["inputFlatfieldBucket"] = args.outputBucket
     imageDict["inputChannelBucket"] = args.bbbc021Bucket
     imageDict["segmentationChannelName"] = 'dapi'
