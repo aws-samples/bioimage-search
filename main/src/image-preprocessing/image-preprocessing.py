@@ -132,14 +132,16 @@ def findCentersFromLabels(labels):
             labelPositions[ix][v] += iv
             ix += 1
     for lp in range(maxLabel+1):
-        if (labelCounts[lp]>=args.minvoxels):
-            ca = []
-            ca.append(lp)
-            ca.append(labelCounts[lp])
-            for d in range(len(labels.shape)):
-                na = labelPositions[d]
-                ca.append(na[lp]/labelCounts[lp])
-            centers.append(ca)
+        # Skip background
+        if (lp!=0):
+            if (labelCounts[lp]>=args.minvoxels):
+                ca = []
+                ca.append(lp)
+                ca.append(labelCounts[lp])
+                for d in range(len(labels.shape)):
+                    na = labelPositions[d]
+                    ca.append(na[lp]/labelCounts[lp])
+                centers.append(ca)
     return centers    
 
 def computeCellCenters(pixels):
