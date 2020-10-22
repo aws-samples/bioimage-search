@@ -143,6 +143,8 @@ def findCentersFromLabels(labels):
     return centers    
 
 def computeCellCenters(pixels):
+    if pixels.min()==pixels.max():
+        return []
     otsuThreshold = threshold_otsu(pixels)
     binaryPixels = pixels >= otsuThreshold
     ed1=binary_opening(binaryPixels)
