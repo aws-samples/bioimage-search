@@ -7,6 +7,7 @@ import s3assets = require("@aws-cdk/aws-s3-assets");
 import fs = require("fs");
 
 export class BaseStack extends cdk.Stack {
+  public bioimageSearchRole: iam.Role;
   public bioimageSearchAccessPolicy: iam.Policy;
   public externalResourcesPolicy: iam.Policy;
   public testBucket: s3.Bucket;
@@ -14,6 +15,12 @@ export class BaseStack extends cdk.Stack {
 
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
+    
+    const bioimageSearchUser = new iam.User(this, "bioimageSearchUser");
+    
+    this.bioimageSearchRole = new iam.Role(this, "bioimageSearchRole", {
+      assumedBy: bioimageSearchUser 
+    })
 
     this.bioimageSearchAccessPolicy = new iam.Policy(this, "biomageSearchAccessPolicy");
     
@@ -47,8 +54,6 @@ export class BaseStack extends cdk.Stack {
     this.bioimageSearchAccessPolicy.addStatements(cloudFormationPolicyStatement)
     
     this.bioimageSearchAccessPolicy.addStatements(testBucketPolicyStatement)
-    
-    const bioimageSearchUser = new iam.User(this, "bioimageSearchUser");
     
     this.bioimageSearchAccessPolicy.attachToUser(bioimageSearchUser)
     

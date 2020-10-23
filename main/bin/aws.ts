@@ -11,6 +11,7 @@ import { ImageArtifactStack } from '../cdk/image-artifact-stack';
 import { ResourcePermissionsStack } from '../cdk/resource-permissions-stack';
 import { PlatePreprocessingStack } from '../cdk/plate-preprocessing-stack';
 import { ImagePreprocessingStack } from '../cdk/image-preprocessing-stack';
+import { EmbeddingConfigurationStack } from '../cdk/embedding-configuration-stack';
 
 const app = new cdk.App();
 
@@ -50,4 +51,7 @@ const imagePreprocessingStack = new ImagePreprocessingStack(app, 'BioimageSearch
     bioimageSearchAccessPolicy: baseStack.bioimageSearchAccessPolicy,
 })
 
-
+const embeddingConfigurationStack = new EmbeddingConfigurationStack(app, 'BioimageSearchEmbeddingConfigurationStack', {
+    bioimageSearchAccessPolicy: baseStack.bioimageSearchAccessPolicy,
+    bioimageSearchRole: baseStack.bioimageSearchRole    
+})
