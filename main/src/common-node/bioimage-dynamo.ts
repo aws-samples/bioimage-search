@@ -32,6 +32,21 @@ const getAllScanData = async (db: any, params: any) => {
   return rows;
 };
 
+async function getPartitionRows(db: any, partitionKey: any, key: any, table: any) {
+  const keyConditionExpression = partitionKey + " = :" + partitionKey;
+  const expressionAttributeValues =
+    '":' + partitionKey + '" : "' + key + '"';
+  const params = {
+    TableName: table,
+    KeyConditionExpression: keyConditionExpression,
+    ExpressionAttributeValues: JSON.parse(
+      "{" + expressionAttributeValues + "}"
+    ),
+  };
+  const result: any = await getAllQueryData(db, params);
+  return result;
+}
+
 async function deleteRows(
   db: any,
   partition_key: any,
