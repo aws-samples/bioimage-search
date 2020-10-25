@@ -1,6 +1,7 @@
 const AWS = require("aws-sdk");
 const { v4: uuidv4 } = require('uuid')
 const db = new AWS.DynamoDB.DocumentClient();
+const dy = require("bioimage-dynamo")
 const TABLE_NAME = process.env.TABLE_NAME || "";
 const PARTITION_KEY = process.env.PARTITION_KEY || "";
 const SORT_KEY = process.env.SORT_KEY || "";
@@ -44,64 +45,6 @@ deleteMessage(messageId):
   }
 
 */
-
-//////////////////////////////////////////////
-//
-// COMMON
-//
-//
-//////////////////////////////////////////////
-
-const getAllQueryData = async (params: any) => {
-  const _getAllData = async (params: any, startKey: any) => {
-    if (startKey) {
-      params.ExclusiveStartKey = startKey;
-    }
-    return db.query(params).promise();
-  };
-  let lastEvaluatedKey = null;
-  let rows: any[] = [];
-  do {
-    const result: any = await _getAllData(params, lastEvaluatedKey);
-    rows = rows.concat(result.Items);
-    lastEvaluatedKey = result.LastEvaluatedKey;
-  } while (lastEvaluatedKey);
-  return rows;
-};
-
-const getAllScanData = async (params: any) => {
-  const _getAllData = async (params: any, startKey: any) => {
-    if (startKey) {
-      params.ExclusiveStartKey = startKey;
-    }
-    return db.scan(params).promise();
-  };
-  let lastEvaluatedKey = null;
-  let rows: any[] = [];
-  do {
-    const result: any = await _getAllData(params, lastEvaluatedKey);
-    rows = rows.concat(result.Items);
-    lastEvaluatedKey = result.LastEvaluatedKey;
-  } while (lastEvaluatedKey);
-  return rows;
-};
-
-async function deleteRows(rows: any[]) {
-  let delarr: any[] = [];
-  for (let r of rows) {
-    const pk = r[PARTITION_KEY];
-    const sk = r[SORT_KEY];
-    const dr = {
-      DeleteRequest: { Key: { [PARTITION_KEY]: pk, [SORT_KEY]: sk } },
-    };
-    delarr.push(dr);
-  }
-  const requestItems = { [TABLE_NAME]: delarr };
-  const params = { RequestItems: requestItems };
-  return db.batchWrite(params).promise();
-}
-
-//////////////////////////////////////////////
 
 async function getMessage(messageId: any) {
   const params = {
@@ -204,7 +147,7 @@ async function listMessage(messageId: any) {
       "{" + expressionAttributeValues + "}"
     ),
   };
-  const result: any = await getAllQueryData(params);
+  const result: any = await dy.getAllQueryData(params);
   return result;
 }
 
@@ -218,7 +161,7 @@ async function deleteMessage(messageId: any) {
       if (j > rows.length) {
         j = rows.length;
       }
-      p.push(deleteRows(rows.slice(i, j)));
+      p.push(dy.deleteRows(rows.slice(i, j)));
       i += j - i;
     }
     await Promise.all(p);

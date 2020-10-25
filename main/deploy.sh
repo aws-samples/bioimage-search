@@ -14,6 +14,9 @@ cd src/message; npm install; cd ../..
 cd src/image-artifact/lambda/default-artifact; ./build.sh; cd ../../../..
 cd src/plate-preprocessing; ./build.sh; cd ../..
 cd src/image-preprocessing; ./build.sh; cd ../..
+cd src/configuration; ./build.sh; cd ../..
+cd src/label; ./build.sh; cd ../..
+cd src/message; ./build.sh; cd ../..
 cd src/embedding-configuration; ./build.sh; cd ../..
 cdk bootstrap
 cdk deploy BioimageSearchBaseStack --require-approval never
