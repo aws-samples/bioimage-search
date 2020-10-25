@@ -50,6 +50,9 @@ class BioimageSearchResources:
     def getPlatePreprocessingStack(self):
         return self.getStackByName('BioimageSearchPlatePreprocessingStack')
         
+    def getEmbeddingConfigurationStack(self):
+        return self.getStackByName('BioimageSearchEmbeddingConfigurationStack')
+        
 ##### FUNCTIONS
 
     def getStackOutputByPrefix(self, stack, prefix):
@@ -79,6 +82,9 @@ class BioimageSearchResources:
     def getDefaultArtifactLambdaArn(self):
         return self.getStackOutputByPrefix(self.getImageArtifactStack(), 'ExportsOutputFnGetAttdefaultArtifactFunction')
         
+    def getEmbeddingConfigurationLambdaArn(self):
+        return self.getStackOutputByPrefix(self.getConfigurationStack(), 'ExportsOutputFnGetAttembeddingConfigurationFunction')
+
 ##### BATCH QUEUE
 
     def getBatchOnDemandQueueName(self):
@@ -106,6 +112,8 @@ def client(serviceName):
         return ImageArtifactClient()
     elif serviceName == 'plate-preprocessing':
         return PlatePreprocessingClient()
+    elif serviceName == 'embedding-configuration':
+        return EmbeddingConfigurationClient()
     else:
         print('service type {} not recognized'.format(serviceName))
         return False
@@ -527,3 +535,37 @@ class PlatePreprocessingClient(BioimageSearchClient):
             }
         )
         print(response)
+
+#############################################
+#
+# EMBEDDING CONFIGURATION
+#
+#############################################
+
+class EmbeddingConfigurationClient(BioimageSearchClient):
+    def __init__(self):
+        super().__init__()
+
+    def getLambdaArn(self):
+        return self._resources.getEmbeddingConfigurationLambdaArn()
+        
+    def createEmbedding(self, embedding):
+        request = '{{ "method": "createEmbedding", "embedding": "{}" }}'.format(embedding)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self._resources.getEmbeddingConfigurationLambdaArn(),
+            InvocationType='Event',
+            Payload=payload)
+        return response['StatusCode']
+        
+    def deleteEmbedding(self, name):
+        request = '{{ "method": "deleteEmbedding", "name": "{}" }}'.format(name)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self._resources.getEmbeddingConfigurationLambdaArn(),
+            InvocationType='Event',
+            Payload=payload
+            )
+        return response['StatusCode']
