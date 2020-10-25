@@ -4,7 +4,7 @@ import iam = require("@aws-cdk/aws-iam");
 import cdk = require("@aws-cdk/core");
 
 export interface ConfigurationStackProps extends cdk.StackProps {
-  bioimageSearchAccessPolicy: iam.Policy;
+  bioimageSearchManagedPolicy: iam.ManagedPolicy;
 }
 
 export class ConfigurationStack extends cdk.Stack {
@@ -48,7 +48,7 @@ export class ConfigurationStack extends cdk.Stack {
       resources: [ configurationLambdaArn ]
     })
     
-    props.bioimageSearchAccessPolicy.addStatements(configurationLambdaPolicyStatement)
+    props.bioimageSearchManagedPolicy.addStatements(configurationLambdaPolicyStatement)
     
   }
 }

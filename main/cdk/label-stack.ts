@@ -4,7 +4,7 @@ import iam = require("@aws-cdk/aws-iam");
 import cdk = require("@aws-cdk/core");
 
 export interface LabelStackProps extends cdk.StackProps {
-  bioimageSearchAccessPolicy: iam.Policy;
+  bioimageSearchManagedPolicy: iam.ManagedPolicy;
 }
 
 export class LabelStack extends cdk.Stack {
@@ -48,7 +48,7 @@ export class LabelStack extends cdk.Stack {
       resources: [ labelLambdaArn ]
     })
     
-    props.bioimageSearchAccessPolicy.addStatements(labelLambdaPolicyStatement)
+    props.bioimageSearchManagedPolicy.addStatements(labelLambdaPolicyStatement)
     
   }
 }

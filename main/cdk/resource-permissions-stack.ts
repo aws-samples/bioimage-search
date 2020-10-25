@@ -4,7 +4,7 @@ import s3 = require("@aws-cdk/aws-s3");
 import crs = require("crypto-random-string")
 
 export interface ResourcePermissionsStackProps extends cdk.StackProps {
-  bioimageSearchAccessPolicy: iam.Policy,
+  bioimageSearchManagedPolicy: iam.ManagedPolicy,
   resourcePermissionsPolicy: iam.Policy
 }
 
@@ -12,18 +12,18 @@ export class ResourcePermissionsStack extends cdk.Stack {
   constructor(app: cdk.App, id: string, props: ResourcePermissionsStackProps) {
     super(app, id, props);
 
-    this.addBucketResourceReadOnly('bioimagesearchbbbc021stack-bbbc021bucket544c3e64-10ecnwo51127', props.bioimageSearchAccessPolicy);
+    this.addBucketResourceReadOnly('bioimagesearchbbbc021stack-bbbc021bucket544c3e64-10ecnwo51127', props.bioimageSearchManagedPolicy);
     this.addBucketResourceReadOnly('bioimagesearchbbbc021stack-bbbc021bucket544c3e64-10ecnwo51127', props.resourcePermissionsPolicy);
 
-    this.addBucketResourceFullPermissions('bioimage-search-input', props.bioimageSearchAccessPolicy);
+    this.addBucketResourceFullPermissions('bioimage-search-input', props.bioimageSearchManagedPolicy);
     this.addBucketResourceFullPermissions('bioimage-search-input', props.resourcePermissionsPolicy);
 
-    this.addBucketResourceFullPermissions('bioimage-search-output', props.bioimageSearchAccessPolicy);
+    this.addBucketResourceFullPermissions('bioimage-search-output', props.bioimageSearchManagedPolicy);
     this.addBucketResourceFullPermissions('bioimage-search-output', props.resourcePermissionsPolicy);
 
   }
   
-  addBucketResourceReadOnly(bucketname: string, policy: iam.Policy) {
+  addBucketResourceReadOnly(bucketname: string, policy: any) {
     const rs = crs({length: 10})
     const bucket = s3.Bucket.fromBucketName(this, bucketname+"-"+rs, bucketname);
     
@@ -39,7 +39,7 @@ export class ResourcePermissionsStack extends cdk.Stack {
     policy.addStatements(policyStatement);
   }
   
-  addBucketResourceFullPermissions(bucketname: string, policy: iam.Policy) {
+  addBucketResourceFullPermissions(bucketname: string, policy: any) {
     const rs = crs({length: 10})
     const bucket = s3.Bucket.fromBucketName(this, bucketname+"-"+rs, bucketname);
     

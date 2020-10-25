@@ -6,7 +6,7 @@ import ecs = require("@aws-cdk/aws-ecs")
 import crs = require("crypto-random-string");
 
 export interface ImagePreprocessingStackProps extends cdk.StackProps {
-  bioimageSearchAccessPolicy: iam.Policy
+  bioimageSearchManagedPolicy: iam.ManagedPolicy
 }
 
 export class ImagePreprocessingStack extends cdk.Stack {

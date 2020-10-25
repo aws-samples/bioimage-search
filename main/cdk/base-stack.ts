@@ -8,7 +8,7 @@ import fs = require("fs");
 
 export class BaseStack extends cdk.Stack {
   public bioimageSearchRole: iam.Role;
-  public bioimageSearchAccessPolicy: iam.Policy;
+  public bioimageSearchManagedPolicy: iam.ManagedPolicy;
   public externalResourcesPolicy: iam.Policy;
   public testBucket: s3.Bucket;
   public testBucketRole: iam.Role;
@@ -21,8 +21,8 @@ export class BaseStack extends cdk.Stack {
     this.bioimageSearchRole = new iam.Role(this, "bioimageSearchRole", {
       assumedBy: bioimageSearchUser 
     })
-
-    this.bioimageSearchAccessPolicy = new iam.Policy(this, "biomageSearchAccessPolicy");
+    
+    this.bioimageSearchManagedPolicy = new iam.ManagedPolicy(this, "biomageSearchManagedPolicy");
     
     this.externalResourcesPolicy = new iam.Policy(this, "externalResourcesPolicy");
     
@@ -51,17 +51,11 @@ export class BaseStack extends cdk.Stack {
         ]
     })
 
-    this.bioimageSearchAccessPolicy.addStatements(cloudFormationPolicyStatement)
+    this.bioimageSearchManagedPolicy.addStatements(cloudFormationPolicyStatement)
     
-    this.bioimageSearchAccessPolicy.addStatements(testBucketPolicyStatement)
+    this.bioimageSearchManagedPolicy.addStatements(testBucketPolicyStatement)
     
-    this.bioimageSearchAccessPolicy.attachToUser(bioimageSearchUser)
-    
-    // this.testBucketRole = new iam.Role(this, 'testBucketRole', {
-    //   assumedBy: bioimageSearchUser
-    // })
-    
-    // this.testBucket.grantReadWrite(this.testBucketRole)
+    this.bioimageSearchManagedPolicy.attachToUser(bioimageSearchUser)
     
     const testBucketOutput = new cdk.CfnOutput(this, 'testBucket', { value: this.testBucket.bucketName } )
 

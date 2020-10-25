@@ -4,7 +4,7 @@ import iam = require("@aws-cdk/aws-iam");
 import cdk = require("@aws-cdk/core");
 
 export interface MessageStackProps extends cdk.StackProps {
-  bioimageSearchAccessPolicy: iam.Policy;
+  bioimageSearchManagedPolicy: iam.ManagedPolicy;
 }
 
 export class MessageStack extends cdk.Stack {
@@ -50,7 +50,7 @@ export class MessageStack extends cdk.Stack {
       resources: [ messageLambdaArn ]
     })
     
-    props.bioimageSearchAccessPolicy.addStatements(messageLambdaPolicyStatement)
+    props.bioimageSearchManagedPolicy.addStatements(messageLambdaPolicyStatement)
     
   }
 }

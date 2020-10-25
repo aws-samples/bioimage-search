@@ -7,7 +7,7 @@ import ecs = require("@aws-cdk/aws-ecs")
 import crs = require("crypto-random-string");
 
 export interface PlatePreprocessingStackProps extends cdk.StackProps {
-  bioimageSearchAccessPolicy: iam.Policy
+  bioimageSearchManagedPolicy: iam.ManagedPolicy
 }
 
 export class PlatePreprocessingStack extends cdk.Stack {

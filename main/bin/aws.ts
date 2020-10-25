@@ -18,40 +18,39 @@ const app = new cdk.App();
 const baseStack = new BaseStack(app, 'BioimageSearchBaseStack');
 
 const batchSetupStack = new BatchSetupStack(app, 'BioimageSearchBatchSetupStack', {
-    bioimageSearchAccessPolicy: baseStack.bioimageSearchAccessPolicy  
+    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy  
 })
 
 const resourcePermissionsStack = new ResourcePermissionsStack(app, 'ResourcePermissionsStack', {
-    bioimageSearchAccessPolicy: baseStack.bioimageSearchAccessPolicy,
+    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy,
     resourcePermissionsPolicy: baseStack.externalResourcesPolicy
 })
 
 const configurationStack = new ConfigurationStack(app, 'BioimageSearchConfigurationStack', {
-    bioimageSearchAccessPolicy: baseStack.bioimageSearchAccessPolicy
+    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy
 })
 
 const labelStack = new LabelStack(app, 'BioimageSearchLabelStack', {
-    bioimageSearchAccessPolicy: baseStack.bioimageSearchAccessPolicy
+    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy
 })
 
 const messageStack = new MessageStack(app, 'BioimageSearchMessageStack', {
-    bioimageSearchAccessPolicy: baseStack.bioimageSearchAccessPolicy
+    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy
 })
 
 const imageArtifactStack = new ImageArtifactStack(app, 'BioimageSearchImageArtifactStack', {
-    bioimageSearchAccessPolicy: baseStack.bioimageSearchAccessPolicy,
+    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy,
     externalResourcesPolicy: baseStack.externalResourcesPolicy
 })
 
 const platePreprocessingStack = new PlatePreprocessingStack(app, 'BioimageSearchPlatePreprocessingStack', {
-    bioimageSearchAccessPolicy: baseStack.bioimageSearchAccessPolicy,
+    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy,
 })
 
 const imagePreprocessingStack = new ImagePreprocessingStack(app, 'BioimageSearchImagePreprocessingStack', {
-    bioimageSearchAccessPolicy: baseStack.bioimageSearchAccessPolicy,
+    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy,
 })
 
 const embeddingConfigurationStack = new EmbeddingConfigurationStack(app, 'BioimageSearchEmbeddingConfigurationStack', {
-    bioimageSearchAccessPolicy: baseStack.bioimageSearchAccessPolicy,
-    bioimageSearchRole: baseStack.bioimageSearchRole    
+    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy
 })

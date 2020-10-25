@@ -4,8 +4,7 @@ import iam = require("@aws-cdk/aws-iam");
 import cdk = require("@aws-cdk/core");
 
 export interface EmbeddingConfigurationStackProps extends cdk.StackProps {
-  bioimageSearchAccessPolicy: iam.Policy;
-  bioimageSearchRole: iam.Role;
+  bioimageSearchManagedPolicy: iam.ManagedPolicy;
 }
 
 export class EmbeddingConfigurationStack extends cdk.Stack {
@@ -44,17 +43,7 @@ export class EmbeddingConfigurationStack extends cdk.Stack {
       resources: [ embeddingConfigurationLambdaArn ]
     })
     
-    const pd2 = new iam.PolicyDocument();
-
-    pd2.addStatements(embeddingConfigurationLambdaPolicyStatement)
-    
-    const embeddingConfigurationLambdaManagedPolicy = new iam.ManagedPolicy(this, 'embeddingConfigurationLambdaManagedPolicy', {
-      document: pd2
-    })
-    
-    //props.bioimageSearchAccessPolicy.addStatements(embeddingConfigurationLambdaPolicyStatement)
-    
-    props.bioimageSearchRole.addManagedPolicy(embeddingConfigurationLambdaManagedPolicy)
+    props.bioimageSearchManagedPolicy.addStatements(embeddingConfigurationLambdaPolicyStatement)
     
   }
 }
