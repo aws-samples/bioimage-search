@@ -29,7 +29,7 @@ export class MessageStack extends cdk.Stack {
       this,
       "messageFunction",
       {
-        code: lambda.Code.fromAsset("src/message"),
+        code: lambda.Code.fromAsset("src/message/build"),
         handler: "message.handler",
         runtime: lambda.Runtime.NODEJS_12_X,
         environment: {

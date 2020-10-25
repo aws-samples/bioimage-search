@@ -27,7 +27,7 @@ export class LabelStack extends cdk.Stack {
       this,
       "labelFunction",
       {
-        code: new lambda.AssetCode("src/label"),
+        code: new lambda.AssetCode("src/label/build"),
         handler: "label.handler",
         runtime: lambda.Runtime.NODEJS_12_X,
         environment: {

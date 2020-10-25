@@ -122,7 +122,7 @@ async function getCategoryRows(category: any) {
       "{" + expressionAttributeValues + "}"
     ),
   };
-  const result: any = await dy.getAllQueryData(params);
+  const result: any = await dy.getAllQueryData(db, params);
   return result;
 }
 
@@ -137,7 +137,7 @@ async function getAllCategories() {
     ),
   };
   try {
-    const rows = await dy.getAllScanData(params);
+    const rows = await dy.getAllScanData(db, params);
     return { statusCode: 200, body: JSON.stringify(rows) };
   } catch (dbError) {
     return { statusCode: 500, body: JSON.stringify(dbError) };
@@ -154,7 +154,7 @@ async function deleteCategory(category: any) {
       if (j > rows.length) {
         j = rows.length;
       }
-      p.push(dy.deleteRows(rows.slice(i, j)));
+      p.push(dy.deleteRows(db, PARTITION_KEY, SORT_KEY, TABLE_NAME, rows.slice(i, j)));
       i += j - i;
     }
     await Promise.all(p);

@@ -27,7 +27,7 @@ export class ConfigurationStack extends cdk.Stack {
       this,
       "configurationFunction",
       {
-        code: new lambda.AssetCode("src/configuration"),
+        code: new lambda.AssetCode("src/configuration/build"),
         handler: "configuration.handler",
         runtime: lambda.Runtime.NODEJS_12_X,
         environment: {

@@ -147,7 +147,7 @@ async function listMessage(messageId: any) {
       "{" + expressionAttributeValues + "}"
     ),
   };
-  const result: any = await dy.getAllQueryData(params);
+  const result: any = await dy.getAllQueryData(db, params);
   return result;
 }
 
@@ -161,7 +161,7 @@ async function deleteMessage(messageId: any) {
       if (j > rows.length) {
         j = rows.length;
       }
-      p.push(dy.deleteRows(rows.slice(i, j)));
+      p.push(dy.deleteRows(db, PARTITION_KEY, SORT_KEY, TABLE_NAME, rows.slice(i, j)));
       i += j - i;
     }
     await Promise.all(p);
