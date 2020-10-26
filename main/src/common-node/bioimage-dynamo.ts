@@ -1,4 +1,5 @@
-const getAllQueryData = async (db: any, params: any) => {
+
+export const getAllQueryData = async (db: any, params: any) => {
   const _getAllData = async (params: any, startKey: any) => {
     if (startKey) {
       params.ExclusiveStartKey = startKey;
@@ -15,7 +16,7 @@ const getAllQueryData = async (db: any, params: any) => {
   return rows;
 };
 
-const getAllScanData = async (db: any, params: any) => {
+export const getAllScanData = async (db: any, params: any) => {
   const _getAllData = async (params: any, startKey: any) => {
     if (startKey) {
       params.ExclusiveStartKey = startKey;
@@ -32,7 +33,7 @@ const getAllScanData = async (db: any, params: any) => {
   return rows;
 };
 
-async function getPartitionRows(db: any, partitionKey: any, key: any, table: any) {
+export const getPartitionRows = async (db: any, partitionKey: any, key: any, table: any) => {
   const keyConditionExpression = partitionKey + " = :" + partitionKey;
   const expressionAttributeValues =
     '":' + partitionKey + '" : "' + key + '"';
@@ -47,13 +48,13 @@ async function getPartitionRows(db: any, partitionKey: any, key: any, table: any
   return result;
 }
 
-async function deleteRows(
+export const deleteRows = async (
   db: any,
   partition_key: any,
   sort_key: any,
   table: any,
   rows: any[]
-) {
+) => {
   let delarr: any[] = [];
   if (sort_key) {
     for (let r of rows) {

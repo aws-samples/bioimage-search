@@ -6,7 +6,7 @@ const PARTITION_KEY = process.env.PARTITION_KEY || "";
 const LATEST = "LATEST";
 const DDB_MAX_BATCH = 25;
 
-const NAME = "name";
+const NAME = "name1";
 const PLATE_PROCESSING_ARN_ATTRIBUTE = "plate-method-arn";
 const WELL_PROCESSING_ARN_ATTRIBUTE = "well-method-arn";
 const IMAGE_PROCESSING_ARN_ATTRIBUTE = "image-method-arn";
@@ -37,6 +37,25 @@ const COMMENTS_ATTRIBUTE = "comments";
     method: 'deleteEmbedding',
     name: name
   }
+
+  Example test:
+  
+  {
+  "method": "createEmbedding",
+  "embedding": {
+      "name1" : "embeddingName1",
+      "image-method-arn" : "testImageMethodArn1",
+      "image-post-method-arn" : "testImagePostMethodArn1",
+      "input-height" : 1000,
+      "input-width" : 1000,
+      "input-depth" : 1,
+      "input-channels" : 3,
+      "roi-height" : 128,
+      "roi-width" : 128,
+      "roi-depth" : 1,
+      "embedding-vector-length" : 1024
+  }
+}
 
 */
 
