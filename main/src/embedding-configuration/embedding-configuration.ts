@@ -120,7 +120,6 @@ export const handler = async (event: any = {}): Promise<any> => {
     console.log("Error: method parameter required - returning status code 400");
     return { statusCode: 400, body: `Error: method parameter required` };
   }
-
   if (event.method === "createEmbedding") {
     if (event.embedding) {
       if (!validateEmbedding(event.embedding)) {

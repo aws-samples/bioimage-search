@@ -83,7 +83,7 @@ class BioimageSearchResources:
         return self.getStackOutputByPrefix(self.getImageArtifactStack(), 'ExportsOutputFnGetAttdefaultArtifactFunction')
         
     def getEmbeddingConfigurationLambdaArn(self):
-        return self.getStackOutputByPrefix(self.getConfigurationStack(), 'ExportsOutputFnGetAttembeddingConfigurationFunction')
+        return self.getStackOutputByPrefix(self.getEmbeddingConfigurationStack(), 'ExportsOutputFnGetAttembeddingConfigurationFunction')
 
 ##### BATCH QUEUE
 
@@ -550,13 +550,18 @@ class EmbeddingConfigurationClient(BioimageSearchClient):
         return self._resources.getEmbeddingConfigurationLambdaArn()
         
     def createEmbedding(self, embedding):
-        request = '{{ "method": "createEmbedding", "embedding": "{}" }}'.format(embedding)
+        embeddingStr = json.dumps(embedding)
+        request = '{{ "method": "createEmbedding", "embedding": {} }}'.format(embeddingStr)
+        print(request)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
+        lambdaArn = self._resources.getEmbeddingConfigurationLambdaArn()
+        print("lambdaArn=", lambdaArn)
         response = lambdaClient.invoke(
-            FunctionName=self._resources.getEmbeddingConfigurationLambdaArn(),
-            InvocationType='Event',
-            Payload=payload)
+            FunctionName=lambdaArn,
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
         return response['StatusCode']
         
     def deleteEmbedding(self, name):

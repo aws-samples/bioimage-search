@@ -1,4 +1,3 @@
-# Build script for default-artifact lambda
 mkdir -p build
 cp default-artifact.py ./build
 cp ../../../common/bioimageimage.py ./build
