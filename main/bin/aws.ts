@@ -22,7 +22,7 @@ const batchSetupStack = new BatchSetupStack(app, 'BioimageSearchBatchSetupStack'
     bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy  
 })
 
-const resourcePermissionsStack = new ResourcePermissionsStack(app, 'ResourcePermissionsStack', {
+const resourcePermissionsStack = new ResourcePermissionsStack(app, 'BioimageSearchResourcePermissionsStack', {
     bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy,
     resourcePermissionsPolicy: baseStack.externalResourcesPolicy
 })

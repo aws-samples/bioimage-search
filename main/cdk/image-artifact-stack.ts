@@ -4,7 +4,7 @@ import cdk = require("@aws-cdk/core");
 
 export interface ImageArtifactStackProps extends cdk.StackProps {
   bioimageSearchManagedPolicy: iam.ManagedPolicy;
-  externalResourcesPolicy: iam.Policy;
+  externalResourcesPolicy: iam.Policy; 
 }
 
 export class ImageArtifactStack extends cdk.Stack {
