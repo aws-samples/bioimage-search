@@ -27,10 +27,18 @@ training = {
     "modelKey" : "model-key1"
 }
 
-#r = trainingConfigurationClient.createTraining(training)
+r = trainingConfigurationClient.createTraining(training)
 
-#print(r)
+print(r)
 
 r = trainingConfigurationClient.updateTraining(training["train_id"], "filterBucket", "filter-bucket-2")
+
+print(r)
+
+r = trainingConfigurationClient.getTraining(training["train_id"])
+
+print(r)
+
+r = trainingConfigurationClient.deleteTraining(training["train_id"])
 
 print(r)

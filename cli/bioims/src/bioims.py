@@ -642,14 +642,6 @@ class TrainingConfigurationClient(BioimageSearchClient):
             Payload=payload
             )
         return response['StatusCode']
-        #stream = response['Payload']
-        #bStrResponse = stream.read()
-        #strResponse = bStrResponse.decode("utf-8")
-        #return strResponse
-        #jresponse = json.loads(strResponse)
-        #jbody = jresponse['body']
-        #jvalue = json.loads(jbody)
-        #return jvalue
 
     def getTraining(self, train_id):
         request = '{{ "method": "getTraining", "train_id": "{}" }}'.format(train_id)
