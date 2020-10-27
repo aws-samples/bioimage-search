@@ -53,6 +53,9 @@ class BioimageSearchResources:
     def getEmbeddingConfigurationStack(self):
         return self.getStackByName('BioimageSearchEmbeddingConfigurationStack')
         
+    def getTrainingConfigurationStack(self):
+        return self.getStackByName('BioimageSearchTrainingConfigurationStack')
+        
 ##### FUNCTIONS
 
     def getStackOutputByPrefix(self, stack, prefix):
@@ -85,6 +88,9 @@ class BioimageSearchResources:
     def getEmbeddingConfigurationLambdaArn(self):
         return self.getStackOutputByPrefix(self.getEmbeddingConfigurationStack(), 'ExportsOutputFnGetAttembeddingConfigurationFunction')
 
+    def getTrainingConfigurationLambdaArn(self):
+        return self.getStackOutputByPrefix(self.getTrainingConfigurationStack(), 'ExportsOutputFnGetAtttrainingConfigurationFunction')
+
 ##### BATCH QUEUE
 
     def getBatchOnDemandQueueName(self):
@@ -114,6 +120,8 @@ def client(serviceName):
         return PlatePreprocessingClient()
     elif serviceName == 'embedding-configuration':
         return EmbeddingConfigurationClient()
+    elif serviceName == 'training-configuration':
+        return TrainingConfigurationClient()
     else:
         print('service type {} not recognized'.format(serviceName))
         return False
@@ -587,6 +595,85 @@ class EmbeddingConfigurationClient(BioimageSearchClient):
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
             FunctionName=self._resources.getEmbeddingConfigurationLambdaArn(),
+            InvocationType='Event',
+            Payload=payload
+            )
+        return response['StatusCode']
+
+
+#############################################
+#
+# TRAINING CONFIGURATION
+#
+#############################################
+
+class TrainingConfigurationClient(BioimageSearchClient):
+    def __init__(self):
+        super().__init__()
+
+    def getLambdaArn(self):
+        return self._resources.getTrainingConfigurationLambdaArn()
+        
+    def createTraining(self, training):
+        trainingStr = json.dumps(training)
+        request = '{{ "method": "createTraining", "training": {} }}'.format(trainingStr)
+        print(request)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        lambdaArn = self._resources.getTrainingConfigurationLambdaArn()
+        print("lambdaArn=", lambdaArn)
+        response = lambdaClient.invoke(
+            FunctionName=lambdaArn,
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        return response['StatusCode']
+
+    def updateTraining(self, train_id, attribute, value):
+        request = '{{ "method": "updateTraining", "train_id": "{}", "attribute": "{}", "value": "{}" }}'.format(train_id, attribute, value)
+        print(request)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        lambdaArn = self._resources.getTrainingConfigurationLambdaArn()
+        print("lambdaArn=", lambdaArn)
+        response = lambdaClient.invoke(
+            FunctionName=lambdaArn,
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        return response['StatusCode']
+        #stream = response['Payload']
+        #bStrResponse = stream.read()
+        #strResponse = bStrResponse.decode("utf-8")
+        #return strResponse
+        #jresponse = json.loads(strResponse)
+        #jbody = jresponse['body']
+        #jvalue = json.loads(jbody)
+        #return jvalue
+
+    def getTraining(self, train_id):
+        request = '{{ "method": "getTraining", "train_id": "{}" }}'.format(train_id)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self._resources.getTrainingConfigurationLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        stream = response['Payload']
+        bStrResponse = stream.read()
+        strResponse = bStrResponse.decode("utf-8")
+        jresponse = json.loads(strResponse)
+        jbody = jresponse['body']
+        jvalue = json.loads(jbody)
+        return jvalue
+
+    def deleteTraining(self, train_id):
+        request = '{{ "method": "deleteTraining", "train_id": "{}" }}'.format(train_id)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self._resources.getTrainingConfigurationLambdaArn(),
             InvocationType='Event',
             Payload=payload
             )

@@ -33,8 +33,8 @@ export class TrainingConfigurationStack extends cdk.Stack {
       }
     );
 
-    trainingConfigurationTable.grantReadWriteData(trainingConfigurationLambda);
-
+    trainingConfigurationTable.grantFullAccess(trainingConfigurationLambda);
+    
     const trainingConfigurationLambdaArn = trainingConfigurationLambda.functionArn
     
     const trainingConfigurationLambdaPolicyStatement = new iam.PolicyStatement({

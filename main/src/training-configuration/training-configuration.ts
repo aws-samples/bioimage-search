@@ -6,14 +6,14 @@ const PARTITION_KEY = process.env.PARTITION_KEY || "";
 const LATEST = "LATEST";
 const DDB_MAX_BATCH = 25;
 
-const FILTER_BUCKET_ATTRIBUTE = "filter-bucket";
-const FILTER_INCLUDE_KEY_ATTRIBUTE = "filter-include-key";
-const FILTER_EXCLUDE_KEY_ATTRIBUTE = "filter-exclude-key";
-const EMBEDDING_NAME_ATTRIBUTE = "embedding-name";
-const SAGEMAKER_TRAIN_ID_ATTRIBUTE = "sagemaker-train-id";
-const TRAINING_JOB_MESSAGE_ID_ATTRIBUTE = "train-message-id";
-const MODEL_BUCKET_ATTRIBUTE = "model-bucket";
-const MODEL_KEY_ATTRIBUTE = "model-key"
+const FILTER_BUCKET_ATTRIBUTE = "filterBucket";
+const FILTER_INCLUDE_KEY_ATTRIBUTE = "filterIncludeKey";
+const FILTER_EXCLUDE_KEY_ATTRIBUTE = "filterExcludeKey";
+const EMBEDDING_NAME_ATTRIBUTE = "embeddingName";
+const SAGEMAKER_TRAIN_ID_ATTRIBUTE = "sagemakerTrainId";
+const TRAINING_JOB_MESSAGE_ID_ATTRIBUTE = "trainMessageId";
+const MODEL_BUCKET_ATTRIBUTE = "modelBucket";
+const MODEL_KEY_ATTRIBUTE = "modelKey"
 
 /*
 
@@ -47,59 +47,86 @@ function validateTraining(training: any): boolean {
   return false;
 }
 
-function updateIntegrityCheck(training: any): boolean {
+function validAttribute(attribute: any): boolean {
+  if (attribute === FILTER_BUCKET_ATTRIBUTE ||
+    attribute === FILTER_INCLUDE_KEY_ATTRIBUTE ||
+    attribute === FILTER_EXCLUDE_KEY_ATTRIBUTE ||
+    attribute === EMBEDDING_NAME_ATTRIBUTE ||
+    attribute === SAGEMAKER_TRAIN_ID_ATTRIBUTE ||
+    attribute === TRAINING_JOB_MESSAGE_ID_ATTRIBUTE ||
+    attribute === MODEL_BUCKET_ATTRIBUTE ||
+    attribute === MODEL_KEY_ATTRIBUTE) {
+      return true;
+    }
     return false;
 }
 
-function createTraining(training: any) {
+async function createTraining(training: any) {
+  const params = {
+    TableName: TABLE_NAME,
+    Item: training
+  };
+  try {
+    await db.put(params).promise();
+    return { statusCode: 201, body: "" };
+  } catch (dbError) {
+    return { statusCode: 500, body: JSON.stringify(dbError) };
+  }  
 }
 
-function updateTraining(training: any) {
+async function updateTraining(train_id: any, attribute: any, value: any) {
+  if (!validAttribute(attribute)) {
+    return { statusCode: 500, body: `Invalid attribute ${attribute}` }
+  }
+  const setStr = `set ${attribute} = :val1`
+  
+  var params = {
+    TableName:TABLE_NAME,
+    Key:{
+      [PARTITION_KEY]: train_id
+    },
+    UpdateExpression: setStr,
+    ExpressionAttributeValues: JSON.parse(
+      "{" + '":val1"' +':' + '"' + value + '"' + "}"
+      ),
+    ReturnValues:"UPDATED_NEW"
+  };
+  
+  const response = db.update(params).promise();
+  return response
 }
 
-function deleteTraining(train_id: any) {
+async function deleteTraining(train_id: any) {
+  const deleteParams = {
+    TableName: TABLE_NAME,
+    Key: {
+      [PARTITION_KEY]: train_id
+    }
+  };
+  try {
+    await db.delete(deleteParams).promise();
+    return { statusCode: 201, body: "" }
+  } catch (dbError) {
+    return { statusCode: 500, body: JSON.stringify(dbError) };
+  }
 }
 
-function getTraining(train_id: any) {
+async function getTraining(train_id: any) {
+    const params = {
+      TableName: TABLE_NAME,
+      Key: {
+        [PARTITION_KEY]: train_id
+      }
+  };
+  try {
+    const response = await db.get(params).promise();
+    return { statusCode: 200, body: JSON.stringify(response.Item) };
+  } catch (dbError) {
+    return { statusCode: 500, body: JSON.stringify(dbError) };
+  }
 }
 
-/////////////////////////////////////////////////////
-
-// async function createEmbedding(embedding: any) {
-//   const params = {
-//     TableName: TABLE_NAME,
-//     Item: embedding
-//   };
-//   try {
-//     await db.put(params).promise();
-//     return { statusCode: 201, body: "" };
-//   } catch (dbError) {
-//     return { statusCode: 500, body: JSON.stringify(dbError) };
-//   }
-// }
-
-// async function deleteEmbedding(name: any) {
-//   try {
-//     let rows: any = await dy.getPartitionRows(db, PARTITION_KEY, name, TABLE_NAME);
-//     let p: any[] = [];
-//     let i = 0;
-//     while (i < rows.length) {
-//       let j = i + DDB_MAX_BATCH;
-//       if (j > rows.length) {
-//         j = rows.length;
-//       }
-//       p.push(dy.deleteRows(db, PARTITION_KEY, false, TABLE_NAME, rows.slice(i, j)));
-//       i += j - i;
-//     }
-//     await Promise.all(p);
-//     const response = "deleted " + rows.length + " items";
-//     return { statusCode: 200, body: response };
-//   } catch (dbError) {
-//     return { statusCode: 500, body: JSON.stringify(dbError) };
-//   } 
-// }
-
-////////////////////////////////////////////
+/////////////////////////////////////////////////
 
 export const handler = async (event: any = {}): Promise<any> => {
   if (!event.method) {
@@ -136,15 +163,22 @@ export const handler = async (event: any = {}): Promise<any> => {
   }
   
   else if (event.method === "updateTraining") {
-    if (event.training) {
-        if (!updateIntegrityCheck(event.training)) {
-            return {
-                statusCode: 400,
-                body: `Error: training update violates existing integrity`,
-            };
-        }
-        return updateTraining(event.training)
-    }      
+    if (event.train_id && event.attribute && event.value) {
+      try {
+        await updateTraining(event.train_id, event.attribute, event.value);
+        console.log("post updateTraining")
+        return { statusCode: 201, body: "" };
+      } catch (dbError) {
+        const errMsg = "dbError=" + JSON.stringify(dbError)
+        console.log(errMsg)
+        return { statusCode: 500, body: errMsg };
+      }
+    } else {
+        return {
+            statusCode: 400,
+            body: `Error: training update violates existing integrity`,
+        };
+    }
   }
 
   else if (event.method === "deleteTraining") {

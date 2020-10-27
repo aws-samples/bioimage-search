@@ -7,21 +7,21 @@ const LATEST = "LATEST";
 const DDB_MAX_BATCH = 25;
 
 const NAME = "name1";
-const PLATE_PROCESSING_ARN_ATTRIBUTE = "plate-method-arn";
-const WELL_PROCESSING_ARN_ATTRIBUTE = "well-method-arn";
-const IMAGE_PROCESSING_ARN_ATTRIBUTE = "image-method-arn";
-const IMAGE_POST_PROCESSING_ARN_ATTRIBUTE = "image-post-method-arn";
-const MODEL_TRAINING_SCRIPT_BUCKET_ATTRIBUTE = "model-training-script-bucket";
-const MODEL_TRAINING_SCRIPT_KEY_ATTRIBUTE = "model-training-script-key";
-const TRAINING_HYPERPARAMETERS_ATTRIBUTE = "training-hyperparameters";
-const INPUT_HEIGHT_ATTRIBUTE = "input-height";
-const INPUT_WIDTH_ATTRIBUTE = "input-width";
-const INPUT_DEPTH_ATTRIBUTE = "input-depth";
-const INPUT_CHANNELS_ATTRIBUTE = "input-channels";
-const ROI_HEIGHT_ATTRIBUTE = "roi-height";
-const ROI_WIDTH_ATTRIBUTE = "roi-width";
-const ROI_DEPTH_ATTRIBUTE = "roi-depth";
-const EMBEDDING_VECTOR_LENGTH_ATTRIBUTE = "embedding-vector-length";
+const PLATE_PROCESSING_ARN_ATTRIBUTE = "plateMethodArn";
+const WELL_PROCESSING_ARN_ATTRIBUTE = "wellMethodArn";
+const IMAGE_PROCESSING_ARN_ATTRIBUTE = "imageMethodArn";
+const IMAGE_POST_PROCESSING_ARN_ATTRIBUTE = "imagePostMethodArn";
+const MODEL_TRAINING_SCRIPT_BUCKET_ATTRIBUTE = "modelTrainingScriptBucket";
+const MODEL_TRAINING_SCRIPT_KEY_ATTRIBUTE = "modelTrainingScriptKey";
+const TRAINING_HYPERPARAMETERS_ATTRIBUTE = "trainingHyperparameters";
+const INPUT_HEIGHT_ATTRIBUTE = "inputHeight";
+const INPUT_WIDTH_ATTRIBUTE = "inputWidth";
+const INPUT_DEPTH_ATTRIBUTE = "inputDepth";
+const INPUT_CHANNELS_ATTRIBUTE = "inputChannels";
+const ROI_HEIGHT_ATTRIBUTE = "roiHeight";
+const ROI_WIDTH_ATTRIBUTE = "roiWidth";
+const ROI_DEPTH_ATTRIBUTE = "roiDepth";
+const EMBEDDING_VECTOR_LENGTH_ATTRIBUTE = "embeddingVectorLength";
 const COMMENTS_ATTRIBUTE = "comments";
 
 /*

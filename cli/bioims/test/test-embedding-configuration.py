@@ -8,16 +8,16 @@ embeddingConfigurationClient = bioims.client('embedding-configuration')
 
 embedding = {
     "name1": "embeddingName1",
-    "image-method-arn": "testImageMethodArn1",
-    "image-post-method-arn": "testImagePostMethodArn1",
-    "input-height": 1000,
-    "input-width": 1000,
-    "input-depth": 1,
-    "input-channels": 3,
-    "roi-height": 128,
-    "roi-width": 128,
-    "roi-depth": 1,
-    "embedding-vector-length": 1024
+    "imageMethodArn": "testImageMethodArn1",
+    "imagePostMethodArn": "testImagePostMethodArn1",
+    "inputHeight": 1000,
+    "inputWidth": 1000,
+    "inputDepth": 1,
+    "inputChannels": 3,
+    "roiHeight": 128,
+    "roiWidth": 128,
+    "roiDepth": 1,
+    "embeddingVectorLength": 1024
 }
 
 r = embeddingConfigurationClient.createEmbedding(embedding)
