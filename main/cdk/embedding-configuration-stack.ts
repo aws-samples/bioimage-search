@@ -16,7 +16,7 @@ export class EmbeddingConfigurationStack extends cdk.Stack {
         name: "name1",
         type: dynamodb.AttributeType.STRING,
       },
-      tableName: "EmbeddingConfiguration",
+      tableName: "BioimsEmbeddingConfiguration",
     });
 
     const embeddingConfigurationLambda = new lambda.Function(

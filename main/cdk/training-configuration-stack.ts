@@ -16,7 +16,7 @@ export class TrainingConfigurationStack extends cdk.Stack {
         name: "train_id",
         type: dynamodb.AttributeType.STRING,
       },
-      tableName: "TrainingConfiguration",
+      tableName: "BioimsTrainingConfiguration",
     });
 
     const trainingConfigurationLambda = new lambda.Function(
