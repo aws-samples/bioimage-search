@@ -564,6 +564,23 @@ class EmbeddingConfigurationClient(BioimageSearchClient):
             )
         return response['StatusCode']
         
+    def getEmbedding(self, name):
+        request = '{{ "method": "getEmbedding", "name": "{}" }}'.format(name)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self._resources.getEmbeddingConfigurationLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        stream = response['Payload']
+        bStrResponse = stream.read()
+        strResponse = bStrResponse.decode("utf-8")
+        jresponse = json.loads(strResponse)
+        jbody = jresponse['body']
+        jvalue = json.loads(jbody)
+        return jvalue
+
     def deleteEmbedding(self, name):
         request = '{{ "method": "deleteEmbedding", "name": "{}" }}'.format(name)
         payload = bytes(request, encoding='utf-8')

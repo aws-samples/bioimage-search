@@ -18,6 +18,7 @@ cd src/configuration; ./build.sh; cd ../..
 cd src/label; ./build.sh; cd ../..
 cd src/message; ./build.sh; cd ../..
 cd src/embedding-configuration; ./build.sh; cd ../..
+cd src/training-configuration; ./build.sh; cd ../..
 cdk bootstrap
 cdk deploy BioimageSearchBaseStack --require-approval never
 cdk deploy BioimageSearchBatchSetupStack --require-approval never

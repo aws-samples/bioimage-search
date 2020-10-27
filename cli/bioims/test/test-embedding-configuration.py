@@ -24,6 +24,10 @@ r = embeddingConfigurationClient.createEmbedding(embedding)
 
 print(r)
 
+r = embeddingConfigurationClient.getEmbedding(embedding["name1"])
+
+print(r)
+
 r = embeddingConfigurationClient.deleteEmbedding(embedding["name1"])
 
 print(r)

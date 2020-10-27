@@ -32,9 +32,15 @@ const COMMENTS_ATTRIBUTE = "comments";
     embedding: embedding
   }
   
-  deleteEmbedding(embedding):
+  deleteEmbedding(name):
   {
     method: 'deleteEmbedding',
+    name: name
+  }
+  
+  getEmbedding(name):
+  {
+    method: 'getEmbedding',
     name: name
   }
 
@@ -113,6 +119,21 @@ async function deleteEmbedding(name: any) {
   } 
 }
 
+async function getEmbedding(name: any) {
+  const params = {
+      TableName: TABLE_NAME,
+      Key: {
+        [PARTITION_KEY]: name
+      }
+  };
+  try {
+    const response = await db.get(params).promise();
+    return { statusCode: 200, body: JSON.stringify(response.Item) };
+  } catch (dbError) {
+    return { statusCode: 500, body: JSON.stringify(dbError) };
+  }
+}
+
 ////////////////////////////////////////////
 
 export const handler = async (event: any = {}): Promise<any> => {
@@ -134,6 +155,17 @@ export const handler = async (event: any = {}): Promise<any> => {
         statusCode: 400,
         body: `Error: embedding required`,
       };
+    }
+  }
+  
+  if (event.method === "getEmbedding") {
+    if (event.name) {
+      return getEmbedding(event.name);
+    } else {
+      return {
+        statusCode: 400,
+        body: `Error: name required`,
+      }
     }
   }
 
