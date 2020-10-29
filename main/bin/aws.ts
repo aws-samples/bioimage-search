@@ -13,6 +13,7 @@ import { PlatePreprocessingStack } from '../cdk/plate-preprocessing-stack';
 import { ImagePreprocessingStack } from '../cdk/image-preprocessing-stack';
 import { EmbeddingConfigurationStack } from '../cdk/embedding-configuration-stack';
 import { TrainingConfigurationStack } from '../cdk/training-configuration-stack';
+import { ImageManagementStack } from '../cdk/image-management-stack';
 
 const app = new cdk.App();
 
@@ -57,5 +58,9 @@ const embeddingConfigurationStack = new EmbeddingConfigurationStack(app, 'Bioima
 })
 
 const trainingConfigurationStack = new TrainingConfigurationStack(app, 'BioimageSearchTrainingConfigurationStack', {
+    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy
+})
+
+const imageManagementStack = new ImageManagementStack(app, 'BioimageSearchImageManagementStack', {
     bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy
 })

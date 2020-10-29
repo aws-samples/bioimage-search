@@ -1,3 +1,4 @@
+rm -rf ./build
 mkdir -p build
 cp default-artifact.py ./build
 cp ../../../common/bioimageimage.py ./build
