@@ -406,13 +406,10 @@ class MessageClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        stream = response['Payload']
-        bStrResponse = stream.read()
-        strResponse = bStrResponse.decode("utf-8")
-        jresponse = json.loads(strResponse)
-        jbody = jresponse['body']
+        jbody = getResponseBody(response)
         jvalue = json.loads(jbody)
-        return jvalue['detail']
+        item = jvalue['Item']
+        return item['detail']
 
     def createMessage(self, message):
         request = '{{ "method": "createMessage", "message": "{}" }}'.format(message)
@@ -423,11 +420,7 @@ class MessageClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        stream = response['Payload']
-        bStrResponse = stream.read()
-        strResponse = bStrResponse.decode("utf-8")
-        jresponse = json.loads(strResponse)
-        jbody = jresponse['body']
+        jbody = getResponseBody(response)
         jvalue = json.loads(jbody)
         return jvalue['messageId']
 
@@ -440,11 +433,7 @@ class MessageClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        stream = response['Payload']
-        bStrResponse = stream.read()
-        strResponse = bStrResponse.decode("utf-8")
-        jresponse = json.loads(strResponse)
-        jbody = jresponse['body']
+        jbody = getResponseBody(response)
         jvalue = json.loads(jbody)
         return jvalue
 
@@ -454,10 +443,10 @@ class MessageClient(BioimageSearchClient):
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
             FunctionName=self._resources.getMessageLambdaArn(),
-            InvocationType='Event',
+            InvocationType='RequestResponse',
             Payload=payload
             )
-        return response['StatusCode']
+        return getResponseBody(response)
 
     def addMessage(self, messageId, message):
         request = '{{ "method": "addMessage", "messageId": "{}", "message": "{}" }}'.format(messageId, message)
@@ -465,10 +454,10 @@ class MessageClient(BioimageSearchClient):
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
             FunctionName=self._resources.getMessageLambdaArn(),
-            InvocationType='Event',
+            InvocationType='RequestResponse',
             Payload=payload
             )
-        return response['StatusCode']
+        return getResponseBody(response)
         
 #############################################
 #

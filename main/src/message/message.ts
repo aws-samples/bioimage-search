@@ -54,12 +54,7 @@ async function getMessage(messageId: any) {
       [SORT_KEY]: LATEST,
     },
   };
-  try {
-    const response = await db.get(params).promise();
-    return { statusCode: 200, body: JSON.stringify(response.Item) };
-  } catch (dbError) {
-    return { statusCode: 500, body: JSON.stringify(dbError) };
-  }
+  return db.get(params).promise();
 }
 
 async function createMessage(message: any) {
@@ -82,16 +77,12 @@ async function createMessage(message: any) {
     TableName: TABLE_NAME,
     Item: itemTimestamp,
   };
-  try {
-    const p: any[] = []
-    p.push(db.put(params).promise());
-    p.push(db.put(paramsTimestamp).promise());
-    await Promise.all(p)
-    const response = { messageId: id }
-    return { statusCode: 201, body: JSON.stringify(response) };
-  } catch (dbError) {
-    return { statusCode: 500, body: JSON.stringify(dbError) };
-  }
+  const p: any[] = []
+  p.push(db.put(params).promise());
+  p.push(db.put(paramsTimestamp).promise());
+  await Promise.all(p)
+  const response = { messageId: id }
+  return response;
 }
 
 async function addMessage(messageId: any, message: any) {
@@ -120,20 +111,16 @@ async function addMessage(messageId: any, message: any) {
     TableName: TABLE_NAME,
     Item: itemTimestamp,
   };
-  try {
-    const validation = await db.get(validationParams).promise();
-    if (!validation.Item[PARTITION_KEY]) {
-        return { statusCode: 400, body: 'messageId must already exist' }
-    }
-    const p: any[] = []
-    p.push(db.put(params).promise());
-    p.push(db.put(paramsTimestamp).promise());
-    await Promise.all(p)
-    const response = { messageId: messageId  }
-    return { statusCode: 201, body: JSON.stringify(response) };
-  } catch (dbError) {
-    return { statusCode: 500, body: JSON.stringify(dbError) };
+  const validation = await db.get(validationParams).promise();
+  if (!validation.Item[PARTITION_KEY]) {
+    throw new Error('messageId must already exist')
   }
+  const p: any[] = []
+  p.push(db.put(params).promise());
+  p.push(db.put(paramsTimestamp).promise());
+  await Promise.all(p)
+  const response = { messageId: messageId  }
+  return response
 }
 
 async function listMessage(messageId: any) {
@@ -152,28 +139,23 @@ async function listMessage(messageId: any) {
 }
 
 async function deleteMessage(messageId: any) {
-  try {
-    let rows: any = await listMessage(messageId);
-    let p: any[] = [];
-    let i = 0;
-    while (i < rows.length) {
-      let j = i + DDB_MAX_BATCH;
-      if (j > rows.length) {
-        j = rows.length;
-      }
-      p.push(dy.deleteRows(db, PARTITION_KEY, SORT_KEY, TABLE_NAME, rows.slice(i, j)));
-      i += j - i;
+  let rows: any = await listMessage(messageId);
+  let p: any[] = [];
+  let i = 0;
+  while (i < rows.length) {
+    let j = i + DDB_MAX_BATCH;
+    if (j > rows.length) {
+      j = rows.length;
     }
-    await Promise.all(p);
-    const response = "deleted " + rows.length + " message rows";
-    return { statusCode: 200, body: response };
-  } catch (dbError) {
-    return { statusCode: 500, body: JSON.stringify(dbError) };
+    p.push(dy.deleteRows(db, PARTITION_KEY, SORT_KEY, TABLE_NAME, rows.slice(i, j)));
+    i += j - i;
   }
+  return Promise.all(p);
 }
 
 
-/////////////////
+//////////////////////////////////////////////////////
+
 
 export const handler = async (event: any = {}): Promise<any> => {
   if (!event.method) {
@@ -182,7 +164,12 @@ export const handler = async (event: any = {}): Promise<any> => {
 
   if (event.method === "getMessage") {
     if (event.messageId) {
-      return await getMessage(event.messageId);
+      try {
+        const response = await getMessage(event.messageId);
+        return { statusCode: 200, body: JSON.stringify(response) };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
     } else {
       return { statusCode: 400, body: `Error: messageId required` };
     }
@@ -190,7 +177,12 @@ export const handler = async (event: any = {}): Promise<any> => {
 
   if (event.method === "createMessage") {
     if (event.message) {
-      return await createMessage(event.message);
+      try {
+        const response = await createMessage(event.message);
+        return { statusCode: 200, body: JSON.stringify(response) };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
     } else {
       return { statusCode: 400, body: `Error: message required` };
     }
@@ -198,7 +190,12 @@ export const handler = async (event: any = {}): Promise<any> => {
   
   if (event.method === "addMessage") {
     if (event.messageId && event.message) {
-      return addMessage(event.messageId, event.message);
+      try {
+        const response = await addMessage(event.messageId, event.message);
+        return { statusCode: 200, body: JSON.stringify(response) };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
     } else {
       return { statusCode: 400, body: `Error: messageId and message required` };
     }
@@ -225,7 +222,12 @@ export const handler = async (event: any = {}): Promise<any> => {
 
   if (event.method === "deleteMessage") {
     if (event.messageId) {
-      return deleteMessage(event.messageId);
+      try {
+        const response = await deleteMessage(event.messageId);
+        return { statusCode: 200, body: JSON.stringify(response) };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
     } else {
       return { statusCode: 400, body: `Error: messageId required` };
     }
