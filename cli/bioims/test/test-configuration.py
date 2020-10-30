@@ -8,7 +8,7 @@ import bioims
 
 configurationClient = bioims.client('configuration')
 
-TEST_SIZE = 400
+TEST_SIZE = 20
 
 parameterValues = {}
 
@@ -43,7 +43,8 @@ for key in parameterValues:
 allKV = configurationClient.getAll()
 for key in allKV:
     print(key)
-    configurationClient.deleteParameter(key)
+    r = configurationClient.deleteParameter(key)
+    print(r)
 
 
 

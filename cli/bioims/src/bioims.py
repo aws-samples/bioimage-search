@@ -137,6 +137,27 @@ class BioimageSearchClient:
     def getBatchSpotQueueName(self):
         return self._resources.getBatchSpotQueueName()
         
+        
+        
+#############################################
+#
+# UTILITIES
+#
+#############################################
+
+def getResponseBody(response):
+    if response['StatusCode']>299:
+        raise Exception("lambda error")
+    stream = response['Payload']
+    bStrResponse = stream.read()
+    strResponse = bStrResponse.decode("utf-8")
+    jresponse = json.loads(strResponse)
+    statusCode = jresponse['statusCode']
+    if statusCode > 299:
+        errMsg = "Error: " + jresponse['body']
+        raise Exception(errMsg)
+    return jresponse['body']
+    
 #############################################
 #
 # CONFIGURATION
@@ -156,10 +177,10 @@ class ConfigurationClient(BioimageSearchClient):
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
             FunctionName=self._resources.getConfigurationLambdaArn(),
-            InvocationType='Event',
+            InvocationType='RequestResponse',
             Payload=payload
             )
-        return response['StatusCode']
+        return getResponseBody(response)
 
     def getParameter(self, key):
         request = '{{ "method": "getParameter", "key": "{}" }}'.format(key)
@@ -170,13 +191,10 @@ class ConfigurationClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        stream = response['Payload']
-        bStrResponse = stream.read()
-        strResponse = bStrResponse.decode("utf-8")
-        jresponse = json.loads(strResponse)
-        jbody = jresponse['body']
-        jvalue = json.loads(jbody)
-        return jvalue['value']
+        jbody = getResponseBody(response)
+        item =jbody['Item']
+        value = item['value']
+        return value
 
     def getAll(self):
         request = '{ "method": "getAll" }'
@@ -187,11 +205,7 @@ class ConfigurationClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        stream = response['Payload']
-        bStrResponse = stream.read()
-        strResponse = bStrResponse.decode("utf-8")
-        jresponse = json.loads(strResponse)
-        jbody = jresponse['body']
+        jbody = getResponseBody(response)
         jvalue = json.loads(jbody)
         d = {}
         for j in jvalue:
@@ -207,11 +221,7 @@ class ConfigurationClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        stream = response['Payload']
-        bStrResponse = stream.read()
-        strResponse = bStrResponse.decode("utf-8")
-        jresponse = json.loads(strResponse)
-        jbody = jresponse['body']
+        jbody = getResponseBody(response)
         jvalue = json.loads(jbody)
         a = []
         for j in jvalue:
@@ -230,13 +240,7 @@ class ConfigurationClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        stream = response['Payload']
-        bStrResponse = stream.read()
-        strResponse = bStrResponse.decode("utf-8")
-        jresponse = json.loads(strResponse)
-        jbody = jresponse['body']
-        jvalue = json.loads(jbody)
-        return jvalue['value']
+        return getResponseBody(response)        
 
     def setDefaultTrainId(self, value):
         request = '{{ "method": "setDefaultTrainId", "value": "{}" }}'.format(value)
@@ -244,21 +248,21 @@ class ConfigurationClient(BioimageSearchClient):
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
             FunctionName=self._resources.getConfigurationLambdaArn(),
-            InvocationType='Event',
+            InvocationType='RequestResponse',
             Payload=payload
             )
-        return response['StatusCode']
-    
+        return getResponseBody(response)
+
     def deleteParameter(self, key):
         request = '{{ "method": "deleteParameter", "key": "{}" }}'.format(key)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
             FunctionName=self._resources.getConfigurationLambdaArn(),
-            InvocationType='Event',
+            InvocationType='RequestResponse',
             Payload=payload
             )
-        return response['StatusCode']
+        return getResponseBody(response)
         
 #############################################
 #

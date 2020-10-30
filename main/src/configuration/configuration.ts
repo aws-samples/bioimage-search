@@ -1,6 +1,6 @@
 const AWS = require("aws-sdk");
 const db = new AWS.DynamoDB.DocumentClient();
-const dy = require("bioimage-dynamo")
+const dy = require("bioimage-dynamo");
 const TABLE_NAME = process.env.TABLE_NAME || "";
 const PARTITION_KEY = process.env.PARTITION_KEY || "";
 const SORT_KEY = process.env.SORT_KEY || "";
@@ -64,12 +64,7 @@ async function getParameter(key: any) {
       [SORT_KEY]: LATEST,
     },
   };
-  try {
-    const response = await db.get(params).promise();
-    return { statusCode: 200, body: JSON.stringify(response.Item) };
-  } catch (dbError) {
-    return { statusCode: 500, body: JSON.stringify(dbError) };
-  }
+  return db.get(params).promise();
 }
 
 async function setParameter(key: any, value: any) {
@@ -91,13 +86,8 @@ async function setParameter(key: any, value: any) {
     TableName: TABLE_NAME,
     Item: itemTimestamp,
   };
-  try {
-    await db.put(params).promise();
-    await db.put(paramsTimestamp).promise();
-    return { statusCode: 201, body: "" };
-  } catch (dbError) {
-    return { statusCode: 500, body: JSON.stringify(dbError) };
-  }
+  await db.put(params).promise();
+  return db.put(paramsTimestamp).promise();
 }
 
 async function getHistoryRows(key: any) {
@@ -125,37 +115,28 @@ async function getAll() {
       "{" + expressionAttributeValues + "}"
     ),
   };
-  try {
-    const rows = await dy.getAllScanData(db, params);
-    return { statusCode: 200, body: JSON.stringify(rows) };
-  } catch (dbError) {
-    return { statusCode: 500, body: JSON.stringify(dbError) };
-  }
+  const rows = await dy.getAllScanData(db, params);
+  return rows;
 }
 
 async function deleteParameter(key: any) {
-  try {
-    let rows: any = await getHistoryRows(key);
-    let p: any[] = [];
-    let i = 0;
-    while (i < rows.length) {
-      let j = i + DDB_MAX_BATCH;
-      if (j > rows.length) {
-        j = rows.length;
-      }
-      p.push(dy.deleteRows(db, PARTITION_KEY, SORT_KEY, TABLE_NAME, rows.slice(i, j)));
-      i += j - i;
+  let rows: any = await getHistoryRows(key);
+  let p: any[] = [];
+  let i = 0;
+  while (i < rows.length) {
+    let j = i + DDB_MAX_BATCH;
+    if (j > rows.length) {
+      j = rows.length;
     }
-    await Promise.all(p);
-    const response = "deleted " + rows.length + " items";
-    return { statusCode: 200, body: response };
-  } catch (dbError) {
-    return { statusCode: 500, body: JSON.stringify(dbError) };
+    p.push(
+      dy.deleteRows(db, PARTITION_KEY, SORT_KEY, TABLE_NAME, rows.slice(i, j))
+    );
+    i += j - i;
   }
+  return Promise.all(p);
 }
 
-
-/////////////////
+/////////////////////////////////////////////
 
 export const handler = async (event: any = {}): Promise<any> => {
   if (!event.method) {
@@ -164,7 +145,12 @@ export const handler = async (event: any = {}): Promise<any> => {
 
   if (event.method === "getParameter") {
     if (event.key) {
-      return getParameter(event.key);
+      try {
+        const result = await getParameter(event.key);
+        return { statusCode: 200, body: result };
+      } catch (dbError) {
+        return { statusCode: 500, body: dbError };
+      }
     } else {
       return { statusCode: 400, body: `Error: key required` };
     }
@@ -172,7 +158,12 @@ export const handler = async (event: any = {}): Promise<any> => {
 
   if (event.method === "setParameter") {
     if (event.key && event.value) {
-      return setParameter(event.key, event.value);
+      try {
+        const result = await setParameter(event.key, event.value);
+        return { statusCode: 200, body: result };
+      } catch (dbError) {
+        return { statusCode: 500, body: dbError };
+      }
     } else {
       return { statusCode: 400, body: `Error: key and value required` };
     }
@@ -192,20 +183,44 @@ export const handler = async (event: any = {}): Promise<any> => {
   }
 
   if (event.method === "getAll") {
-    return getAll();
+    try {
+      const result = await getAll();
+      return { statusCode: 200, body: JSON.stringify(result) };
+    } catch (dbError) {
+      return { statusCode: 500, body: JSON.stringify(dbError) };
+    }
   }
 
   if (event.method === "getDefaultTrainId") {
-    return getParameter(DEFAULT_TRAIN_ID);
+    try {
+      const result = await getParameter(DEFAULT_TRAIN_ID);
+      return { statusCode: 200, body: JSON.stringify(result) };
+    } catch (dbError) {
+      return { statusCode: 500, body: JSON.stringify(dbError) };
+    }
   }
 
   if (event.method === "setDefaultTrainId") {
-    return setParameter(DEFAULT_TRAIN_ID, event.value);
+    if (event.value) {
+      try {
+        const result = await setParameter(DEFAULT_TRAIN_ID, event.value);
+        return { statusCode: 200, body: JSON.stringify(result) };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
+    } else {
+      return { statusCode: 400, body: `Error: value required` };
+    }
   }
 
   if (event.method === "deleteParameter") {
     if (event.key) {
-      return deleteParameter(event.key);
+      try {
+        const result = await deleteParameter(event.key);
+        return { statusCode: 200, body: JSON.stringify(result) };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
     } else {
       return { statusCode: 400, body: `Error: key parameter required` };
     }
