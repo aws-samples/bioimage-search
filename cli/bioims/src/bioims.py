@@ -151,13 +151,16 @@ def getResponseBody(response):
     stream = response['Payload']
     bStrResponse = stream.read()
     strResponse = bStrResponse.decode("utf-8")
-    jresponse = json.loads(strResponse)
-    statusCode = jresponse['statusCode']
-    if statusCode > 299:
-        errMsg = "Error: " + jresponse['body']
-        raise Exception(errMsg)
-    return jresponse['body']
-    
+    if strResponse:
+        jresponse = json.loads(strResponse)
+        statusCode = jresponse['statusCode']
+        if statusCode > 299:
+            errMsg = "Error: " + jresponse['body']
+            raise Exception(errMsg)
+        return jresponse['body']
+    else:
+        return "";
+
 #############################################
 #
 # CONFIGURATION
@@ -287,7 +290,7 @@ class LabelClient(BioimageSearchClient):
             InvocationType='Event',
             Payload=payload
             )
-        return response['StatusCode']
+        return getResponseBody(response)
 
     def updateCategoryDescription(self, category, description):
         request = '{{ "method": "updateCategoryDescription", "category": "{}", "description": "{}" }}'.format(category, description)
@@ -298,7 +301,7 @@ class LabelClient(BioimageSearchClient):
             InvocationType='Event',
             Payload=payload
             )
-        return response['StatusCode']
+        return getResponseBody(response)
 
     def deleteCategory(self, category):
         request = '{{ "method": "deleteCategory", "category": "{}" }}'.format(category)
@@ -309,7 +312,7 @@ class LabelClient(BioimageSearchClient):
             InvocationType='Event',
             Payload=payload
             )
-        return response['StatusCode']
+        return getResponseBody(response)
 
     def createLabel(self, category, label):
         request = '{{ "method": "createLabel", "category": "{}", "label": "{}" }}'.format(category, label)
@@ -320,11 +323,7 @@ class LabelClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        stream = response['Payload']
-        bStrResponse = stream.read()
-        strResponse = bStrResponse.decode("utf-8")
-        jresponse = json.loads(strResponse)
-        jbody = jresponse['body']
+        jbody = getResponseBody(response)
         jvalue = json.loads(jbody)
         return jvalue['index']
 
@@ -337,7 +336,7 @@ class LabelClient(BioimageSearchClient):
             InvocationType='Event',
             Payload=payload
             )
-        return response['StatusCode']
+        return getResponseBody(response)
 
     def getIndex(self, category, label):
         request = '{{ "method": "getIndex", "category": "{}", "label": "{}" }}'.format(category, label)
@@ -348,12 +347,7 @@ class LabelClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        stream = response['Payload']
-        bStrResponse = stream.read()
-        print(bStrResponse)
-        strResponse = bStrResponse.decode("utf-8")
-        jresponse = json.loads(strResponse)
-        jbody = jresponse['body']
+        jbody = getResponseBody(response)
         jvalue = json.loads(jbody)
         return jvalue['index']
 
@@ -366,11 +360,7 @@ class LabelClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        stream = response['Payload']
-        bStrResponse = stream.read()
-        strResponse = bStrResponse.decode("utf-8")
-        jresponse = json.loads(strResponse)
-        jbody = jresponse['body']
+        jbody = getResponseBody(response)
         jvalue = json.loads(jbody)
         a = []
         for j in jvalue:
@@ -380,8 +370,6 @@ class LabelClient(BioimageSearchClient):
 
     def listLabels(self, category):
         request = '{{ "method": "listLabels", "category": "{}" }}'.format(category)
-        #print(request)
-        #print(self._resources.getLabelLambdaArn())
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
@@ -389,11 +377,7 @@ class LabelClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        stream = response['Payload']
-        bStrResponse = stream.read()
-        strResponse = bStrResponse.decode("utf-8")
-        jresponse = json.loads(strResponse)
-        jbody = jresponse['body']
+        jbody = getResponseBody(response)
         jvalue = json.loads(jbody)
         a = []
         for j in jvalue:

@@ -79,12 +79,7 @@ async function createCategory(category: any, description: any) {
     TableName: TABLE_NAME,
     Item: item,
   };
-  try {
-    await db.put(params).promise();
-    return { statusCode: 201, body: "" };
-  } catch (dbError) {
-    return { statusCode: 500, body: JSON.stringify(dbError) };
-  }
+  return db.put(params).promise();
 }
 
 async function updateCategoryDescription(category: any, description: any) {
@@ -103,12 +98,7 @@ async function updateCategoryDescription(category: any, description: any) {
       "{" + expressionAttributeValues + "}"
     ),
   };
-  try {
-    await db.update(params).promise();
-    return { statusCode: 201, body: "" };
-  } catch (dbError) {
-    return { statusCode: 500, body: JSON.stringify(dbError) };
-  }
+  return await db.update(params).promise();
 }
 
 async function getCategoryRows(category: any) {
@@ -122,8 +112,7 @@ async function getCategoryRows(category: any) {
       "{" + expressionAttributeValues + "}"
     ),
   };
-  const result: any = await dy.getAllQueryData(db, params);
-  return result;
+  return await dy.getAllQueryData(db, params);
 }
 
 async function getAllCategories() {
@@ -136,33 +125,23 @@ async function getAllCategories() {
       "{" + expressionAttributeValues + "}"
     ),
   };
-  try {
-    const rows = await dy.getAllScanData(db, params);
-    return { statusCode: 200, body: JSON.stringify(rows) };
-  } catch (dbError) {
-    return { statusCode: 500, body: JSON.stringify(dbError) };
-  }
+  const rows = await dy.getAllScanData(db, params);
+  return rows
 }
 
 async function deleteCategory(category: any) {
-  try {
-    let rows: any = await getCategoryRows(category);
-    let p: any[] = [];
-    let i = 0;
-    while (i < rows.length) {
-      let j = i + DDB_MAX_BATCH;
-      if (j > rows.length) {
-        j = rows.length;
-      }
-      p.push(dy.deleteRows(db, PARTITION_KEY, SORT_KEY, TABLE_NAME, rows.slice(i, j)));
-      i += j - i;
+  let rows: any = await getCategoryRows(category);
+  let p: any[] = [];
+  let i = 0;
+  while (i < rows.length) {
+    let j = i + DDB_MAX_BATCH;
+    if (j > rows.length) {
+      j = rows.length;
     }
-    await Promise.all(p);
-    const response = "deleted " + rows.length + " items";
-    return { statusCode: 200, body: response };
-  } catch (dbError) {
-    return { statusCode: 500, body: JSON.stringify(dbError) };
+    p.push(dy.deleteRows(db, PARTITION_KEY, SORT_KEY, TABLE_NAME, rows.slice(i, j)));
+    i += j - i;
   }
+  return Promise.all(p);
 }
 
 async function createLabel(category: any, label: any) {
@@ -185,13 +164,9 @@ async function createLabel(category: any, label: any) {
     TableName: TABLE_NAME,
     Item: item,
   };
-  try {
-    await db.put(params).promise();
-    const rv = { index: nextIndex };
-    return { statusCode: 201, body: JSON.stringify(rv) };
-  } catch (dbError) {
-    return { statusCode: 500, body: JSON.stringify(dbError) };
-  }
+  await db.put(params).promise();
+  const rv = { index: nextIndex };
+  return rv;
 }
 
 async function updateLabel(category: any, oldlabel: any, newlabel: any) {
@@ -232,15 +207,14 @@ async function updateLabel(category: any, oldlabel: any, newlabel: any) {
       };
       return db.put(createParams).promise(); })
     .then((response: any) => {
-      return { statusCode: 200, body: JSON.stringify(response) };
+      return response;
     })
     .catch((error: any) => {
-      return { statusCode: 500, body: JSON.stringify(error) };
+      throw new Error(error);
     });
 }
 
 async function listLabels(category: any) {
-  try {
     var l: any[] = [];
     const rows = await getCategoryRows(category);
     for (let r of rows) {
@@ -248,10 +222,7 @@ async function listLabels(category: any) {
         l.push(r);
       }
     }
-    return { statusCode: 200, body: JSON.stringify(l) };
-  } catch (dbError) {
-    return { statusCode: 500, body: JSON.stringify(dbError) };
-  }
+    return l
 }
 
 async function getIndex(category: any, label: any) {
@@ -262,14 +233,10 @@ async function getIndex(category: any, label: any) {
       [SORT_KEY]: label,
     },
   };
-  try {
     const response = await db.get(params).promise();
     const item = response.Item
     const indexResponse = { index: item[INDEX_ATTRIBUTE] }
-    return { statusCode: 200, body: JSON.stringify(indexResponse) };
-  } catch (dbError) {
-    return { statusCode: 500, body: JSON.stringify(dbError) };
-  }
+    return indexResponse
 }
 
 //////////////////////////////////////////////
@@ -282,7 +249,12 @@ export const handler = async (event: any = {}): Promise<any> => {
 
   if (event.method === "createCategory") {
     if (event.category && event.description) {
-      return createCategory(event.category, event.description);
+      try {
+        const result = await createCategory(event.category, event.description);
+        return { statusCode: 200, body: JSON.stringify(result) };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
     } else {
       return {
         statusCode: 400,
@@ -293,7 +265,12 @@ export const handler = async (event: any = {}): Promise<any> => {
 
   if (event.method === "updateCategoryDescription") {
     if (event.category && event.description) {
-      return updateCategoryDescription(event.category, event.description);
+      try {
+        const result = await updateCategoryDescription(event.category, event.description);
+        return { statusCode: 200, body: JSON.stringify(result) };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
     } else {
       return {
         statusCode: 400,
@@ -304,7 +281,12 @@ export const handler = async (event: any = {}): Promise<any> => {
 
   if (event.method === "deleteCategory") {
     if (event.category) {
-      return deleteCategory(event.category);
+      try {
+        const result = await deleteCategory(event.category);
+        return { statusCode: 200, body: JSON.stringify(result) };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
     } else {
       return { statusCode: 400, body: `Error: category required` };
     }
@@ -312,7 +294,12 @@ export const handler = async (event: any = {}): Promise<any> => {
 
   if (event.method === "createLabel") {
     if (event.category && event.label) {
-      return await createLabel(event.category, event.label);
+      try {
+        const result = await createLabel(event.category, event.label);
+        return { statusCode: 200, body: JSON.stringify(result) };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
     } else {
       return { statusCode: 400, body: `Error: category and label required` };
     }
@@ -320,19 +307,34 @@ export const handler = async (event: any = {}): Promise<any> => {
 
   if (event.method === "listLabels") {
     if (event.category) {
-      return await listLabels(event.category);
+      try {
+        const result = await listLabels(event.category);
+        return { statusCode: 200, body: JSON.stringify(result) };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
     } else {
       return { statusCode: 400, body: `Error: category` };
     }
   }
 
   if (event.method === "listCategories") {
-    return await getAllCategories();
+    try {
+      const result = await getAllCategories();
+      return { statusCode: 200, body: JSON.stringify(result) };
+    } catch (dbError) {
+      return { statusCode: 500, body: JSON.stringify(dbError) };
+    }
   }
 
   if (event.method === "getIndex") {
     if (event.category && event.label) {
-      return await getIndex(event.category, event.label);
+      try {
+        const result = await getIndex(event.category, event.label);
+        return { statusCode: 200, body: JSON.stringify(result) };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
     } else {
       return { statusCode: 400, body: `Error: category and label required` };
     }
@@ -340,7 +342,12 @@ export const handler = async (event: any = {}): Promise<any> => {
   
   if (event.method === "updateLabel") {
     if (event.category && event.oldlabel && event.newlabel) {
-      return await updateLabel(event.category, event.oldlabel, event.newlabel)
+      try {
+        const result = await updateLabel(event.category, event.oldlabel, event.newlabel)
+        return { statusCode: 200, body: JSON.stringify(result) };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
     }
   }
 

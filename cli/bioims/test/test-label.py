@@ -27,3 +27,6 @@ print(r)
 
 r = labelClient.getIndex("category2", "label9")
 print(r)
+
+r = labelClient.deleteCategory("category2")
+print(r)
