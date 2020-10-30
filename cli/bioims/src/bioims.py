@@ -478,7 +478,6 @@ class ImageArtifactClient(BioimageSearchClient):
         artifactSizesJson = json.dumps(artifactSizes)
         request = '{{ "input_bucket": "{}", "input_keys": {}, "output_bucket": "{}", "artifact_keys": {}, "artifact_sizes": {} }}'.format(
             inputBucket, inputKeysJson, outputBucket, artifactKeysJson, artifactSizesJson)
-        print("request=", request)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
@@ -486,7 +485,7 @@ class ImageArtifactClient(BioimageSearchClient):
             InvocationType='Event',
             Payload=payload
             )
-        return response['StatusCode']
+        return response
         
 #############################################
 #
@@ -519,7 +518,7 @@ class PlatePreprocessingClient(BioimageSearchClient):
                 'p8': outputFlatFieldKey
             }
         )
-        print(response)
+        return response
 
 #############################################
 #
@@ -537,17 +536,15 @@ class EmbeddingConfigurationClient(BioimageSearchClient):
     def createEmbedding(self, embedding):
         embeddingStr = json.dumps(embedding)
         request = '{{ "method": "createEmbedding", "embedding": {} }}'.format(embeddingStr)
-        print(request)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         lambdaArn = self._resources.getEmbeddingConfigurationLambdaArn()
-        print("lambdaArn=", lambdaArn)
         response = lambdaClient.invoke(
             FunctionName=lambdaArn,
             InvocationType='RequestResponse',
             Payload=payload
             )
-        return response['StatusCode']
+        return getResponseBody(response)
         
     def getEmbedding(self, name):
         request = '{{ "method": "getEmbedding", "name": "{}" }}'.format(name)
@@ -558,13 +555,9 @@ class EmbeddingConfigurationClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        stream = response['Payload']
-        bStrResponse = stream.read()
-        strResponse = bStrResponse.decode("utf-8")
-        jresponse = json.loads(strResponse)
-        jbody = jresponse['body']
+        jbody = getResponseBody(response)
         jvalue = json.loads(jbody)
-        return jvalue
+        return jvalue['Item']
 
     def deleteEmbedding(self, name):
         request = '{{ "method": "deleteEmbedding", "name": "{}" }}'.format(name)
@@ -575,8 +568,7 @@ class EmbeddingConfigurationClient(BioimageSearchClient):
             InvocationType='Event',
             Payload=payload
             )
-        return response['StatusCode']
-
+        return getResponseBody(response)
 
 #############################################
 #

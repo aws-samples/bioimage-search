@@ -88,59 +88,52 @@ function validateEmbedding(embedding: any): boolean {
 async function createEmbedding(embedding: any) {
   const params = {
     TableName: TABLE_NAME,
-    Item: embedding
+    Item: embedding,
   };
-  try {
-    await db.put(params).promise();
-    return { statusCode: 201, body: "" };
-  } catch (dbError) {
-    return { statusCode: 500, body: JSON.stringify(dbError) };
-  }
+  return db.put(params).promise();
 }
 
 async function deleteEmbedding(name: any) {
-   try {
-    let rows: any = await dy.getPartitionRows(db, PARTITION_KEY, name, TABLE_NAME);
-    let p: any[] = [];
-    let i = 0;
-    while (i < rows.length) {
-      let j = i + DDB_MAX_BATCH;
-      if (j > rows.length) {
-        j = rows.length;
-      }
-      p.push(dy.deleteRows(db, PARTITION_KEY, false, TABLE_NAME, rows.slice(i, j)));
-      i += j - i;
+  let rows: any = await dy.getPartitionRows(
+    db,
+    PARTITION_KEY,
+    name,
+    TABLE_NAME
+  );
+  let p: any[] = [];
+  let i = 0;
+  while (i < rows.length) {
+    let j = i + DDB_MAX_BATCH;
+    if (j > rows.length) {
+      j = rows.length;
     }
-    await Promise.all(p);
-    const response = "deleted " + rows.length + " items";
-    return { statusCode: 200, body: response };
-  } catch (dbError) {
-    return { statusCode: 500, body: JSON.stringify(dbError) };
-  } 
+    p.push(
+      dy.deleteRows(db, PARTITION_KEY, false, TABLE_NAME, rows.slice(i, j))
+    );
+    i += j - i;
+  }
+  return Promise.all(p);
 }
 
 async function getEmbedding(name: any) {
   const params = {
-      TableName: TABLE_NAME,
-      Key: {
-        [PARTITION_KEY]: name
-      }
+    TableName: TABLE_NAME,
+    Key: {
+      [PARTITION_KEY]: name,
+    },
   };
-  try {
-    const response = await db.get(params).promise();
-    return { statusCode: 200, body: JSON.stringify(response.Item) };
-  } catch (dbError) {
-    return { statusCode: 500, body: JSON.stringify(dbError) };
-  }
+  return db.get(params).promise();
 }
 
 ////////////////////////////////////////////
 
 export const handler = async (event: any = {}): Promise<any> => {
+
   if (!event.method) {
     console.log("Error: method parameter required - returning status code 400");
     return { statusCode: 400, body: `Error: method parameter required` };
   }
+
   if (event.method === "createEmbedding") {
     if (event.embedding) {
       if (!validateEmbedding(event.embedding)) {
@@ -149,7 +142,12 @@ export const handler = async (event: any = {}): Promise<any> => {
           body: `Error: embedding does not validate`,
         };
       }
-      return createEmbedding(event.embedding);
+      try {
+        const response = await createEmbedding(event.embedding);
+        return { statusCode: 200, body: JSON.stringify(response) }
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };        
+      }
     } else {
       return {
         statusCode: 400,
@@ -157,21 +155,15 @@ export const handler = async (event: any = {}): Promise<any> => {
       };
     }
   }
-  
+
   if (event.method === "getEmbedding") {
     if (event.name) {
-      return getEmbedding(event.name);
-    } else {
-      return {
-        statusCode: 400,
-        body: `Error: name required`,
+      try {
+        const response = await getEmbedding(event.name);
+        return { statusCode: 200, body: JSON.stringify(response) };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
       }
-    }
-  }
-
-  if (event.method === "deleteEmbedding") {
-    if (event.name) {
-      return deleteEmbedding(event.name);
     } else {
       return {
         statusCode: 400,
@@ -179,4 +171,21 @@ export const handler = async (event: any = {}): Promise<any> => {
       };
     }
   }
+
+  if (event.method === "deleteEmbedding") {
+    if (event.name) {
+      try {
+        const response = await deleteEmbedding(event.name)
+        return { statusCode: 200, body: JSON.stringify(response) };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
+    } else {
+      return {
+        statusCode: 400,
+        body: `Error: name required`,
+      };
+    }
+  }
+  
 };
