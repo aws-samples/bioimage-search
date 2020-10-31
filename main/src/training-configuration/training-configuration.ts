@@ -66,12 +66,7 @@ async function createTraining(training: any) {
     TableName: TABLE_NAME,
     Item: training
   };
-  try {
-    await db.put(params).promise();
-    return { statusCode: 201, body: "" };
-  } catch (dbError) {
-    return { statusCode: 500, body: JSON.stringify(dbError) };
-  }  
+  return db.put(params).promise();
 }
 
 async function updateTraining(train_id: any, attribute: any, value: any) {
@@ -92,8 +87,7 @@ async function updateTraining(train_id: any, attribute: any, value: any) {
     ReturnValues:"UPDATED_NEW"
   };
   
-  const response = db.update(params).promise();
-  return response
+  return db.update(params).promise();
 }
 
 async function deleteTraining(train_id: any) {
@@ -103,27 +97,17 @@ async function deleteTraining(train_id: any) {
       [PARTITION_KEY]: train_id
     }
   };
-  try {
-    await db.delete(deleteParams).promise();
-    return { statusCode: 201, body: "" }
-  } catch (dbError) {
-    return { statusCode: 500, body: JSON.stringify(dbError) };
-  }
+  return db.delete(deleteParams).promise();
 }
 
 async function getTraining(train_id: any) {
-    const params = {
-      TableName: TABLE_NAME,
-      Key: {
-        [PARTITION_KEY]: train_id
-      }
+  const params = {
+    TableName: TABLE_NAME,
+    Key: {
+      [PARTITION_KEY]: train_id
+    }
   };
-  try {
-    const response = await db.get(params).promise();
-    return { statusCode: 200, body: JSON.stringify(response.Item) };
-  } catch (dbError) {
-    return { statusCode: 500, body: JSON.stringify(dbError) };
-  }
+  return db.get(params).promise();
 }
 
 /////////////////////////////////////////////////
@@ -142,7 +126,12 @@ export const handler = async (event: any = {}): Promise<any> => {
           body: `Error: training does not validate`,
         };
       }
-      return createTraining(event.training);
+      try {
+        const response = await createTraining(event.training);
+        return { statusCode: 200, body: JSON.stringify(response) };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
     } else {
       return {
         statusCode: 400,
@@ -153,7 +142,12 @@ export const handler = async (event: any = {}): Promise<any> => {
   
   else if (event.method === "getTraining") {
       if (event.train_id) {
-          return getTraining(event.train_id)
+        try {
+          const response = await getTraining(event.train_id)
+          return { statusCode: 200, body: JSON.stringify(response) };
+        } catch (dbError) {
+          return { statusCode: 500, body: JSON.stringify(dbError) };
+        }
       } else {
           return {
               statusCode: 400,
@@ -165,13 +159,10 @@ export const handler = async (event: any = {}): Promise<any> => {
   else if (event.method === "updateTraining") {
     if (event.train_id && event.attribute && event.value) {
       try {
-        await updateTraining(event.train_id, event.attribute, event.value);
-        console.log("post updateTraining")
-        return { statusCode: 201, body: "" };
+        const response = await updateTraining(event.train_id, event.attribute, event.value);
+        return { statusCode: 201, body: JSON.stringify(response) };
       } catch (dbError) {
-        const errMsg = "dbError=" + JSON.stringify(dbError)
-        console.log(errMsg)
-        return { statusCode: 500, body: errMsg };
+        return { statusCode: 500, body: JSON.stringify(dbError) };
       }
     } else {
         return {
@@ -183,7 +174,12 @@ export const handler = async (event: any = {}): Promise<any> => {
 
   else if (event.method === "deleteTraining") {
     if (event.train_id) {
-      return deleteTraining(event.train_id);
+      try {
+        const response = await deleteTraining(event.train_id);
+        return { statusCode: 200, body: JSON.stringify(response) };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
     } else {
       return {
         statusCode: 400,

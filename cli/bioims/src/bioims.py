@@ -586,31 +586,27 @@ class TrainingConfigurationClient(BioimageSearchClient):
     def createTraining(self, training):
         trainingStr = json.dumps(training)
         request = '{{ "method": "createTraining", "training": {} }}'.format(trainingStr)
-        print(request)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         lambdaArn = self._resources.getTrainingConfigurationLambdaArn()
-        print("lambdaArn=", lambdaArn)
         response = lambdaClient.invoke(
             FunctionName=lambdaArn,
             InvocationType='RequestResponse',
             Payload=payload
             )
-        return response['StatusCode']
+        return getResponseBody(response)
 
     def updateTraining(self, train_id, attribute, value):
         request = '{{ "method": "updateTraining", "train_id": "{}", "attribute": "{}", "value": "{}" }}'.format(train_id, attribute, value)
-        print(request)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         lambdaArn = self._resources.getTrainingConfigurationLambdaArn()
-        print("lambdaArn=", lambdaArn)
         response = lambdaClient.invoke(
             FunctionName=lambdaArn,
             InvocationType='RequestResponse',
             Payload=payload
             )
-        return response['StatusCode']
+        return getResponseBody(response)
 
     def getTraining(self, train_id):
         request = '{{ "method": "getTraining", "train_id": "{}" }}'.format(train_id)
@@ -621,13 +617,9 @@ class TrainingConfigurationClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        stream = response['Payload']
-        bStrResponse = stream.read()
-        strResponse = bStrResponse.decode("utf-8")
-        jresponse = json.loads(strResponse)
-        jbody = jresponse['body']
+        jbody = getResponseBody(response)
         jvalue = json.loads(jbody)
-        return jvalue
+        return jvalue['Item']
 
     def deleteTraining(self, train_id):
         request = '{{ "method": "deleteTraining", "train_id": "{}" }}'.format(train_id)
@@ -638,4 +630,4 @@ class TrainingConfigurationClient(BioimageSearchClient):
             InvocationType='Event',
             Payload=payload
             )
-        return response['StatusCode']
+        return getResponseBody(response)
