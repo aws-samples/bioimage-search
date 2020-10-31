@@ -16,34 +16,34 @@ mids=[]
 
 for i in range(10):
     artifact = {
-        "typeId" : "plate",
-        "trainId" : "train-id-1",
-        "s3key" : "s3key-1",
-        "s3bucket" : "s3bucket-1",
-        "type" : "type-1"
+        "typeId" : 'plate-'+str(i),
+        "trainId" : 'train-id-'+str(i),
+        "s3key" : 's3key-'+str(i),
+        "s3bucket" : 's3bucket-'+str(i),
+        "type" : 'type-'+str(i)
     }
     r = artifactClient.createArtifact(artifact)
     print(r)
 
-# for i in range(10):
-#     r = messageClient.getMessage(mids[i])
-#     print(r)
+for i in range(10):
+    r = artifactClient.getArtifacts('plate-'+str(i), 'train-id-'+str(i))
+    print(r)
 
-# for i in range(10):
-#     print(i)
-#     print(mids[i])
-#     r = messageClient.addMessage(mids[i], "message test add3 "+str(i))
-#     print(r)
+for i in range(10):
+    artifact = {
+        "typeId" : 'plate-'+str(i),
+        "trainId" : 'train-id-'+str(i),
+        "s3key" : 's3key-'+str(i)+'-2',
+        "s3bucket" : 's3bucket-'+str(i),
+        "type" : 'type-'+str(i)
+    }
+    r = artifactClient.createArtifact(artifact)
+    print(r)
 
-# for i in range(10):
-#     print(i)
-#     print(mids[i])
-#     r = messageClient.addMessage(mids[i], "message test add4 "+str(i))
-#     print(r)
-    
-# for i in range(10):
-#     r = messageClient.listMessage(mids[i])
-#     print(r)
+for i in range(10):
+    r = artifactClient.getArtifacts('plate-'+str(i), 'train-id-'+str(i))
+    print(r)
 
-# for i in range(10):
-#     messageClient.deleteMessage(mids[i])
+for i in range(10):
+    r = artifactClient.deleteArtifacts('plate-'+str(i), 'train-id-'+str(i))
+    print(r)
