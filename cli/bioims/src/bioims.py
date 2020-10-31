@@ -56,6 +56,9 @@ class BioimageSearchResources:
     def getTrainingConfigurationStack(self):
         return self.getStackByName('BioimageSearchTrainingConfigurationStack')
         
+    def getArtifactStack(self):
+        return self.getStackByName('BioimageSearchArtifactStack')
+        
 ##### FUNCTIONS
 
     def getStackOutputByPrefix(self, stack, prefix):
@@ -90,6 +93,9 @@ class BioimageSearchResources:
 
     def getTrainingConfigurationLambdaArn(self):
         return self.getStackOutputByPrefix(self.getTrainingConfigurationStack(), 'ExportsOutputFnGetAtttrainingConfigurationFunction')
+        
+    def getArtifactLambdaArn(self):
+        return self.getStackOutputByPrefix(self.getArtifactStack(), 'ExportsOutputFnGetAttartifactFunction')
 
 ##### BATCH QUEUE
 
@@ -122,6 +128,8 @@ def client(serviceName):
         return EmbeddingConfigurationClient()
     elif serviceName == 'training-configuration':
         return TrainingConfigurationClient()
+    elif serviceName == 'artifact':
+        return ArtifactClient()
     else:
         print('service type {} not recognized'.format(serviceName))
         return False
@@ -631,3 +639,67 @@ class TrainingConfigurationClient(BioimageSearchClient):
             Payload=payload
             )
         return getResponseBody(response)
+
+#############################################
+#
+# ARTIFACT
+#
+#############################################
+    
+class ArtifactClient(BioimageSearchClient):
+    def __init__(self):
+        super().__init__()
+
+    def getLambdaArn(self):
+        return self._resources.getArtifactLambdaArn()
+
+    def getArtifacts(self, typeId, trainId):
+        request = '{{ "method": "getArtifacts", "typeId": "{}", "trainId": "{}" }}'.format(typeId, trainId)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self.getLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        jbody = getResponseBody(response)
+        jvalue = json.loads(jbody)
+        item = jvalue['Item']
+        return item
+
+    def createArtifact(self, artifact):
+        artifactStr = json.dumps(artifact)
+        request = '{{ "method": "createArtifact", "artifact": {} }}'.format(artifactStr)
+        print(request)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self.getLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        print(response)
+        return getResponseBody(response)
+
+    def deleteArtifacts(self, typeId, trainId):
+        request = '{{ "method": "deleteArtifacts", "typeId": "{}", "trainId": "{}" }}'.format(typeId, trainId)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self.getLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        return getResponseBody(response)
+
+    def addAnnotation(self, typeId, trainId, s3key, annotation):
+        request = '{{ "method": "addAnnotation", "typeId": "{}", "trainid": "{}", "s3key": "{}", "annotation": "{}" }}'.format(typeId, trainId, s3key, annotation)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self.getLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        return getResponseBody(response)
+        

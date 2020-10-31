@@ -23,14 +23,12 @@ export class ArtifactStack extends cdk.Stack {
       tableName: "BioimsArtifact",
     });
 
-//        code: new lambda.AssetCode("src/message"),
-
     const artifactLambda = new lambda.Function(
       this,
       "artifactFunction",
       {
         code: lambda.Code.fromAsset("src/artifact/build"),
-        handler: "message.handler",
+        handler: "artifact.handler",
         runtime: lambda.Runtime.NODEJS_12_X,
         environment: {
           TABLE_NAME: artifactTable.tableName,
