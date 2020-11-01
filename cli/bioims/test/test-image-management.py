@@ -33,7 +33,7 @@ training = {
 }
 
 plateSourceInfo = {
-    "train_id": training["train_id"],
+    "trainId": training["train_id"],
     "key1" : "value1",
     "key2" : "value2"
 }

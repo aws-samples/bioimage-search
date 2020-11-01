@@ -68,5 +68,6 @@ const artifactStack = new ArtifactStack(app, 'BioimageSearchArtifactStack', {
 
 const imageManagementStack = new ImageManagementStack(app, 'BioimageSearchImageManagementStack', {
     bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy,
-    trainingConfigurationLambdaArn: trainingConfigurationStack.trainingConfigurationLambdaArn
+    trainingConfigurationLambdaArn: trainingConfigurationStack.trainingConfigurationLambdaArn,
+    externalResourcesPolicy: baseStack.externalResourcesPolicy
 })

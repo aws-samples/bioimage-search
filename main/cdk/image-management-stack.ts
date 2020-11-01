@@ -6,6 +6,7 @@ import cdk = require("@aws-cdk/core");
 export interface ImageManagementStackProps extends cdk.StackProps {
   bioimageSearchManagedPolicy: iam.ManagedPolicy;
   trainingConfigurationLambdaArn: string;
+  externalResourcesPolicy: iam.Policy;
 }
 
 export class ImageManagementStack extends cdk.Stack {
@@ -39,6 +40,17 @@ export class ImageManagementStack extends cdk.Stack {
         },
       }
     );
+    
+    const invokeTrainingConfigurationLambdaPolicyStatement = new iam.PolicyStatement({
+      actions: ["lambda:InvokeFunction"],
+      effect: iam.Effect.ALLOW,
+      resources: [ props.trainingConfigurationLambdaArn ]
+    })
+
+    if (imageManagementLambda.role) {
+      imageManagementLambda.role.attachInlinePolicy(props.externalResourcesPolicy);
+      imageManagementLambda.role.addToPolicy(invokeTrainingConfigurationLambdaPolicyStatement);
+    }
 
     imageManagementTable.grantFullAccess(imageManagementLambda);
 
