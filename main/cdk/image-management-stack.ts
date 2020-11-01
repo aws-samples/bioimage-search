@@ -5,6 +5,7 @@ import cdk = require("@aws-cdk/core");
 
 export interface ImageManagementStackProps extends cdk.StackProps {
   bioimageSearchManagedPolicy: iam.ManagedPolicy;
+  trainingConfigurationLambdaArn: string;
 }
 
 export class ImageManagementStack extends cdk.Stack {
@@ -34,6 +35,7 @@ export class ImageManagementStack extends cdk.Stack {
           TABLE_NAME: imageManagementTable.tableName,
           PARTITION_KEY: "imageId",
           SORT_KEY: "trainId",
+          TRAINING_CONFIGURATION_LAMBDA_ARN: props.trainingConfigurationLambdaArn
         },
       }
     );

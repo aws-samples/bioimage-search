@@ -59,6 +59,9 @@ class BioimageSearchResources:
     def getArtifactStack(self):
         return self.getStackByName('BioimageSearchArtifactStack')
         
+    def getImageManagementStack(self):
+        return self.getStackByName('BioimageSearchImageManagementStack')
+        
 ##### FUNCTIONS
 
     def getStackOutputByPrefix(self, stack, prefix):
@@ -93,9 +96,12 @@ class BioimageSearchResources:
 
     def getTrainingConfigurationLambdaArn(self):
         return self.getStackOutputByPrefix(self.getTrainingConfigurationStack(), 'ExportsOutputFnGetAtttrainingConfigurationFunction')
-        
+
     def getArtifactLambdaArn(self):
         return self.getStackOutputByPrefix(self.getArtifactStack(), 'ExportsOutputFnGetAttartifactFunction')
+        
+    def getImageManagementLambdaArn(self):
+        return self.getStackOutputByPrefix(self.getImageManagementStack(), 'ExportsOutputFnGetAttimageManagementFunction')
 
 ##### BATCH QUEUE
 
@@ -130,6 +136,8 @@ def client(serviceName):
         return TrainingConfigurationClient()
     elif serviceName == 'artifact':
         return ArtifactClient()
+    elif serviceName == 'image-management':
+        return ImageManagementClient()
     else:
         print('service type {} not recognized'.format(serviceName))
         return False
@@ -187,7 +195,7 @@ class ConfigurationClient(BioimageSearchClient):
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
-            FunctionName=self._resources.getConfigurationLambdaArn(),
+            FunctionName=self.getLambdaArn(),
             InvocationType='RequestResponse',
             Payload=payload
             )
@@ -198,7 +206,7 @@ class ConfigurationClient(BioimageSearchClient):
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
-            FunctionName=self._resources.getConfigurationLambdaArn(),
+            FunctionName=self.getLambdaArn(),
             InvocationType='RequestResponse',
             Payload=payload
             )
@@ -212,7 +220,7 @@ class ConfigurationClient(BioimageSearchClient):
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
-            FunctionName=self._resources.getConfigurationLambdaArn(),
+            FunctionName=self.getLambdaArn(),
             InvocationType='RequestResponse',
             Payload=payload
             )
@@ -228,7 +236,7 @@ class ConfigurationClient(BioimageSearchClient):
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
-            FunctionName=self._resources.getConfigurationLambdaArn(),
+            FunctionName=self.getLambdaArn(),
             InvocationType='RequestResponse',
             Payload=payload
             )
@@ -247,7 +255,7 @@ class ConfigurationClient(BioimageSearchClient):
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
-            FunctionName=self._resources.getConfigurationLambdaArn(),
+            FunctionName=self.getLambdaArn(),
             InvocationType='RequestResponse',
             Payload=payload
             )
@@ -258,7 +266,7 @@ class ConfigurationClient(BioimageSearchClient):
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
-            FunctionName=self._resources.getConfigurationLambdaArn(),
+            FunctionName=self.getLambdaArn(),
             InvocationType='RequestResponse',
             Payload=payload
             )
@@ -269,7 +277,7 @@ class ConfigurationClient(BioimageSearchClient):
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
-            FunctionName=self._resources.getConfigurationLambdaArn(),
+            FunctionName=self.getLambdaArn(),
             InvocationType='RequestResponse',
             Payload=payload
             )
@@ -294,7 +302,7 @@ class LabelClient(BioimageSearchClient):
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
-            FunctionName=self._resources.getLabelLambdaArn(),
+            FunctionName=self.getLambdaArn(),
             InvocationType='Event',
             Payload=payload
             )
@@ -305,7 +313,7 @@ class LabelClient(BioimageSearchClient):
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
-            FunctionName=self._resources.getLabelLambdaArn(),
+            FunctionName=self.getLambdaArn(),
             InvocationType='Event',
             Payload=payload
             )
@@ -316,7 +324,7 @@ class LabelClient(BioimageSearchClient):
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
-            FunctionName=self._resources.getLabelLambdaArn(),
+            FunctionName=self.getLambdaArn(),
             InvocationType='Event',
             Payload=payload
             )
@@ -327,7 +335,7 @@ class LabelClient(BioimageSearchClient):
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
-            FunctionName=self._resources.getLabelLambdaArn(),
+            FunctionName=self.getLambdaArn(),
             InvocationType='RequestResponse',
             Payload=payload
             )
@@ -340,7 +348,7 @@ class LabelClient(BioimageSearchClient):
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
-            FunctionName=self._resources.getLabelLambdaArn(),
+            FunctionName=self.getLambdaArn(),
             InvocationType='Event',
             Payload=payload
             )
@@ -351,7 +359,7 @@ class LabelClient(BioimageSearchClient):
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
-            FunctionName=self._resources.getLabelLambdaArn(),
+            FunctionName=self.getLambdaArn(),
             InvocationType='RequestResponse',
             Payload=payload
             )
@@ -364,7 +372,7 @@ class LabelClient(BioimageSearchClient):
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
-            FunctionName=self._resources.getLabelLambdaArn(),
+            FunctionName=self.getLambdaArn(),
             InvocationType='RequestResponse',
             Payload=payload
             )
@@ -375,13 +383,12 @@ class LabelClient(BioimageSearchClient):
             a.append(j['category'])
         return a
         
-
     def listLabels(self, category):
         request = '{{ "method": "listLabels", "category": "{}" }}'.format(category)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
-            FunctionName=self._resources.getLabelLambdaArn(),
+            FunctionName=self.getLambdaArn(),
             InvocationType='RequestResponse',
             Payload=payload
             )
@@ -410,7 +417,7 @@ class MessageClient(BioimageSearchClient):
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
-            FunctionName=self._resources.getMessageLambdaArn(),
+            FunctionName=self.getLambdaArn(),
             InvocationType='RequestResponse',
             Payload=payload
             )
@@ -424,7 +431,7 @@ class MessageClient(BioimageSearchClient):
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
-            FunctionName=self._resources.getMessageLambdaArn(),
+            FunctionName=self.getLambdaArn(),
             InvocationType='RequestResponse',
             Payload=payload
             )
@@ -437,7 +444,7 @@ class MessageClient(BioimageSearchClient):
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
-            FunctionName=self._resources.getMessageLambdaArn(),
+            FunctionName=self.getLambdaArn(),
             InvocationType='RequestResponse',
             Payload=payload
             )
@@ -450,7 +457,7 @@ class MessageClient(BioimageSearchClient):
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
-            FunctionName=self._resources.getMessageLambdaArn(),
+            FunctionName=self.getLambdaArn(),
             InvocationType='RequestResponse',
             Payload=payload
             )
@@ -461,7 +468,7 @@ class MessageClient(BioimageSearchClient):
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
-            FunctionName=self._resources.getMessageLambdaArn(),
+            FunctionName=self.getLambdaArn(),
             InvocationType='RequestResponse',
             Payload=payload
             )
@@ -489,7 +496,7 @@ class ImageArtifactClient(BioimageSearchClient):
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
-            FunctionName=self._resources.getDefaultArtifactLambdaArn(),
+            FunctionName=self.getLambdaArn(),
             InvocationType='Event',
             Payload=payload
             )
@@ -514,7 +521,7 @@ class PlatePreprocessingClient(BioimageSearchClient):
         response = batchClient.submit_job(
             jobName=jobName1,
             jobQueue=queueName,
-            jobDefinition=self._resources.getPlatePreprocessingJobDefnArn(),
+            jobDefinition=self.getBatchJobDefinitionArn(),
             parameters = {
                 'p1': '--imageListBucket',
                 'p2': inputListBucket,
@@ -546,7 +553,7 @@ class EmbeddingConfigurationClient(BioimageSearchClient):
         request = '{{ "method": "createEmbedding", "embedding": {} }}'.format(embeddingStr)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
-        lambdaArn = self._resources.getEmbeddingConfigurationLambdaArn()
+        lambdaArn = self.getLambdaArn(),
         response = lambdaClient.invoke(
             FunctionName=lambdaArn,
             InvocationType='RequestResponse',
@@ -559,7 +566,7 @@ class EmbeddingConfigurationClient(BioimageSearchClient):
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
-            FunctionName=self._resources.getEmbeddingConfigurationLambdaArn(),
+            FunctionName=self.getLambdaArn(),
             InvocationType='RequestResponse',
             Payload=payload
             )
@@ -572,7 +579,7 @@ class EmbeddingConfigurationClient(BioimageSearchClient):
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
-            FunctionName=self._resources.getEmbeddingConfigurationLambdaArn(),
+            FunctionName=self.getLambdaArn(),
             InvocationType='Event',
             Payload=payload
             )
@@ -590,15 +597,14 @@ class TrainingConfigurationClient(BioimageSearchClient):
 
     def getLambdaArn(self):
         return self._resources.getTrainingConfigurationLambdaArn()
-        
+
     def createTraining(self, training):
         trainingStr = json.dumps(training)
         request = '{{ "method": "createTraining", "training": {} }}'.format(trainingStr)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
-        lambdaArn = self._resources.getTrainingConfigurationLambdaArn()
         response = lambdaClient.invoke(
-            FunctionName=lambdaArn,
+            FunctionName=self.getLambdaArn(),
             InvocationType='RequestResponse',
             Payload=payload
             )
@@ -608,9 +614,8 @@ class TrainingConfigurationClient(BioimageSearchClient):
         request = '{{ "method": "updateTraining", "train_id": "{}", "attribute": "{}", "value": "{}" }}'.format(train_id, attribute, value)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
-        lambdaArn = self._resources.getTrainingConfigurationLambdaArn()
         response = lambdaClient.invoke(
-            FunctionName=lambdaArn,
+            FunctionName=self.getLambdaArn(),
             InvocationType='RequestResponse',
             Payload=payload
             )
@@ -621,7 +626,7 @@ class TrainingConfigurationClient(BioimageSearchClient):
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
-            FunctionName=self._resources.getTrainingConfigurationLambdaArn(),
+            FunctionName=self.getLambdaArn(),
             InvocationType='RequestResponse',
             Payload=payload
             )
@@ -634,7 +639,7 @@ class TrainingConfigurationClient(BioimageSearchClient):
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
-            FunctionName=self._resources.getTrainingConfigurationLambdaArn(),
+            FunctionName=self.getLambdaArn(),
             InvocationType='Event',
             Payload=payload
             )
@@ -701,4 +706,31 @@ class ArtifactClient(BioimageSearchClient):
             Payload=payload
             )
         return getResponseBody(response)
+        
+#############################################
+#
+# IMAGE MANAGEMENT
+#
+#############################################
+    
+class ImageManagementClient(BioimageSearchClient):
+    def __init__(self):
+        super().__init__()
+
+    def getLambdaArn(self):
+        return self._resources.getImageManagementLambdaArn()
+
+    def createManifest(self, inputBucket, inputKey, outputBucket, outputKey):
+        request = '{{ "method": "createManifest", "inputBucket": "{}", "inputKey": "{}", "outputBucket": "{}", "outputKey": "{}" }}'.format(inputBucket, inputKey, outputBucket, outputKey)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self.getLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        jbody = getResponseBody(response)
+        jvalue = json.loads(jbody)
+        return jvalue
+        
         

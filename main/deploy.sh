@@ -11,6 +11,7 @@
 source ./scripts/source-nvm.sh
 npm run build
 cd src/message; npm install; cd ../..
+cd src/image-management; npm install; cd ../..
 cd src/image-artifact/lambda/default-artifact; ./build.sh; cd ../../../..
 cd src/plate-preprocessing; ./build.sh; cd ../..
 cd src/image-preprocessing; ./build.sh; cd ../..

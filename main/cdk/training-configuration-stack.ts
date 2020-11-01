@@ -8,6 +8,8 @@ export interface TrainingConfigurationStackProps extends cdk.StackProps {
 }
 
 export class TrainingConfigurationStack extends cdk.Stack {
+  public trainingConfigurationLambdaArn: string;
+  
   constructor(app: cdk.App, id: string, props: TrainingConfigurationStackProps) {
     super(app, id, props);
 
@@ -35,12 +37,12 @@ export class TrainingConfigurationStack extends cdk.Stack {
 
     trainingConfigurationTable.grantFullAccess(trainingConfigurationLambda);
     
-    const trainingConfigurationLambdaArn = trainingConfigurationLambda.functionArn
+    this.trainingConfigurationLambdaArn = trainingConfigurationLambda.functionArn
     
     const trainingConfigurationLambdaPolicyStatement = new iam.PolicyStatement({
       actions: ["lambda:InvokeFunction"],
       effect: iam.Effect.ALLOW,
-      resources: [ trainingConfigurationLambdaArn ]
+      resources: [ this.trainingConfigurationLambdaArn ]
     })
     
     props.bioimageSearchManagedPolicy.addStatements(trainingConfigurationLambdaPolicyStatement)

@@ -1,9 +1,15 @@
 const AWS = require("aws-sdk");
+const s3 = new AWS.S3({apiVersion: '2006-03-01'});
+const lambda = new AWS.Lambda({apiVersion: '2015-03-31'});
 const db = new AWS.DynamoDB.DocumentClient();
 const dy = require("bioimage-dynamo");
+const su = require("short-uuid")
+
 const TABLE_NAME = process.env.TABLE_NAME || "";
 const PARTITION_KEY_IMGID = process.env.PARTITION_KEY || "";
 const SORT_KEY_TRNID = process.env.SORT_KEY || "";
+const TRAINING_CONFIGURATION_LAMBDA_ARN = process.env.TRAINING_CONFIGURATION_LAMBDA_ARN || "";
+
 const LATEST = "LATEST";
 const DDB_MAX_BATCH = 25;
 const ORIGIN = "origin";
@@ -68,14 +74,51 @@ const ROI_EMBEDDING_ARRAY_ATTRIBUTE = "roiEmbeddingArr";
 
 /////////////////////////////////////////////////
 
-function createManifest(inputBucket: any, inputKey: any, outputBucket: any, outputKey: any) {
-  // placeholder  
-  return {}
+async function getTrainInfo(trainId: any) {
+  var params = {
+    FunctionName: TRAINING_CONFIGURATION_LAMBDA_ARN, 
+    InvocationType: "RequestResponse", 
+    Payload: { "method": "getTraining", "train_id": trainId }
+  };
+  console.log("Check4.1")
+  const data = await lambda.invoke(params).promise();
+  console.log("Check4.2")
+  if (!data) {
+    throw new Error(`null data for train_id=${trainId}`)
+  }
+  const payload = data['Payload'].toString('utf-8')
+  const trainInfo = JSON.parse(payload)
+  return trainInfo
+}
+
+async function createManifest(inputBucket: any, inputKey: any, outputBucket: any, outputKey: any) {
+  console.log("Check2")
+  const data = await s3.getObject({ Bucket: inputBucket, Key: inputKey}).promise();
+  console.log("Check3")
+  if (!data) {
+    throw new Error("sourcePlateInfo object null")
+  }
+  const sourcePlateInfo = data.Body.toString('utf-8');
+  const trainId = sourcePlateInfo['trainId']    
+  // Validate trainId
+  console.log("Check4")
+  const trainInfo: any = await getTrainInfo(trainId);
+  console.log("Check5")
+  if (!trainInfo) {
+    throw new Error(`trainInfo not available for trainId=${trainId}}`)
+  }
+  if (trainInfo.train_id == trainId) {
+    console.log(`trainId=${trainId} matches ${trainInfo.train_id}`)
+  } else {
+    console.log(`trainId=${trainId} does NOT match ${trainInfo.train_id}`)
+  }
+  return { value: "value1" }
 }
 
 /////////////////////////////////////////////////
 
 export const handler = async (event: any = {}): Promise<any> => {
+  console.log("Check0")
   if (!event.method) {
     console.log("Error: method parameter required - returning status code 400");
     return { statusCode: 400, body: `Error: method parameter required` };
@@ -86,7 +129,13 @@ export const handler = async (event: any = {}): Promise<any> => {
     event.inputKey &&
     event.outputBucket &&
     event.outputKey) {
-      return createManifest(event.inputBucket, event.inputKey, event.outputBucket, event.outputKey);
+      try {
+        console.log("Check1")
+        const response = await createManifest(event.inputBucket, event.inputKey, event.outputBucket, event.outputKey);
+        return { statusCode: 200, body: JSON.stringify(response) };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
     } else {
       return {
         statusCode: 400,

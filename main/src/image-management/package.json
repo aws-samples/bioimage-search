@@ -1,0 +1,7 @@
+{
+  "name": "image-management-package",
+  "version": "0.1.0",
+  "dependencies": {
+    "short-uuid": "^4.1.0"
+  }
+}
