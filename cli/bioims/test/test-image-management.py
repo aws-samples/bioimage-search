@@ -11,15 +11,6 @@ TEST_OUTPUT_BUCKET = "bioimage-search-output"
 trainingConfigurationClient = bioims.client('training-configuration')
 imageManagementClient = bioims.client('image-management')
 
-# const FILTER_BUCKET_ATTRIBUTE = "filter-bucket";
-# const FILTER_INCLUDE_KEY_ATTRIBUTE = "filter-include-key";
-# const FILTER_EXCLUDE_KEY_ATTRIBUTE = "filter-exclude-key";
-# const EMBEDDING_NAME_ATTRIBUTE = "embedding-name";
-# const SAGEMAKER_TRAIN_ID_ATTRIBUTE = "sagemaker-train-id";
-# const TRAINING_JOB_MESSAGE_ID_ATTRIBUTE = "train-message-id";
-# const MODEL_BUCKET_ATTRIBUTE = "model-bucket";
-# const MODEL_KEY_ATTRIBUTE = "model-key"
-
 training = {
     "train_id": "123456789",
     "filterBucket": "filter-bucket-1",
@@ -32,10 +23,43 @@ training = {
     "modelKey" : "model-key1"
 }
 
+#  SourcePlateInfo {
+#     trainId: <string>
+#     plateSourceId: <string>
+#     images: [
+#       wellSourceId: <string>
+#       imageSourceId: <string>
+#       sourceBucket: <string>
+#       sourceKey: <string>
+#       category: <string - optional>
+#       label: <string - optional>
+#       experiment: <string - optional>
+#     ]
+#   }
+
 plateSourceInfo = {
     "trainId": training["train_id"],
-    "key1" : "value1",
-    "key2" : "value2"
+    "plateSourceId" : "plateSourceId-1",
+    "images" : [
+            {
+                "wellSourceId" : "wellSourceId-1",
+                "imageSourceId" : "imageSourceId-1",
+                "sourceBucket" : "sourceBucket-1",
+                "sourceKey" : "sourceKey-1",
+                "experiment" : "experiment-1",
+                "category" : "category-1",
+                "label" : "label-1"
+            },
+            {
+                "wellSourceId" : "wellSourceId-2",
+                "imageSourceId" : "imageSourceId-2",
+                "sourceBucket" : "sourceBucket-2",
+                "sourceKey" : "sourceKey-2",
+                "experiment" : "experiment-2",
+                "category" : "category-2",
+                "label" : "label-2"
+            }
+        ]
 }
 
 s3 = boto3.client('s3')
@@ -56,7 +80,7 @@ print(r)
 
 plateManifestKey = "plateManifestKey.json"
 
-r = imageManagementClient.createManifest(TEST_INPUT_BUCKET, plateSourceKey, TEST_OUTPUT_BUCKET, plateManifestKey)
+r = imageManagementClient.processPlate(TEST_INPUT_BUCKET, plateSourceKey)
 
 print(r)
 

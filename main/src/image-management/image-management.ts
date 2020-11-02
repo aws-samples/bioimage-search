@@ -66,7 +66,8 @@ async function createMessage(message: any) {
   };
   const data = await lambda.invoke(params).promise();
   const createMessageResponse = la.getResponseBody(data);
-  return createMessageResponse['messageId']
+  const messageId = createMessageResponse['messageId']
+  return messageId
 }
 
 async function getTrainInfo(trainId: any) {
@@ -138,7 +139,7 @@ async function processPlate(inputBucket: any, inputKey: any) {
       wellId = su.generate()
       wellDict.set(wellSourceId, wellId)
     }
-    const messageId = createMessage(`Creation of imageId=${imageId}`)
+    const messageId = await createMessage(`Creation of imageId=${imageId}`)
     const imageEntry = {
       [PARTITION_KEY_IMGID] : imageId,
       [SORT_KEY_TRNID] : ORIGIN,

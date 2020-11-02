@@ -720,8 +720,8 @@ class ImageManagementClient(BioimageSearchClient):
     def getLambdaArn(self):
         return self._resources.getImageManagementLambdaArn()
 
-    def createManifest(self, inputBucket, inputKey, outputBucket, outputKey):
-        request = '{{ "method": "createManifest", "inputBucket": "{}", "inputKey": "{}", "outputBucket": "{}", "outputKey": "{}" }}'.format(inputBucket, inputKey, outputBucket, outputKey)
+    def processPlate(self, inputBucket, inputKey):
+        request = '{{ "method": "processPlate", "inputBucket": "{}", "inputKey": "{}" }}'.format(inputBucket, inputKey)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
