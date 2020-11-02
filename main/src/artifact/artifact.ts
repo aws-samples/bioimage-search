@@ -37,8 +37,7 @@ const ANNOTATION_ATTRIBUTE = "annotation";
 */
 
 async function createArtifact(artifact1: any) {
-  const dateNow = new Date(Date.now())
-  const timestamp = dateNow.toISOString()
+  const timestamp = Date.now().toString()
   const annotationList: any[] = []
   if(artifact1.annotation) {
     annotationList.push(artifact1.annotation)

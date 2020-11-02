@@ -8,6 +8,8 @@ export interface MessageStackProps extends cdk.StackProps {
 }
 
 export class MessageStack extends cdk.Stack {
+  public messageLambdaArn: string
+  
   constructor(app: cdk.App, id: string, props: MessageStackProps) {
     super(app, id, props);
 
@@ -42,12 +44,12 @@ export class MessageStack extends cdk.Stack {
 
     messageTable.grantReadWriteData(messageLambda);
 
-    const messageLambdaArn = messageLambda.functionArn
+    this.messageLambdaArn = messageLambda.functionArn
     
     const messageLambdaPolicyStatement = new iam.PolicyStatement({
       actions: ["lambda:InvokeFunction"],
       effect: iam.Effect.ALLOW,
-      resources: [ messageLambdaArn ]
+      resources: [ this.messageLambdaArn ]
     })
     
     props.bioimageSearchManagedPolicy.addStatements(messageLambdaPolicyStatement)
