@@ -1,4 +1,5 @@
 import dynamodb = require("@aws-cdk/aws-dynamodb");
+import { AttributeType, BillingMode, StreamViewType, ProjectionType, Table } from '@aws-cdk/aws-dynamodb';
 import lambda = require("@aws-cdk/aws-lambda");
 import iam = require("@aws-cdk/aws-iam");
 import cdk = require("@aws-cdk/core");
@@ -25,6 +26,19 @@ export class ImageManagementStack extends cdk.Stack {
       },
       tableName: "BioimsImageManagement",
     });
+    
+    imageManagementTable.addGlobalSecondaryIndex({
+      indexName: "plateIdIndex",
+      partitionKey: {
+        name: "plateId",
+        type: dynamodb.AttributeType.STRING,
+      },
+      sortKey: {
+        name: "imageId",
+        type: dynamodb.AttributeType.STRING,
+      },
+      projectionType: ProjectionType.KEYS_ONLY
+    })
 
     const imageManagementLambda = new lambda.Function(
       this,
@@ -37,6 +51,7 @@ export class ImageManagementStack extends cdk.Stack {
           TABLE_NAME: imageManagementTable.tableName,
           PARTITION_KEY: "imageId",
           SORT_KEY: "trainId",
+          PLATE_INDEX: "plateIdIndex",
           TRAINING_CONFIGURATION_LAMBDA_ARN: props.trainingConfigurationLambdaArn,
           MESSAGE_LAMBDA_ARN: props.messageLambdaArn
         },

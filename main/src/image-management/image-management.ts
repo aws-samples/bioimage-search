@@ -9,6 +9,7 @@ const su = require("short-uuid")
 const TABLE_NAME = process.env.TABLE_NAME || "";
 const PARTITION_KEY_IMGID = process.env.PARTITION_KEY || "";
 const SORT_KEY_TRNID = process.env.SORT_KEY || "";
+const PLATE_INDEX = process.env.PLATE_INDEX || "";
 const TRAINING_CONFIGURATION_LAMBDA_ARN = process.env.TRAINING_CONFIGURATION_LAMBDA_ARN || "";
 const MESSAGE_LAMBDA_ARN = process.env.MESSAGE_LAMBDA_ARN || "";
 
@@ -165,6 +166,22 @@ async function processPlate(inputBucket: any, inputKey: any) {
   return Promise.all(p)
 }
 
+async function getImagesByPlateId(plateId: any) {
+  const keyConditionExpression = [PLATE_ID_ATTRIBUTE] + " = :" + [PLATE_ID_ATTRIBUTE];
+  const expressionAttributeValues =
+    '":' + [PLATE_ID_ATTRIBUTE] + '" : "' + plateId + '"';
+  const params = {
+    TableName: TABLE_NAME,
+    IndexName: PLATE_INDEX,
+    KeyConditionExpression: keyConditionExpression,
+    ExpressionAttributeValues: JSON.parse(
+      "{" + expressionAttributeValues + "}"
+    ),
+  };
+  const result: any = await dy.getAllQueryData(db, params);
+  return result;  
+}
+
 /////////////////////////////////////////////////
 
 export const handler = async (event: any = {}): Promise<any> => {
@@ -188,6 +205,21 @@ export const handler = async (event: any = {}): Promise<any> => {
         body: `Error: embedding required`,
       };
     }
+  }
+  
+  if (event.method === "getImagesByPlateId") {
+    if (event.plateId) {
+      try {
+        const response = await getImagesByPlateId(event.plateId);
+        return { statusCode: 200, body: JSON.stringify(response) };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
+    }
+  }
+  
+  else {
+    return { statusCode: 400, body: `Do not recognize method type ${event.method}` }
   }
 
 };

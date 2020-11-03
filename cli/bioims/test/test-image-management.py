@@ -62,28 +62,32 @@ plateSourceInfo = {
         ]
 }
 
-s3 = boto3.client('s3')
+# s3 = boto3.client('s3')
 
-stringBuffer = io.StringIO()
+# stringBuffer = io.StringIO()
 
-stringBuffer.write(json.dumps(plateSourceInfo))
+# stringBuffer.write(json.dumps(plateSourceInfo))
 
-ioBuffer = io.BytesIO(stringBuffer.getvalue().encode())
+# ioBuffer = io.BytesIO(stringBuffer.getvalue().encode())
 
-plateSourceKey = "plateSourceKey.json"
+# plateSourceKey = "plateSourceKey.json"
 
-s3.upload_fileobj(ioBuffer, TEST_INPUT_BUCKET, plateSourceKey)
+# s3.upload_fileobj(ioBuffer, TEST_INPUT_BUCKET, plateSourceKey)
 
-r = trainingConfigurationClient.createTraining(training)
+# r = trainingConfigurationClient.createTraining(training)
+
+# print(r)
+
+#plateManifestKey = "plateManifestKey.json"
+
+# r = imageManagementClient.processPlate(TEST_INPUT_BUCKET, plateSourceKey)
+
+# print(r)
+
+r = imageManagementClient.getImagesByPlateId('rkVUnK6eqcsCj7acqUYNQR')
 
 print(r)
 
-plateManifestKey = "plateManifestKey.json"
-
-r = imageManagementClient.processPlate(TEST_INPUT_BUCKET, plateSourceKey)
-
-print(r)
-
-# r = trainingConfigurationClient.deleteTraining(training["train_id"])
+#r = trainingConfigurationClient.deleteTraining(training["train_id"])
 
 # print(r)
