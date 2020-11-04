@@ -163,7 +163,8 @@ async function processPlate(inputBucket: any, inputKey: any) {
     };
     p.push(db.put(params).promise());
   }
-  return Promise.all(p)
+  await Promise.all(p)
+  return { "plateId" : plateId }
 }
 
 async function getImagesByPlateId(plateId: any) {

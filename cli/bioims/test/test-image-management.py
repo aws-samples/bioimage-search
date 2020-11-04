@@ -70,7 +70,7 @@ plateSourceInfo = {
 
 # ioBuffer = io.BytesIO(stringBuffer.getvalue().encode())
 
-# plateSourceKey = "plateSourceKey.json"
+plateSourceKey = "plateSourceKey.json"
 
 # s3.upload_fileobj(ioBuffer, TEST_INPUT_BUCKET, plateSourceKey)
 
@@ -80,13 +80,13 @@ plateSourceInfo = {
 
 #plateManifestKey = "plateManifestKey.json"
 
-# r = imageManagementClient.processPlate(TEST_INPUT_BUCKET, plateSourceKey)
-
-# print(r)
-
-r = imageManagementClient.getImagesByPlateId('rkVUnK6eqcsCj7acqUYNQR')
+r = imageManagementClient.processPlate(TEST_INPUT_BUCKET, plateSourceKey)
 
 print(r)
+
+# r = imageManagementClient.getImagesByPlateId('rkVUnK6eqcsCj7acqUYNQR')
+
+# print(r)
 
 #r = trainingConfigurationClient.deleteTraining(training["train_id"])
 
