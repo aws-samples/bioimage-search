@@ -2,10 +2,11 @@ import numpy as np
 import math 
 import boto3
 import s3fs
-from PIL import Image
 from pathlib import Path
 import shortuuid as su
 import json
+from skimage import io
+
 
 # seaborn color_palette("husl", 100)
 colors =[(0.9677975592919913, 0.44127456009157356, 0.5358103155058701),
@@ -190,11 +191,9 @@ def normalizeChannel(bval, nda):
             n = (v-min)/s
             nda[idx]=n
             
-def getImageFromS3(bucket, key):
-    s3c = boto3.client('s3')
-    fileObject = s3c.get_object(Bucket=bucket, Key=key)
-    file_stream = fileObject['Body']
-    im = Image.open(file_stream)
+def getImageFromS3AsNumpy(bucket, key):
+    url = 's3://' + bucket + '/' + key
+    im = io.imread(url)
     return im
     
 def getNumpyArrayFromS3(bucket, key):
@@ -225,8 +224,7 @@ def writeNumpyToS3(data_array, bucketName, keyPath):
     tPath.rmdir()
     
 def computeNormedImage(imageBucket, imageKey):
-    im = getImageFromS3(imageBucket, imageKey)
-    input_data = np.array(im)
+    input_data = getImageFromS3AsNumpy(imageBucket, imageKey)
     if len(input_data.shape)==2:
         input_data = np.expand_dims(input_data, axis=0)
     return normImageData(input_data)
