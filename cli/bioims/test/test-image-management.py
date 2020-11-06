@@ -12,10 +12,10 @@ trainingConfigurationClient = bioims.client('training-configuration')
 imageManagementClient = bioims.client('image-management')
 
 training = {
-    "train_id": "123456789",
-    "filterBucket": "filter-bucket-1",
-    "filterIncludeKey": "filter-include-key1",
-    "filterExcludeKey": "filter-exclude-key1",
+    "train_id": "origin",
+    "filterBucket": "bioimage-search-input",
+    "filterIncludeKey": "",
+    "filterExcludeKey": "",
     "embeddingName": "embedding-name1",
     "sagemakerTrainId": "sagemaker-train-id1",
     "trainMessageId": "train-message-id1",
@@ -62,21 +62,23 @@ plateSourceInfo = {
         ]
 }
 
-# s3 = boto3.client('s3')
+s3 = boto3.client('s3')
 
-# stringBuffer = io.StringIO()
+stringBuffer = io.StringIO()
 
-# stringBuffer.write(json.dumps(plateSourceInfo))
+#stringBuffer.write(json.dumps(plateSourceInfo))
 
 # ioBuffer = io.BytesIO(stringBuffer.getvalue().encode())
 
-plateSourceKey = "plateSourceKey.json"
+# plateSourceKey = "plateSourceKey.json"
+
+plateSourceKey = "SourcePlateInfo_Week1_22123.json"
 
 # s3.upload_fileobj(ioBuffer, TEST_INPUT_BUCKET, plateSourceKey)
 
-# r = trainingConfigurationClient.createTraining(training)
+r = trainingConfigurationClient.createTraining(training)
 
-# print(r)
+print(r)
 
 #plateManifestKey = "plateManifestKey.json"
 

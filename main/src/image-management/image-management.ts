@@ -35,6 +35,7 @@ const DEPTH_ATTRIBUTE = "depth";
 const CHANNELS_ATTRIBUTE = "channels";
 const BUCKET_ATTRIBUTE = "bucket";
 const KEY_ATTRIBUTE = "key";
+const CHANNEL_KEYS_ATTRIBUTE = "channelKeys"
 const TAG_ARRAY_ATTRIBUTE = "tagArr";
 const ROI_ARRAY_ATTRIBUTE = "roiArr";
 const ROI_EMBEDDING_ARRAY_ATTRIBUTE = "roiEmbeddingArr";
@@ -42,19 +43,20 @@ const ROI_EMBEDDING_ARRAY_ATTRIBUTE = "roiEmbeddingArr";
 /*
 
   SourcePlateInfo {
-    trainId: <string>
-    plateSourceId: <string>
-    images: [
-      wellSourceId: <string>
-      imageSourceId: <string>
-      sourceBucket: <string>
-      sourceKey: <string>
-      category: <string - optional>
-      label: <string - optional>
-      experiment: <string - optional>
-    ]
-  }
-  
+     trainId: <string>
+     plateSourceId: <string>
+     images: [
+       wellSourceId: <string>
+       imageSourceId: <string>
+       sourceBucket: <string>a
+       sourceKey: <string>
+       channelKeys: [{ channel:<name>, keysuffix:<suffix> }] - optional
+       category: <string - optional>
+       label: <string - optional>
+       experiment: <string - optional>
+     ]
+   }
+
 */
 
 /////////////////////////////////////////////////
@@ -153,6 +155,7 @@ async function processPlate(inputBucket: any, inputKey: any) {
       [MESSAGE_ID_ATTRIBUTE] : messageId,
       [BUCKET_ATTRIBUTE] : sourceBucket,
       [KEY_ATTRIBUTE] : sourceKey,
+      ...('channelKeys' in image) && { [CHANNEL_KEYS_ATTRIBUTE] : image['channelKeys'] },
       ...('category' in image) && { [TRAIN_CATEGORY_ATTRIBUTE] : image['category'] },
       ...('label' in image) && { [TRAIN_LABEL_ATTRIBUTE] : image['label'] },
       ...('experiment' in image) && { [EXPERIMENT_ATTRIBUTE] : image['experiment'] }

@@ -55,6 +55,8 @@ export class ImageManagementStack extends cdk.Stack {
           TRAINING_CONFIGURATION_LAMBDA_ARN: props.trainingConfigurationLambdaArn,
           MESSAGE_LAMBDA_ARN: props.messageLambdaArn
         },
+        memorySize: 3008,
+        timeout: cdk.Duration.minutes(15),
       }
     );
     

@@ -169,6 +169,9 @@ def getResponseBody(response):
     strResponse = bStrResponse.decode("utf-8")
     if strResponse:
         jresponse = json.loads(strResponse)
+        if "statusCode" not in jresponse:
+            errMsg = "Missing statusCode - message: " + strResponse
+            raise Exception(errMsg)
         statusCode = jresponse['statusCode']
         if statusCode > 299:
             errMsg = "Error: " + jresponse['body']
