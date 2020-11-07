@@ -1,6 +1,7 @@
 const AWS = require("aws-sdk");
 const s3 = new AWS.S3({apiVersion: '2006-03-01'});
 const lambda = new AWS.Lambda({apiVersion: '2015-03-31'});
+const sfn = new AWS.StepFunctions();
 const db = new AWS.DynamoDB.DocumentClient();
 const dy = require("bioimage-dynamo");
 const la = require("bioimage-lambda");
@@ -12,6 +13,8 @@ const SORT_KEY_TRNID = process.env.SORT_KEY || "";
 const PLATE_INDEX = process.env.PLATE_INDEX || "";
 const TRAINING_CONFIGURATION_LAMBDA_ARN = process.env.TRAINING_CONFIGURATION_LAMBDA_ARN || "";
 const MESSAGE_LAMBDA_ARN = process.env.MESSAGE_LAMBDA_ARN || "";
+
+//const PROCESS_PLATE_SFN = process.env.PROCESS_PLATE_SFN || "";
 
 const LATEST = "LATEST";
 const DDB_MAX_BATCH = 25;
@@ -167,6 +170,16 @@ async function processPlate(inputBucket: any, inputKey: any) {
     p.push(db.put(params).promise());
   }
   await Promise.all(p)
+
+//   const sfnName = plateId + '-' + su.generate()
+//   var processPlateSfnParams = {
+//     stateMachineArn: PROCESS_PLATE_SFN,
+//     input: { "plateId" : plateId },
+//     name: sfnName,
+// //    traceHeader: 'STRING_VALUE'
+//   };
+//   await sfn.startExecution(processPlateSfnParams).promise();
+
   return { "plateId" : plateId }
 }
 

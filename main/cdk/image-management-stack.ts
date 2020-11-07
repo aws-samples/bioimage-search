@@ -100,16 +100,45 @@ export class ImageManagementStack extends cdk.Stack {
     imageManagementTable.grantFullAccess(imageManagementLambda);
     imageManagementTable.grantFullAccess(imageInspectorLambda);
 
-    const imageManagementLambdaArn = imageManagementLambda.functionArn
-    const imageInspectorLambdaArn = imageInspectorLambda.functionArn
-    
     const imageManagementLambdaPolicyStatement = new iam.PolicyStatement({
       actions: ["lambda:InvokeFunction"],
       effect: iam.Effect.ALLOW,
-      resources: [ imageManagementLambdaArn, imageInspectorLambdaArn ]
+      resources: [ imageManagementLambda.functionArn, imageInspectorLambda.functionArn ]
     })
     
     props.bioimageSearchManagedPolicy.addStatements(imageManagementLambdaPolicyStatement)
     
+    ///////////////////////////////////////////
+    //
+    // PlateProcessing StepFunction
+    //
+    ///////////////////////////////////////////
+    
+    // const plateToImages = new tasks.LambdaInvoke(this, 'Plate To Images', {
+    //   lambdaFunction: imageManagementLambda,
+    //   outputPath: '$.images',
+    // });
+    
+    // const imageInspector = new tasks.LambdaInvoke(this, 'Image Inspector', {
+    //   lambdaFunction: imageInspectorLambda,
+    // })
+
+    // const inspectorMap = new sfn.Map(this, 'Inspector Map', {
+    //   maxConcurrency: 0,
+    //   itemsPath: sfn.JsonPath.stringAt('$.images.body'),
+    //   outputPath: '$.inspection'
+    // });
+    // inspectorMap.iterator(imageInspector);
+    
+    // const processPlateStepFunctionDef = plateToImages.next(inspectorMap)
+
+    // const processPlateStateMachine = new sfn.StateMachine(this, 'Process Plate StateMachine', {
+    //   definition: processPlateStepFunctionDef,
+    //   timeout: cdk.Duration.minutes(3)
+    // });
+    
+    // imageInspectorLambda.addEnvironment("PROCESS_PLATE_SFN", processPlateStateMachine.stateMachineArn);
+    
   }
+
 }
