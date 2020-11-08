@@ -25,6 +25,8 @@ const dynamodb = new Dynamodb({
     credentials: credentials
 });
 
+console.log("A");
+
 (async() => {
 
 console.log("Check0.1")
@@ -105,3 +107,5 @@ const processPlateStack = new ProcessPlateStack(app, 'BioimageSearchProcessPlate
 console.log("Check0.3")
 
 })();
+
+console.log("B")
