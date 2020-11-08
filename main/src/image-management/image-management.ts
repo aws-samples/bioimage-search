@@ -1,7 +1,6 @@
 const AWS = require("aws-sdk");
 const s3 = new AWS.S3({apiVersion: '2006-03-01'});
 const lambda = new AWS.Lambda({apiVersion: '2015-03-31'});
-const sfn = new AWS.StepFunctions();
 const db = new AWS.DynamoDB.DocumentClient();
 const dy = require("bioimage-dynamo");
 const la = require("bioimage-lambda");
@@ -102,7 +101,7 @@ async function validateTrainId(trainId: any) {
 // This function validates the TrainId, and then adds 'origin' information from
 // the SourcePlateInfo data. It then hands off processing to the 'ProcessPlate' StepFunction.
 
-async function processPlate(inputBucket: any, inputKey: any) {
+async function uploadSourcePlate(inputBucket: any, inputKey: any) {
   const data = await s3.getObject({ Bucket: inputBucket, Key: inputKey}).promise();
   if (!data) {
     throw new Error("sourcePlateInfo object null")
@@ -208,10 +207,10 @@ export const handler = async (event: any = {}): Promise<any> => {
     return { statusCode: 400, body: `Error: method parameter required` };
   }
 
-  if (event.method === "processPlate") {
+  if (event.method === "uploadSourcePlate") {
     if (event.inputBucket && event.inputKey) {
       try {
-        const response = await processPlate(event.inputBucket, event.inputKey);
+        const response = await uploadSourcePlate(event.inputBucket, event.inputKey);
         return { statusCode: 200, body: JSON.stringify(response) };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };

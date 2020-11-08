@@ -1,7 +1,7 @@
 rm -rf ./build
 mkdir -p build
 cp image-inspector.py ./build
-cp ../../../common/bioimageimage.py ./build
+cp ../common/bioimageimage.py ./build
 cd build
 python3.8 -m venv venv
 source venv/bin/activate

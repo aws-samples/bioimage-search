@@ -15,6 +15,7 @@ import { EmbeddingConfigurationStack } from '../cdk/embedding-configuration-stac
 import { TrainingConfigurationStack } from '../cdk/training-configuration-stack';
 import { ArtifactStack } from '../cdk/artifact-stack';
 import { ImageManagementStack } from '../cdk/image-management-stack';
+import { ProcessPlateStack } from '../cdk/process-plate-stack';
 
 const app = new cdk.App();
 
@@ -69,6 +70,13 @@ const artifactStack = new ArtifactStack(app, 'BioimageSearchArtifactStack', {
 const imageManagementStack = new ImageManagementStack(app, 'BioimageSearchImageManagementStack', {
     bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy,
     trainingConfigurationLambdaArn: trainingConfigurationStack.trainingConfigurationLambdaArn,
-    messageLambdaArn: messageStack.messageLambdaArn,
+    messageLambda: messageStack.messageLambda,
+    externalResourcesPolicy: baseStack.externalResourcesPolicy
+})
+
+const processPlateStack = new ProcessPlateStack(app, 'BioimageSearchProcessPlateStack', {
+    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy,
+    messageLambda: messageStack.messageLambda,
+    imageManagementLambda: imageManagementStack.imageManagementLambda,
     externalResourcesPolicy: baseStack.externalResourcesPolicy
 })

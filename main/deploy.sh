@@ -23,6 +23,7 @@ cd src/training-configuration; ./build.sh; cd ../..
 cd src/artifact; ./build.sh; cd ../..
 cd src/image-management; ./build.sh; cd ../..
 cd src/image-inspector; ./build.sh; cd ../..
+cd src/process-plate; ./build.sh; cd ../..
 cdk bootstrap
 cdk deploy BioimageSearchBaseStack --require-approval never
 cdk deploy BioimageSearchBatchSetupStack --require-approval never
