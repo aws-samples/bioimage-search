@@ -16,6 +16,26 @@ import { TrainingConfigurationStack } from '../cdk/training-configuration-stack'
 import { ArtifactStack } from '../cdk/artifact-stack';
 import { ImageManagementStack } from '../cdk/image-management-stack';
 import { ProcessPlateStack } from '../cdk/process-plate-stack';
+import * as Dynamodb from 'aws-sdk/clients/dynamodb';
+import { SharedIniFileCredentials } from 'aws-sdk';
+
+const credentials = new SharedIniFileCredentials({profile: 'default'});
+const dynamodb = new Dynamodb({
+    region: process.env.CDK_DEFAULT_REGION,
+    credentials: credentials
+});
+
+(async() => {
+
+console.log("Check0.1")
+
+const dynamoTables = await dynamodb.listTables().promise();
+
+const dynamoTableNames = dynamoTables!.TableNames
+
+console.log(dynamoTableNames)
+
+console.log("Check0.2")
 
 const app = new cdk.App();
 
@@ -64,7 +84,8 @@ const trainingConfigurationStack = new TrainingConfigurationStack(app, 'Bioimage
 })
 
 const artifactStack = new ArtifactStack(app, 'BioimageSearchArtifactStack', {
-    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy
+    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy,
+    dynamoTableNames: dynamoTableNames
 })
 
 const imageManagementStack = new ImageManagementStack(app, 'BioimageSearchImageManagementStack', {
@@ -80,3 +101,7 @@ const processPlateStack = new ProcessPlateStack(app, 'BioimageSearchProcessPlate
     imageManagementLambda: imageManagementStack.imageManagementLambda,
     externalResourcesPolicy: baseStack.externalResourcesPolicy
 })
+
+console.log("Check0.3")
+
+})();

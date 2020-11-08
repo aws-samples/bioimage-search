@@ -76,7 +76,7 @@ export class ProcessPlateStack extends cdk.Stack {
         environment: {
           MESSAGE_LAMBDA_ARN: props.messageLambda.functionArn,
           IMAGE_MANAGEMENT_LAMBDA_ARN: props.imageManagementLambda.functionArn,
-          PROCESS_PLATE_SFN_ARN: processPlateStateMachine.stateMachineArn
+//          PROCESS_PLATE_SFN_ARN: processPlateStateMachine.stateMachineArn
         },
       }
     );
@@ -100,7 +100,10 @@ export class ProcessPlateStack extends cdk.Stack {
     const lambdaPolicyStatement = new iam.PolicyStatement({
       actions: ["lambda:InvokeFunction"],
       effect: iam.Effect.ALLOW,
-      resources: [ imageInspectorLambda.functionArn, processPlateLambda.functionArn ]
+      resources: [ 
+        imageInspectorLambda.functionArn, 
+        processPlateLambda.functionArn 
+        ]
     })
     
     props.bioimageSearchManagedPolicy.addStatements(lambdaPolicyStatement)

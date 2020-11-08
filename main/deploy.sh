@@ -10,6 +10,7 @@
 
 source ./scripts/source-nvm.sh
 npm run build
+
 cd src/message; npm install; cd ../..
 cd src/image-management; npm install; cd ../..
 cd src/image-artifact/lambda/default-artifact; ./build.sh; cd ../../../..
@@ -25,11 +26,12 @@ cd src/image-management; ./build.sh; cd ../..
 cd src/image-inspector; ./build.sh; cd ../..
 cd src/process-plate; ./build.sh; cd ../..
 cdk bootstrap
-cdk deploy BioimageSearchBaseStack --require-approval never
-cdk deploy BioimageSearchBatchSetupStack --require-approval never
-cdk deploy BioimageSearchConfigurationStack --require-approval never
-cdk deploy BioimageSearchLabelStack --require-approval never
-cdk deploy BioimageSearchMessageStack --require-approval never
-cdk deploy BioimageSearchImageArtifactStack --require-approval never
-cdk deploy BioimageSearchPlatePreprocessingStack --require-approval never
-cdk deploy BioimageSearchImagePreprocessingStack --require-approval never
+
+# cdk deploy BioimageSearchBaseStack --require-approval never
+# cdk deploy BioimageSearchBatchSetupStack --require-approval never
+# cdk deploy BioimageSearchConfigurationStack --require-approval never
+# cdk deploy BioimageSearchLabelStack --require-approval never
+# cdk deploy BioimageSearchMessageStack --require-approval never
+# cdk deploy BioimageSearchImageArtifactStack --require-approval never
+# cdk deploy BioimageSearchPlatePreprocessingStack --require-approval never
+# cdk deploy BioimageSearchImagePreprocessingStack --require-approval never
