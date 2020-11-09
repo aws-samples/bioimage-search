@@ -87,15 +87,25 @@ export class ProcessPlateStack extends cdk.Stack {
       resources: [ props.imageManagementLambda.functionArn, props.messageLambda.functionArn ]
     })
 
+    // Necessary to avoid circular dependency    
+    const s3FullAccessPolicy = new iam.PolicyStatement({
+      actions: ["s3:*"],
+      effect: iam.Effect.ALLOW,
+      resources: ["*"]
+    })
+    
     if (imageInspectorLambda.role) {
-      imageInspectorLambda.role.attachInlinePolicy(props.externalResourcesPolicy);
+      imageInspectorLambda.role.addToPolicy(s3FullAccessPolicy);
+      // NOTE: this causes circular dependency:
+      //imageInspectorLambda.role.attachInlinePolicy(props.externalResourcesPolicy);
       imageInspectorLambda.role.addToPolicy(invokeLambdaPolicyStatement);
     }
 
-    // if (processPlateLambda.role) {
-    //   processPlateLambda.role.attachInlinePolicy(props.externalResourcesPolicy);
-    //   //processPlateLambda.role.addToPolicy(invokeLambdaPolicyStatement);
-    // }
+    if (processPlateLambda.role) {
+      processPlateLambda.role.addToPolicy(s3FullAccessPolicy);
+      //processPlateLambda.role.attachInlinePolicy(props.externalResourcesPolicy);
+      processPlateLambda.role.addToPolicy(invokeLambdaPolicyStatement);
+    }
 
     const lambdaPolicyStatement = new iam.PolicyStatement({
       actions: ["lambda:InvokeFunction"],
@@ -105,8 +115,9 @@ export class ProcessPlateStack extends cdk.Stack {
         processPlateLambda.functionArn 
         ]
     })
-    
-    props.bioimageSearchManagedPolicy.addStatements(lambdaPolicyStatement)
+
+    // This also causes circular dependency:    
+    //props.bioimageSearchManagedPolicy.addStatements(lambdaPolicyStatement)
 
   }
 

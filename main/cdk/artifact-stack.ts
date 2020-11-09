@@ -2,7 +2,6 @@ import dynamodb = require("@aws-cdk/aws-dynamodb");
 import lambda = require("@aws-cdk/aws-lambda");
 import iam = require("@aws-cdk/aws-iam");
 import cdk = require("@aws-cdk/core");
-import { BioimageStack } from "../cdk/bioimage-stack";
 
 export interface ArtifactStackProps extends cdk.StackProps {
   bioimageSearchManagedPolicy: iam.ManagedPolicy;
@@ -11,7 +10,7 @@ export interface ArtifactStackProps extends cdk.StackProps {
 
 const TABLE_NAME = "BioimsArtifact";
 
-export class ArtifactStack extends BioimageStack {
+export class ArtifactStack extends cdk.Stack {
   constructor(app: cdk.App, id: string, props: ArtifactStackProps) {
     super(app, id, props);
 
