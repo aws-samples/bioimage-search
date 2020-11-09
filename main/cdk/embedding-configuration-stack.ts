@@ -5,19 +5,36 @@ import cdk = require("@aws-cdk/core");
 
 export interface EmbeddingConfigurationStackProps extends cdk.StackProps {
   bioimageSearchManagedPolicy: iam.ManagedPolicy;
+  dynamoTableNames: any;
 }
+
+const TABLE_NAME = "BioimsEmbeddingConfiguration"
 
 export class EmbeddingConfigurationStack extends cdk.Stack {
   constructor(app: cdk.App, id: string, props: EmbeddingConfigurationStackProps) {
     super(app, id, props);
+    
+    var embeddingConfigurationTable: dynamodb.ITable | null = null;
+    
+    var createTable = true;
+    
+    if (props.dynamoTableNames.indexOf(TABLE_NAME) > -1) {
+      createTable = false;
+    }
 
-    const embeddingConfigurationTable = new dynamodb.Table(this, "embedding-configuration", {
+    if (createTable) {
+      console.log("Creating new table "+TABLE_NAME)
+      embeddingConfigurationTable = new dynamodb.Table(this, "embedding-configuration", {
       partitionKey: {
         name: "name1",
         type: dynamodb.AttributeType.STRING,
       },
       tableName: "BioimsEmbeddingConfiguration",
     });
+    } else {
+      console.log("Using already existing table "+TABLE_NAME)
+      embeddingConfigurationTable = dynamodb.Table.fromTableName(this, TABLE_NAME, TABLE_NAME);
+    }
 
     const embeddingConfigurationLambda = new lambda.Function(
       this,

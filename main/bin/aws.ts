@@ -25,19 +25,10 @@ const dynamodb = new Dynamodb({
     credentials: credentials
 });
 
-console.log("A");
-
 (async() => {
 
-console.log("Check0.1")
-
 const dynamoTables = await dynamodb.listTables().promise();
-
 const dynamoTableNames = dynamoTables!.TableNames
-
-console.log(dynamoTableNames)
-
-console.log("Check0.2")
 
 const app = new cdk.App();
 
@@ -53,15 +44,18 @@ const resourcePermissionsStack = new ResourcePermissionsStack(app, 'BioimageSear
 })
 
 const configurationStack = new ConfigurationStack(app, 'BioimageSearchConfigurationStack', {
-    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy
+    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy,
+    dynamoTableNames: dynamoTableNames
 })
 
 const labelStack = new LabelStack(app, 'BioimageSearchLabelStack', {
-    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy
+    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy,
+    dynamoTableNames: dynamoTableNames
 })
 
 const messageStack = new MessageStack(app, 'BioimageSearchMessageStack', {
-    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy
+    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy,
+    dynamoTableNames: dynamoTableNames
 })
 
 const imageArtifactStack = new ImageArtifactStack(app, 'BioimageSearchImageArtifactStack', {
@@ -78,11 +72,13 @@ const imagePreprocessingStack = new ImagePreprocessingStack(app, 'BioimageSearch
 })
 
 const embeddingConfigurationStack = new EmbeddingConfigurationStack(app, 'BioimageSearchEmbeddingConfigurationStack', {
-    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy
+    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy,
+    dynamoTableNames: dynamoTableNames
 })
 
 const trainingConfigurationStack = new TrainingConfigurationStack(app, 'BioimageSearchTrainingConfigurationStack', {
-    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy
+    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy,
+    dynamoTableNames: dynamoTableNames
 })
 
 const artifactStack = new ArtifactStack(app, 'BioimageSearchArtifactStack', {
@@ -94,7 +90,8 @@ const imageManagementStack = new ImageManagementStack(app, 'BioimageSearchImageM
     bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy,
     trainingConfigurationLambdaArn: trainingConfigurationStack.trainingConfigurationLambdaArn,
     messageLambda: messageStack.messageLambda,
-    externalResourcesPolicy: baseStack.externalResourcesPolicy
+    externalResourcesPolicy: baseStack.externalResourcesPolicy,
+    dynamoTableNames: dynamoTableNames
 })
 
 const processPlateStack = new ProcessPlateStack(app, 'BioimageSearchProcessPlateStack', {
@@ -104,8 +101,4 @@ const processPlateStack = new ProcessPlateStack(app, 'BioimageSearchProcessPlate
     externalResourcesPolicy: baseStack.externalResourcesPolicy
 })
 
-console.log("Check0.3")
-
 })();
-
-console.log("B")

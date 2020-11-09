@@ -5,52 +5,65 @@ import cdk = require("@aws-cdk/core");
 
 export interface MessageStackProps extends cdk.StackProps {
   bioimageSearchManagedPolicy: iam.ManagedPolicy;
+  dynamoTableNames: any;
 }
 
+const TABLE_NAME = "BioimsMessage";
+
 export class MessageStack extends cdk.Stack {
-  public messageLambda: lambda.Function
-  
+  public messageLambda: lambda.Function;
+
   constructor(app: cdk.App, id: string, props: MessageStackProps) {
     super(app, id, props);
 
-    const messageTable = new dynamodb.Table(this, "message", {
-      partitionKey: {
-        name: "messageId",
-        type: dynamodb.AttributeType.STRING,
-      },
-      sortKey: {
-        name: "timestamp1",
-        type: dynamodb.AttributeType.STRING,
-      },
-      tableName: "BioimsMessage",
-    });
+    var messageTable: dynamodb.ITable | null = null;
 
-//        code: new lambda.AssetCode("src/message"),
+    var createTable = true;
 
-    this.messageLambda = new lambda.Function(
-      this,
-      "messageFunction",
-      {
-        code: lambda.Code.fromAsset("src/message/build"),
-        handler: "message.handler",
-        runtime: lambda.Runtime.NODEJS_12_X,
-        environment: {
-          TABLE_NAME: messageTable.tableName,
-          PARTITION_KEY: "messageId",
-          SORT_KEY: "timestamp1",
+    if (props.dynamoTableNames.indexOf(TABLE_NAME) > -1) {
+      console.log("Found table " + TABLE_NAME);
+      createTable = false;
+    }
+
+    if (createTable) {
+      console.log("Creating new table " + TABLE_NAME);
+      messageTable = new dynamodb.Table(this, "message", {
+        partitionKey: {
+          name: "messageId",
+          type: dynamodb.AttributeType.STRING,
         },
-      }
-    );
+        sortKey: {
+          name: "timestamp1",
+          type: dynamodb.AttributeType.STRING,
+        },
+        tableName: TABLE_NAME,
+      });
+    } else {
+      console.log("Using already existing table " + TABLE_NAME);
+      messageTable = dynamodb.Table.fromTableName(this, TABLE_NAME, TABLE_NAME);
+    }
+
+    this.messageLambda = new lambda.Function(this, "messageFunction", {
+      code: lambda.Code.fromAsset("src/message/build"),
+      handler: "message.handler",
+      runtime: lambda.Runtime.NODEJS_12_X,
+      environment: {
+        TABLE_NAME: messageTable.tableName,
+        PARTITION_KEY: "messageId",
+        SORT_KEY: "timestamp1",
+      },
+    });
 
     messageTable.grantReadWriteData(this.messageLambda);
 
     const messageLambdaPolicyStatement = new iam.PolicyStatement({
       actions: ["lambda:InvokeFunction"],
       effect: iam.Effect.ALLOW,
-      resources: [ this.messageLambda.functionArn ]
-    })
-    
-    props.bioimageSearchManagedPolicy.addStatements(messageLambdaPolicyStatement)
-    
+      resources: [this.messageLambda.functionArn],
+    });
+
+    props.bioimageSearchManagedPolicy.addStatements(
+      messageLambdaPolicyStatement
+    );
   }
 }

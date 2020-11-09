@@ -9,36 +9,22 @@ export interface ArtifactStackProps extends cdk.StackProps {
   dynamoTableNames: any;
 }
 
+const TABLE_NAME = "BioimsArtifact";
+
 export class ArtifactStack extends BioimageStack {
-  
   constructor(app: cdk.App, id: string, props: ArtifactStackProps) {
     super(app, id, props);
 
     var artifactTable: dynamodb.ITable | null = null;
 
-    var createTable = false;
-    
-    console.log("Check1")
-    
-    console.log(props.dynamoTableNames)
-    
-    console.log("Check1.1")
+    var createTable = true;
 
-    try {
-      console.log("Check2")
-      artifactTable = dynamodb.Table.fromTableName(
-        this,
-        "BioimsArtifact",
-        "BioimsArtifact"
-      );
-      console.log("Check3")
-    } catch (error) {
-      console.log("Check4")
-      createTable = true;
+    if (props.dynamoTableNames.indexOf(TABLE_NAME) > -1) {
+      createTable = false;
     }
 
     if (createTable) {
-      console.log("Check5")
+      console.log("Creating new table "+TABLE_NAME)
       artifactTable = new dynamodb.Table(this, "artifact", {
         partitionKey: {
           name: "compoundId",
@@ -48,35 +34,40 @@ export class ArtifactStack extends BioimageStack {
           name: "s3key",
           type: dynamodb.AttributeType.STRING,
         },
-        tableName: "BioimsArtifact",
+        tableName: TABLE_NAME,
       });
-    }
-
-    if (artifactTable) {
-      const artifactLambda = new lambda.Function(this, "artifactFunction", {
-        code: lambda.Code.fromAsset("src/artifact/build"),
-        handler: "artifact.handler",
-        runtime: lambda.Runtime.NODEJS_12_X,
-        environment: {
-          TABLE_NAME: artifactTable.tableName,
-          PARTITION_KEY: "compoundId",
-          SORT_KEY: "s3key",
-        },
-      });
-
-      artifactTable.grantReadWriteData(artifactLambda);
-
-      const artifactLambdaArn = artifactLambda.functionArn;
-
-      const artifactLambdaPolicyStatement = new iam.PolicyStatement({
-        actions: ["lambda:InvokeFunction"],
-        effect: iam.Effect.ALLOW,
-        resources: [artifactLambdaArn],
-      });
-
-      props.bioimageSearchManagedPolicy.addStatements(
-        artifactLambdaPolicyStatement
+    } else {
+      console.log("Using already existing table "+TABLE_NAME)
+      artifactTable = dynamodb.Table.fromTableName(
+        this,
+        TABLE_NAME,
+        TABLE_NAME
       );
     }
+
+    const artifactLambda = new lambda.Function(this, "artifactFunction", {
+      code: lambda.Code.fromAsset("src/artifact/build"),
+      handler: "artifact.handler",
+      runtime: lambda.Runtime.NODEJS_12_X,
+      environment: {
+        TABLE_NAME: artifactTable.tableName,
+        PARTITION_KEY: "compoundId",
+        SORT_KEY: "s3key",
+      },
+    });
+
+    artifactTable.grantReadWriteData(artifactLambda);
+
+    const artifactLambdaArn = artifactLambda.functionArn;
+
+    const artifactLambdaPolicyStatement = new iam.PolicyStatement({
+      actions: ["lambda:InvokeFunction"],
+      effect: iam.Effect.ALLOW,
+      resources: [artifactLambdaArn],
+    });
+
+    props.bioimageSearchManagedPolicy.addStatements(
+      artifactLambdaPolicyStatement
+    );
   }
 }

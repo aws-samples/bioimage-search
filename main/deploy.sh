@@ -27,7 +27,7 @@ cd src/image-inspector; ./build.sh; cd ../..
 cd src/process-plate; ./build.sh; cd ../..
 cdk bootstrap
 
-# cdk deploy BioimageSearchBaseStack --require-approval never
+cdk deploy BioimageSearchBaseStack --require-approval never
 # cdk deploy BioimageSearchBatchSetupStack --require-approval never
 # cdk deploy BioimageSearchConfigurationStack --require-approval never
 # cdk deploy BioimageSearchLabelStack --require-approval never

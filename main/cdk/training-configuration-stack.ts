@@ -5,21 +5,51 @@ import cdk = require("@aws-cdk/core");
 
 export interface TrainingConfigurationStackProps extends cdk.StackProps {
   bioimageSearchManagedPolicy: iam.ManagedPolicy;
+  dynamoTableNames: any;
 }
+
+const TABLE_NAME = "BioimsTrainingConfiguration";
 
 export class TrainingConfigurationStack extends cdk.Stack {
   public trainingConfigurationLambdaArn: string;
-  
-  constructor(app: cdk.App, id: string, props: TrainingConfigurationStackProps) {
+
+  constructor(
+    app: cdk.App,
+    id: string,
+    props: TrainingConfigurationStackProps
+  ) {
     super(app, id, props);
 
-    const trainingConfigurationTable = new dynamodb.Table(this, "training-configuration", {
-      partitionKey: {
-        name: "train_id",
-        type: dynamodb.AttributeType.STRING,
-      },
-      tableName: "BioimsTrainingConfiguration",
-    });
+    var trainingConfigurationTable: dynamodb.ITable | null = null;
+
+    var createTable = true;
+
+    if (props.dynamoTableNames.indexOf(TABLE_NAME) > -1) {
+      console.log("Found table " + TABLE_NAME);
+      createTable = false;
+    }
+
+    if (createTable) {
+      console.log("Creating new table " + TABLE_NAME);
+      trainingConfigurationTable = new dynamodb.Table(
+        this,
+        "training-configuration",
+        {
+          partitionKey: {
+            name: "train_id",
+            type: dynamodb.AttributeType.STRING,
+          },
+          tableName: TABLE_NAME,
+        }
+      );
+    } else {
+      console.log("Using already existing table " + TABLE_NAME);
+      trainingConfigurationTable = dynamodb.Table.fromTableName(
+        this,
+        TABLE_NAME,
+        TABLE_NAME
+      );
+    }
 
     const trainingConfigurationLambda = new lambda.Function(
       this,
@@ -30,22 +60,24 @@ export class TrainingConfigurationStack extends cdk.Stack {
         runtime: lambda.Runtime.NODEJS_12_X,
         environment: {
           TABLE_NAME: trainingConfigurationTable.tableName,
-          PARTITION_KEY: "train_id"
+          PARTITION_KEY: "train_id",
         },
       }
     );
 
     trainingConfigurationTable.grantFullAccess(trainingConfigurationLambda);
-    
-    this.trainingConfigurationLambdaArn = trainingConfigurationLambda.functionArn
-    
+
+    this.trainingConfigurationLambdaArn =
+      trainingConfigurationLambda.functionArn;
+
     const trainingConfigurationLambdaPolicyStatement = new iam.PolicyStatement({
       actions: ["lambda:InvokeFunction"],
       effect: iam.Effect.ALLOW,
-      resources: [ this.trainingConfigurationLambdaArn ]
-    })
-    
-    props.bioimageSearchManagedPolicy.addStatements(trainingConfigurationLambdaPolicyStatement)
- 
-   }
+      resources: [this.trainingConfigurationLambdaArn],
+    });
+
+    props.bioimageSearchManagedPolicy.addStatements(
+      trainingConfigurationLambdaPolicyStatement
+    );
+  }
 }
