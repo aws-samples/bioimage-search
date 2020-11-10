@@ -63,8 +63,6 @@ export class ProcessPlateStack extends cdk.Stack {
       timeout: cdk.Duration.minutes(3)
     });
     
-    this.imageInspectorLambda.addEnvironment("PROCESS_PLATE_SFN", processPlateStateMachine.stateMachineArn);
-    
     this.processPlateLambda = new lambda.Function(
       this,
       "processPlateFunction",
