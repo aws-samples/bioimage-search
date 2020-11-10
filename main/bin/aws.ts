@@ -81,10 +81,13 @@ const resourcePermissionsStack = new ResourcePermissionsStack(app, 'BioimageSear
     testBucket: baseStack.testBucket,
     batchInstanceRole: batchSetupStack.batchInstanceRole,
     configurationLambdaArn: configurationStack.configurationLambdaArn,
+    labelLambdaArn: labelStack.labelLambdaArn,
     messageLambda: messageStack.messageLambda,
     defaultArtifactLambda: imageArtifactStack.defaultArtifactLambda,
     embeddingConfigurationLambdaArn: embeddingConfigurationStack.embeddingConfigurationLambdaArn,
     trainingConfigurationLambdaArn: trainingConfigurationStack.trainingConfigurationLambdaArn,
+    artifactLambdaArn: artifactStack.artifactLambdaArn,
+    imageManagementLambda: imageManagementStack.imageManagementLambda,
     imageInspectorLambda: processPlateStack.imageInspectorLambda,
     processPlateLambda: processPlateStack.processPlateLambda
 })
