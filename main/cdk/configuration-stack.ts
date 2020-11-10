@@ -4,13 +4,14 @@ import iam = require("@aws-cdk/aws-iam");
 import cdk = require("@aws-cdk/core");
 
 export interface ConfigurationStackProps extends cdk.StackProps {
-  bioimageSearchManagedPolicy: iam.ManagedPolicy;
   dynamoTableNames: any;
 }
 
 const TABLE_NAME = "BioimsConfiguration"
 
 export class ConfigurationStack extends cdk.Stack {
+  public configurationLambdaArn: string;
+  
   constructor(app: cdk.App, id: string, props: ConfigurationStackProps) {
     super(app, id, props);
 
@@ -61,17 +62,7 @@ export class ConfigurationStack extends cdk.Stack {
     );
 
     configurationTable.grantReadWriteData(configurationLambda);
-
-    const configurationLambdaArn = configurationLambda.functionArn;
-
-    const configurationLambdaPolicyStatement = new iam.PolicyStatement({
-      actions: ["lambda:InvokeFunction"],
-      effect: iam.Effect.ALLOW,
-      resources: [configurationLambdaArn],
-    });
-
-    props.bioimageSearchManagedPolicy.addStatements(
-      configurationLambdaPolicyStatement
-    );
+    this.configurationLambdaArn = configurationLambda.functionArn;
   }
+  
 }

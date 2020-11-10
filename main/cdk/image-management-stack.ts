@@ -13,10 +13,8 @@ import * as sfn from "@aws-cdk/aws-stepfunctions";
 import * as tasks from "@aws-cdk/aws-stepfunctions-tasks";
 
 export interface ImageManagementStackProps extends cdk.StackProps {
-  bioimageSearchManagedPolicy: iam.ManagedPolicy;
   trainingConfigurationLambdaArn: string;
   messageLambda: lambda.Function;
-  externalResourcesPolicy: iam.Policy;
   dynamoTableNames: any;
 }
 
@@ -104,23 +102,7 @@ export class ImageManagementStack extends cdk.Stack {
       ],
     });
 
-    if (this.imageManagementLambda.role) {
-      this.imageManagementLambda.role.attachInlinePolicy(
-        props.externalResourcesPolicy
-      );
-      this.imageManagementLambda.role.addToPolicy(invokeLambdaPolicyStatement);
-    }
-
     imageManagementTable.grantFullAccess(this.imageManagementLambda);
-
-    const imageManagementLambdaPolicyStatement = new iam.PolicyStatement({
-      actions: ["lambda:InvokeFunction"],
-      effect: iam.Effect.ALLOW,
-      resources: [this.imageManagementLambda.functionArn],
-    });
-
-    props.bioimageSearchManagedPolicy.addStatements(
-      imageManagementLambdaPolicyStatement
-    );
   }
+  
 }

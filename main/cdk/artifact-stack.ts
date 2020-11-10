@@ -4,13 +4,14 @@ import iam = require("@aws-cdk/aws-iam");
 import cdk = require("@aws-cdk/core");
 
 export interface ArtifactStackProps extends cdk.StackProps {
-  bioimageSearchManagedPolicy: iam.ManagedPolicy;
   dynamoTableNames: any;
 }
 
 const TABLE_NAME = "BioimsArtifact";
 
 export class ArtifactStack extends cdk.Stack {
+  public artifactLambdaArn: string;
+  
   constructor(app: cdk.App, id: string, props: ArtifactStackProps) {
     super(app, id, props);
 
@@ -56,17 +57,7 @@ export class ArtifactStack extends cdk.Stack {
     });
 
     artifactTable.grantReadWriteData(artifactLambda);
-
-    const artifactLambdaArn = artifactLambda.functionArn;
-
-    const artifactLambdaPolicyStatement = new iam.PolicyStatement({
-      actions: ["lambda:InvokeFunction"],
-      effect: iam.Effect.ALLOW,
-      resources: [artifactLambdaArn],
-    });
-
-    props.bioimageSearchManagedPolicy.addStatements(
-      artifactLambdaPolicyStatement
-    );
+    this.artifactLambdaArn = artifactLambda.functionArn;
   }
+  
 }

@@ -5,15 +5,11 @@ import batch = require("@aws-cdk/aws-batch");
 import ecs = require("@aws-cdk/aws-ecs")
 import crs = require("crypto-random-string");
 
-export interface ImagePreprocessingStackProps extends cdk.StackProps {
-  bioimageSearchManagedPolicy: iam.ManagedPolicy
-}
-
 export class ImagePreprocessingStack extends cdk.Stack {
   public imagePreprocessingJobDefinition: batch.JobDefinition;
   
-  constructor(app: cdk.App, id: string, props: ImagePreprocessingStackProps) {
-    super(app, id, props);
+  constructor(app: cdk.App, id: string) {
+    super(app, id);
     
     this.imagePreprocessingJobDefinition = new batch.JobDefinition(this, 'image-preprocessing-job-def', {
         container: {

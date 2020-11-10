@@ -5,10 +5,6 @@ import batch = require("@aws-cdk/aws-batch");
 
 import crs = require("crypto-random-string");
 
-export interface BatchSetupStackProps extends cdk.StackProps {
-  bioimageSearchManagedPolicy: iam.ManagedPolicy
-}
-
 export class BatchSetupStack extends cdk.Stack {
   public batchInstanceRole: iam.Role;
   public batchVpc: ec2.Vpc;
@@ -17,15 +13,13 @@ export class BatchSetupStack extends cdk.Stack {
   public spotQueueOutput: cdk.CfnOutput
   public onDemandQueueOutput: cdk.CfnOutput
 
-  constructor(app: cdk.App, id: string, props: BatchSetupStackProps) {
-    super(app, id, props);
+  constructor(app: cdk.App, id: string) {
+    super(app, id);
     
     this.batchInstanceRole = new iam.Role(this, 'batchInstanceRole', {
         assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
         managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AmazonEC2ContainerServiceforEC2Role")],
     });
-    
-    props.bioimageSearchManagedPolicy.attachToRole(this.batchInstanceRole)
     
     this.batchVpc = new ec2.Vpc(this, 'Batch-VPC');
     

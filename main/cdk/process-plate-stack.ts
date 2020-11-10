@@ -7,17 +7,18 @@ import * as sfn from '@aws-cdk/aws-stepfunctions';
 import * as tasks from '@aws-cdk/aws-stepfunctions-tasks';
 
 export interface ProcessPlateStackProps extends cdk.StackProps {
-  bioimageSearchManagedPolicy: iam.ManagedPolicy;
   messageLambda: lambda.Function;
   imageManagementLambda: lambda.Function;
-  externalResourcesPolicy: iam.Policy;
 }
 
 export class ProcessPlateStack extends cdk.Stack {
+  public imageInspectorLambda: lambda.Function;
+  public processPlateLambda: lambda.Function;
+
   constructor(app: cdk.App, id: string, props: ProcessPlateStackProps) {
     super(app, id, props);
 
-    const imageInspectorLambda = new lambda.Function(
+    this.imageInspectorLambda = new lambda.Function(
       this,
       "imageInspectorFunction",
       {
@@ -45,7 +46,7 @@ export class ProcessPlateStack extends cdk.Stack {
     });
     
     const imageInspector = new tasks.LambdaInvoke(this, 'Image Inspector', {
-      lambdaFunction: imageInspectorLambda,
+      lambdaFunction: this.imageInspectorLambda,
     })
 
     const inspectorMap = new sfn.Map(this, 'Inspector Map', {
@@ -62,9 +63,9 @@ export class ProcessPlateStack extends cdk.Stack {
       timeout: cdk.Duration.minutes(3)
     });
     
-    imageInspectorLambda.addEnvironment("PROCESS_PLATE_SFN", processPlateStateMachine.stateMachineArn);
+    this.imageInspectorLambda.addEnvironment("PROCESS_PLATE_SFN", processPlateStateMachine.stateMachineArn);
     
-    const processPlateLambda = new lambda.Function(
+    this.processPlateLambda = new lambda.Function(
       this,
       "processPlateFunction",
       {
@@ -80,45 +81,7 @@ export class ProcessPlateStack extends cdk.Stack {
         },
       }
     );
-
-    const invokeLambdaPolicyStatement = new iam.PolicyStatement({
-      actions: ["lambda:InvokeFunction"],
-      effect: iam.Effect.ALLOW,
-      resources: [ props.imageManagementLambda.functionArn, props.messageLambda.functionArn ]
-    })
-
-    // Necessary to avoid circular dependency    
-    const s3FullAccessPolicy = new iam.PolicyStatement({
-      actions: ["s3:*"],
-      effect: iam.Effect.ALLOW,
-      resources: ["*"]
-    })
     
-    if (imageInspectorLambda.role) {
-      imageInspectorLambda.role.addToPolicy(s3FullAccessPolicy);
-      // NOTE: this causes circular dependency:
-      //imageInspectorLambda.role.attachInlinePolicy(props.externalResourcesPolicy);
-      imageInspectorLambda.role.addToPolicy(invokeLambdaPolicyStatement);
-    }
-
-    if (processPlateLambda.role) {
-      processPlateLambda.role.addToPolicy(s3FullAccessPolicy);
-      //processPlateLambda.role.attachInlinePolicy(props.externalResourcesPolicy);
-      processPlateLambda.role.addToPolicy(invokeLambdaPolicyStatement);
-    }
-
-    const lambdaPolicyStatement = new iam.PolicyStatement({
-      actions: ["lambda:InvokeFunction"],
-      effect: iam.Effect.ALLOW,
-      resources: [ 
-        imageInspectorLambda.functionArn, 
-        processPlateLambda.functionArn 
-        ]
-    })
-
-    // This also causes circular dependency:    
-    //props.bioimageSearchManagedPolicy.addStatements(lambdaPolicyStatement)
-
   }
 
 }

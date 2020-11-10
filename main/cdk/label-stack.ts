@@ -4,13 +4,14 @@ import iam = require("@aws-cdk/aws-iam");
 import cdk = require("@aws-cdk/core");
 
 export interface LabelStackProps extends cdk.StackProps {
-  bioimageSearchManagedPolicy: iam.ManagedPolicy;
   dynamoTableNames: any;
 }
 
 const TABLE_NAME = "BioimsLabel";
 
 export class LabelStack extends cdk.Stack {
+  public labelLambdaArn: string;
+  
   constructor(app: cdk.App, id: string, props: LabelStackProps) {
     super(app, id, props);
 
@@ -53,15 +54,7 @@ export class LabelStack extends cdk.Stack {
     });
 
     labelTable.grantReadWriteData(labelLambda);
-
-    const labelLambdaArn = labelLambda.functionArn;
-
-    const labelLambdaPolicyStatement = new iam.PolicyStatement({
-      actions: ["lambda:InvokeFunction"],
-      effect: iam.Effect.ALLOW,
-      resources: [labelLambdaArn],
-    });
-
-    props.bioimageSearchManagedPolicy.addStatements(labelLambdaPolicyStatement);
+    this.labelLambdaArn = labelLambda.functionArn;
   }
+  
 }

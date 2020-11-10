@@ -4,7 +4,6 @@ import iam = require("@aws-cdk/aws-iam");
 import cdk = require("@aws-cdk/core");
 
 export interface TrainingConfigurationStackProps extends cdk.StackProps {
-  bioimageSearchManagedPolicy: iam.ManagedPolicy;
   dynamoTableNames: any;
 }
 
@@ -70,14 +69,5 @@ export class TrainingConfigurationStack extends cdk.Stack {
     this.trainingConfigurationLambdaArn =
       trainingConfigurationLambda.functionArn;
 
-    const trainingConfigurationLambdaPolicyStatement = new iam.PolicyStatement({
-      actions: ["lambda:InvokeFunction"],
-      effect: iam.Effect.ALLOW,
-      resources: [this.trainingConfigurationLambdaArn],
-    });
-
-    props.bioimageSearchManagedPolicy.addStatements(
-      trainingConfigurationLambdaPolicyStatement
-    );
   }
 }

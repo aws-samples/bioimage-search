@@ -4,7 +4,6 @@ import iam = require("@aws-cdk/aws-iam");
 import cdk = require("@aws-cdk/core");
 
 export interface MessageStackProps extends cdk.StackProps {
-  bioimageSearchManagedPolicy: iam.ManagedPolicy;
   dynamoTableNames: any;
 }
 
@@ -55,15 +54,6 @@ export class MessageStack extends cdk.Stack {
     });
 
     messageTable.grantReadWriteData(this.messageLambda);
-
-    const messageLambdaPolicyStatement = new iam.PolicyStatement({
-      actions: ["lambda:InvokeFunction"],
-      effect: iam.Effect.ALLOW,
-      resources: [this.messageLambda.functionArn],
-    });
-
-    props.bioimageSearchManagedPolicy.addStatements(
-      messageLambdaPolicyStatement
-    );
   }
+  
 }

@@ -34,71 +34,59 @@ const app = new cdk.App();
 
 const baseStack = new BaseStack(app, 'BioimageSearchBaseStack');
 
-const batchSetupStack = new BatchSetupStack(app, 'BioimageSearchBatchSetupStack', {
-    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy  
-})
-
-const resourcePermissionsStack = new ResourcePermissionsStack(app, 'BioimageSearchResourcePermissionsStack', {
-    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy,
-    resourcePermissionsPolicy: baseStack.externalResourcesPolicy
-})
+const batchSetupStack = new BatchSetupStack(app, 'BioimageSearchBatchSetupStack');
 
 const configurationStack = new ConfigurationStack(app, 'BioimageSearchConfigurationStack', {
-    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy,
     dynamoTableNames: dynamoTableNames
 })
 
 const labelStack = new LabelStack(app, 'BioimageSearchLabelStack', {
-    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy,
     dynamoTableNames: dynamoTableNames
 })
 
 const messageStack = new MessageStack(app, 'BioimageSearchMessageStack', {
-    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy,
     dynamoTableNames: dynamoTableNames
 })
 
-const imageArtifactStack = new ImageArtifactStack(app, 'BioimageSearchImageArtifactStack', {
-    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy,
-    externalResourcesPolicy: baseStack.externalResourcesPolicy
-})
+const imageArtifactStack = new ImageArtifactStack(app, 'BioimageSearchImageArtifactStack');
 
-const platePreprocessingStack = new PlatePreprocessingStack(app, 'BioimageSearchPlatePreprocessingStack', {
-    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy,
-})
+const platePreprocessingStack = new PlatePreprocessingStack(app, 'BioimageSearchPlatePreprocessingStack');
 
-const imagePreprocessingStack = new ImagePreprocessingStack(app, 'BioimageSearchImagePreprocessingStack', {
-    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy,
-})
+const imagePreprocessingStack = new ImagePreprocessingStack(app, 'BioimageSearchImagePreprocessingStack');
 
 const embeddingConfigurationStack = new EmbeddingConfigurationStack(app, 'BioimageSearchEmbeddingConfigurationStack', {
-    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy,
     dynamoTableNames: dynamoTableNames
 })
 
 const trainingConfigurationStack = new TrainingConfigurationStack(app, 'BioimageSearchTrainingConfigurationStack', {
-    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy,
     dynamoTableNames: dynamoTableNames
 })
 
 const artifactStack = new ArtifactStack(app, 'BioimageSearchArtifactStack', {
-    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy,
     dynamoTableNames: dynamoTableNames
 })
 
 const imageManagementStack = new ImageManagementStack(app, 'BioimageSearchImageManagementStack', {
-    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy,
     trainingConfigurationLambdaArn: trainingConfigurationStack.trainingConfigurationLambdaArn,
     messageLambda: messageStack.messageLambda,
-    externalResourcesPolicy: baseStack.externalResourcesPolicy,
     dynamoTableNames: dynamoTableNames
 })
 
 const processPlateStack = new ProcessPlateStack(app, 'BioimageSearchProcessPlateStack', {
-    bioimageSearchManagedPolicy: baseStack.bioimageSearchManagedPolicy,
     messageLambda: messageStack.messageLambda,
     imageManagementLambda: imageManagementStack.imageManagementLambda,
-    externalResourcesPolicy: baseStack.externalResourcesPolicy
+})
+
+const resourcePermissionsStack = new ResourcePermissionsStack(app, 'BioimageSearchResourcePermissionsStack', {
+    testBucket: baseStack.testBucket,
+    batchInstanceRole: batchSetupStack.batchInstanceRole,
+    configurationLambdaArn: configurationStack.configurationLambdaArn,
+    messageLambda: messageStack.messageLambda,
+    defaultArtifactLambda: imageArtifactStack.defaultArtifactLambda,
+    embeddingConfigurationLambdaArn: embeddingConfigurationStack.embeddingConfigurationLambdaArn,
+    trainingConfigurationLambdaArn: trainingConfigurationStack.trainingConfigurationLambdaArn,
+    imageInspectorLambda: processPlateStack.imageInspectorLambda,
+    processPlateLambda: processPlateStack.processPlateLambda
 })
 
 })();
