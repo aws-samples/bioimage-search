@@ -8,9 +8,11 @@ import bioimageimage as bi
 
 """
 
-This function takes as input a list of image IDs.
+It inspects the image (including all channel files, if separate) and updates the image table with corresponding information.
 
-It inspects each image (including all channel files, if separate) and updates the image table with corresponding information.
+Example input event:
+
+event= {'trainId': 'origin', 'plateId': '3YpbgZCfkNLfZHDTZU3E2x', 'imageId': 'p1iBF8Vfg5M7GnRAknDFqn'}
 
 """
 
@@ -18,9 +20,12 @@ s3c = boto3.client('s3')
 
 def handler(event, context):
     s3c = boto3.client('s3')
-    image_ids = event['image_ids']
-    for image_id in image_ids:
-        print("imageId=", image_id)
+    print("event=", event)    
+
+    # image_ids = event['image_ids']
+    # for image_id in image_ids:
+    #     print("imageId=", image_id)
+
     return {
         'key0' : 'value0'
     }  
