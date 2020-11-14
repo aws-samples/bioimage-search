@@ -5,6 +5,8 @@ import iam = require("@aws-cdk/aws-iam");
 import cdk = require("@aws-cdk/core");
 import * as sfn from '@aws-cdk/aws-stepfunctions';
 import * as tasks from '@aws-cdk/aws-stepfunctions-tasks';
+import * as logs from '@aws-cdk/aws-logs';
+
 
 export interface ProcessPlateStackProps extends cdk.StackProps {
   messageLambda: lambda.Function;
@@ -55,7 +57,7 @@ export class ProcessPlateStack extends cdk.Stack {
     
     const plateToImages = new tasks.LambdaInvoke(this, 'Plate To Images', {
       lambdaFunction: props.imageManagementLambda,
-      outputPath: '$.images',
+//      outputPath: '$.images',
     });
     
     const imageInspector = new tasks.LambdaInvoke(this, 'Image Inspector', {
@@ -64,16 +66,23 @@ export class ProcessPlateStack extends cdk.Stack {
 
     const inspectorMap = new sfn.Map(this, 'Inspector Map', {
       maxConcurrency: 0,
-      itemsPath: sfn.JsonPath.stringAt('$.images.body'),
-      outputPath: '$.inspection'
+  //    itemsPath: sfn.JsonPath.stringAt('$.images.body'),
+      itemsPath: sfn.JsonPath.stringAt('$.body'),
+//      outputPath: '$.inspection'
     });
     inspectorMap.iterator(imageInspector);
     
     const processPlateStepFunctionDef = plateFormat.next(plateToImages).next(inspectorMap)
+    
+    const logGroup = new logs.LogGroup(this, 'ProcessPlateLogGroup');
 
     this.processPlateStateMachine = new sfn.StateMachine(this, 'Process Plate StateMachine', {
       definition: processPlateStepFunctionDef,
-      timeout: cdk.Duration.minutes(3)
+      timeout: cdk.Duration.minutes(3),
+      logs: {
+        destination: logGroup,
+        level: sfn.LogLevel.ALL,
+      }
     });
     
     //////////////////////////////////////////

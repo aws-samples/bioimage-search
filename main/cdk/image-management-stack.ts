@@ -93,16 +93,19 @@ export class ImageManagementStack extends cdk.Stack {
       }
     );
 
-    const invokeLambdaPolicyStatement = new iam.PolicyStatement({
-      actions: ["lambda:InvokeFunction"],
+    const imageTableAccessPolicy = new iam.PolicyStatement({
+      actions: ["dynamodb:*"],
       effect: iam.Effect.ALLOW,
       resources: [
-        props.trainingConfigurationLambdaArn,
-        props.messageLambda.functionArn,
-      ],
-    });
+        imageManagementTable.tableArn,
+        imageManagementTable.tableArn + "/index/*"
+        ]
+    })
 
-    imageManagementTable.grantFullAccess(this.imageManagementLambda);
+    const lambdaPolicy = new iam.Policy(this, "imageManagementAccessPolicy");
+    lambdaPolicy.addStatements(imageTableAccessPolicy);
+
+    this.imageManagementLambda!.role!.attachInlinePolicy(lambdaPolicy);
   }
   
 }

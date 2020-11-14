@@ -11,13 +11,15 @@ const PROCESS_PLATE_SFN_ARN = process.env.PROCESS_PLATE_SFN_ARN || "";
 
 async function startExecution(plateId: string) {
   const executionName = "ProcessPlate-"+plateId+"-"+su.generate()
-  const inputStr = `{ "plateId" : ${plateId} }`;
+  const inputStr = `{ "plateId" : \"${plateId}\" }`;
+  console.log("inputStr=", inputStr);
   var params = {
     stateMachineArn: PROCESS_PLATE_SFN_ARN,
     input: inputStr,
     name: executionName,
 //    traceHeader: 'STRING_VALUE'
   };
+  console.log("params=", params)
   const response = await sfn.startExecution(params).promise()
   return response
 }
