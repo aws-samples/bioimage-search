@@ -5,6 +5,7 @@ cp ../../../common/bioimageimage.py ./build
 cd build
 python3.8 -m venv venv
 source venv/bin/activate
+pip install shortuuid
 pip install numpy
 pip install Pillow
 pip install scikit-image

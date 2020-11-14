@@ -1,11 +1,12 @@
 import numpy as np
 import math 
 import boto3
-import s3fs
+#import s3fs
 from pathlib import Path
 import shortuuid as su
 import json
-from skimage import io
+from skimage import io as skio
+from io import BytesIO
 
 
 # seaborn color_palette("husl", 100)
@@ -110,7 +111,7 @@ colors =[(0.9677975592919913, 0.44127456009157356, 0.5358103155058701),
  (0.9666815246136576, 0.43287332510462706, 0.6020383616245532),
  (0.9673068486894055, 0.43760373463479557, 0.5661632485543318)]
  
-s3f = s3fs.S3FileSystem(anon=False)
+#s3f = s3fs.S3FileSystem(anon=False)
 s3c = boto3.client('s3')
  
 def getColors(n):
@@ -193,12 +194,14 @@ def normalizeChannel(bval, nda):
             
 def getImageFromS3AsNumpy(bucket, key):
     url = 's3://' + bucket + '/' + key
-    im = io.imread(url)
+    im = skio.imread(url)
     return im
     
 def getNumpyArrayFromS3(bucket, key):
-    nparr = np.load(s3f.open('{}/{}'.format(bucket, key)))
-    return nparr    
+    #nparr = np.load(s3f.open('{}/{}'.format(bucket, key)))
+    obj = s3c.get_object(Bucket=bucket, Key=key)
+    array = np.load(BytesIO(obj['Body'].read()))
+    return array   
     
 def getTmpDir():
     tmpDir="/tmp"
