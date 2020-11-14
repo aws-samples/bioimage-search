@@ -2,6 +2,7 @@ import iam = require("@aws-cdk/aws-iam");
 import cdk = require("@aws-cdk/core");
 import s3 = require("@aws-cdk/aws-s3");
 import lambda = require("@aws-cdk/aws-lambda");
+import * as sfn from '@aws-cdk/aws-stepfunctions';
 import crs = require("crypto-random-string");
 
 export interface ResourcePermissionsStackProps extends cdk.StackProps {
@@ -17,6 +18,7 @@ export interface ResourcePermissionsStackProps extends cdk.StackProps {
   imageManagementLambda: lambda.Function;
   imageInspectorLambda: lambda.Function;
   processPlateLambda: lambda.Function;
+  processPlateStateMachine: sfn.StateMachine;
 }
 
 export class ResourcePermissionsStack extends cdk.Stack {
@@ -126,15 +128,27 @@ export class ResourcePermissionsStack extends cdk.Stack {
                   props.processPlateLambda.functionArn
                 ]
     });
+    
+    const invokeStepFunctionsPolicyStatement = new iam.PolicyStatement({
+      actions: ["states:StartExecution"],
+      effect: iam.Effect.ALLOW,
+      resources: [props.processPlateStateMachine.stateMachineArn]
+    });
 
     this.bioimageSearchManagedPolicy.addStatements(
-      invokeLambdaPolicyStatement
+      invokeLambdaPolicyStatement,
+      invokeStepFunctionsPolicyStatement
     );
 
     props.defaultArtifactLambda!.role!.attachInlinePolicy(this.externalResourcesPolicy);
     props.imageManagementLambda!.role!.attachInlinePolicy(this.externalResourcesPolicy);
     props.imageInspectorLambda!.role!.attachInlinePolicy(this.externalResourcesPolicy);
     props.processPlateLambda!.role!.attachInlinePolicy(this.externalResourcesPolicy);
+
+    const processPlateStepFunctionsPolicy = new iam.Policy(this, "processPlateStepFunctionsPolicy");
+    processPlateStepFunctionsPolicy.addStatements(invokeStepFunctionsPolicyStatement);
+    
+    props.processPlateLambda!.role!.attachInlinePolicy(processPlateStepFunctionsPolicy);
   }
   
 }

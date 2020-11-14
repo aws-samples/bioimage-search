@@ -89,7 +89,8 @@ const resourcePermissionsStack = new ResourcePermissionsStack(app, 'BioimageSear
     artifactLambdaArn: artifactStack.artifactLambdaArn,
     imageManagementLambda: imageManagementStack.imageManagementLambda,
     imageInspectorLambda: processPlateStack.imageInspectorLambda,
-    processPlateLambda: processPlateStack.processPlateLambda
+    processPlateLambda: processPlateStack.processPlateLambda,
+    processPlateStateMachine: processPlateStack.processPlateStateMachine
 })
 
 })();

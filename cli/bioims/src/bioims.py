@@ -62,6 +62,9 @@ class BioimageSearchResources:
     def getImageManagementStack(self):
         return self.getStackByName('BioimageSearchImageManagementStack')
         
+    def getProcessPlateStack(self):
+        return self.getStackByName('BioimageSearchProcessPlateStack')
+        
 ##### FUNCTIONS
 
     def getStackOutputByPrefix(self, stack, prefix):
@@ -103,6 +106,9 @@ class BioimageSearchResources:
     def getImageManagementLambdaArn(self):
         return self.getStackOutputByPrefix(self.getImageManagementStack(), 'ExportsOutputFnGetAttimageManagementFunction')
 
+    def getProcessPlateLambdaArn(self):
+        return self.getStackOutputByPrefix(self.getProcessPlateStack(), 'ExportsOutputFnGetAttprocessPlateFunction')
+
 ##### BATCH QUEUE
 
     def getBatchOnDemandQueueName(self):
@@ -138,6 +144,8 @@ def client(serviceName):
         return ArtifactClient()
     elif serviceName == 'image-management':
         return ImageManagementClient()
+    elif serviceName == 'process-plate':
+        return ProcessPlateClient()
     else:
         print('service type {} not recognized'.format(serviceName))
         return False
@@ -723,8 +731,8 @@ class ImageManagementClient(BioimageSearchClient):
     def getLambdaArn(self):
         return self._resources.getImageManagementLambdaArn()
 
-    def processPlate(self, inputBucket, inputKey):
-        request = '{{ "method": "processPlate", "inputBucket": "{}", "inputKey": "{}" }}'.format(inputBucket, inputKey)
+    def uploadSourcePlate(self, inputBucket, inputKey):
+        request = '{{ "method": "uploadSourcePlate", "inputBucket": "{}", "inputKey": "{}" }}'.format(inputBucket, inputKey)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
@@ -748,4 +756,31 @@ class ImageManagementClient(BioimageSearchClient):
         jbody = getResponseBody(response)
         jvalue = json.loads(jbody)
         return jvalue
+        
+#############################################
+#
+# PROCESS PLATE
+#
+#############################################
+    
+class ProcessPlateClient(BioimageSearchClient):
+    def __init__(self):
+        super().__init__()
+
+    def getLambdaArn(self):
+        return self._resources.getProcessPlateLambdaArn()
+
+    def processPlate(self, plateId):
+        request = '{{ "method": "processPlate", "plateId": "{}" }}'.format(plateId)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self.getLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        jbody = getResponseBody(response)
+        jvalue = json.loads(jbody)
+        return jvalue
+        
         

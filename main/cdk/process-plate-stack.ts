@@ -14,6 +14,7 @@ export interface ProcessPlateStackProps extends cdk.StackProps {
 export class ProcessPlateStack extends cdk.Stack {
   public imageInspectorLambda: lambda.Function;
   public processPlateLambda: lambda.Function;
+  public processPlateStateMachine: sfn.StateMachine;
 
   constructor(app: cdk.App, id: string, props: ProcessPlateStackProps) {
     super(app, id, props);
@@ -40,6 +41,18 @@ export class ProcessPlateStack extends cdk.Stack {
     //
     ///////////////////////////////////////////
     
+    // input from processPlate is: { "plateId" : plateId }
+    // input needed to imageManagementLambda is : { "method" : "getImagesByPlateId", "plateId" : <plateId> }
+    
+    // const parameterStr = `{ "method" : "getImagesByPlateId", "plateId" : \$.plateId }`
+    
+    const plateFormat = new sfn.Pass(this, 'Plate Format', {
+      parameters: {
+        method: "getImagesByPlateId",
+        plateId: sfn.JsonPath.stringAt('$.plateId')
+      }
+    });
+    
     const plateToImages = new tasks.LambdaInvoke(this, 'Plate To Images', {
       lambdaFunction: props.imageManagementLambda,
       outputPath: '$.images',
@@ -56,12 +69,14 @@ export class ProcessPlateStack extends cdk.Stack {
     });
     inspectorMap.iterator(imageInspector);
     
-    const processPlateStepFunctionDef = plateToImages.next(inspectorMap)
+    const processPlateStepFunctionDef = plateFormat.next(plateToImages).next(inspectorMap)
 
-    const processPlateStateMachine = new sfn.StateMachine(this, 'Process Plate StateMachine', {
+    this.processPlateStateMachine = new sfn.StateMachine(this, 'Process Plate StateMachine', {
       definition: processPlateStepFunctionDef,
       timeout: cdk.Duration.minutes(3)
     });
+    
+    //////////////////////////////////////////
     
     this.processPlateLambda = new lambda.Function(
       this,
@@ -75,7 +90,7 @@ export class ProcessPlateStack extends cdk.Stack {
         environment: {
           MESSAGE_LAMBDA_ARN: props.messageLambda.functionArn,
           IMAGE_MANAGEMENT_LAMBDA_ARN: props.imageManagementLambda.functionArn,
-          PROCESS_PLATE_SFN_ARN: processPlateStateMachine.stateMachineArn
+          PROCESS_PLATE_SFN_ARN: this.processPlateStateMachine.stateMachineArn
         },
       }
     );

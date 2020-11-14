@@ -21,8 +21,7 @@ def handler(event, context):
     image_ids = event['image_ids']
     for image_id in image_ids:
         print("imageId=", image_id)
-
-    return { 
+    return {
         'key0' : 'value0'
     }  
     
