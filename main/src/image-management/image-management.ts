@@ -227,7 +227,8 @@ export const handler = async (event: any = {}): Promise<any> => {
     if (event.plateId) {
       try {
         const response = await getImagesByPlateId(event.plateId);
-        return { statusCode: 200, body: JSON.stringify(response) };
+//        return { statusCode: 200, body: JSON.stringify(response) };
+        return { statusCode: 200, body: response };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };
       }

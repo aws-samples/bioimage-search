@@ -66,9 +66,7 @@ export class ProcessPlateStack extends cdk.Stack {
 
     const inspectorMap = new sfn.Map(this, 'Inspector Map', {
       maxConcurrency: 0,
-  //    itemsPath: sfn.JsonPath.stringAt('$.images.body'),
-      itemsPath: sfn.JsonPath.stringAt('$.body'),
-//      outputPath: '$.inspection'
+      itemsPath: '$.Payload.body',
     });
     inspectorMap.iterator(imageInspector);
     

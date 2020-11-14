@@ -754,8 +754,7 @@ class ImageManagementClient(BioimageSearchClient):
             Payload=payload
             )
         jbody = getResponseBody(response)
-        jvalue = json.loads(jbody)
-        return jvalue
+        return jbody
         
 #############################################
 #
