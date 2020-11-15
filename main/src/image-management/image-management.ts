@@ -182,6 +182,17 @@ async function uploadSourcePlate(inputBucket: any, inputKey: any) {
   return { "plateId" : plateId }
 }
 
+async function getImageRow(imageId: any, trainId: any) {
+  const params = {
+    TableName: TABLE_NAME,
+    Key: {
+      [PARTITION_KEY_IMGID]: imageId,
+      [SORT_KEY_TRNID]: trainId
+    },
+  };
+  return db.get(params).promise();
+}
+
 async function getImagesByPlateId(plateId: any) {
   const keyConditionExpression = [PLATE_ID_ATTRIBUTE] + " = :" + [PLATE_ID_ATTRIBUTE];
   const expressionAttributeValues =
@@ -194,8 +205,14 @@ async function getImagesByPlateId(plateId: any) {
       "{" + expressionAttributeValues + "}"
     ),
   };
-  const result: any = await dy.getAllQueryData(db, params);
-  return result;  
+  const imageRowInfo: any[] = await dy.getAllQueryData(db, params);
+  let rows: any[] = []
+  const p: any[] = []
+  for (let ir of imageRowInfo) {
+    p.push((getImageRow(ir[PARTITION_KEY_IMGID], ir[SORT_KEY_TRNID]).then( (result:any) => (rows.push(result)))))
+  }
+  await Promise.all(p)
+  return rows;
 }
 
 /////////////////////////////////////////////////
