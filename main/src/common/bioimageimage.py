@@ -113,6 +113,8 @@ colors =[(0.9677975592919913, 0.44127456009157356, 0.5358103155058701),
  
 #s3f = s3fs.S3FileSystem(anon=False)
 s3c = boto3.client('s3')
+my_session = boto3.session.Session()
+my_region = my_session.region_name
  
 def getColors(n):
     cd = 100.0/n
@@ -193,9 +195,9 @@ def normalizeChannel(bval, nda):
             nda[idx]=n
             
 def getImageFromS3AsNumpy(bucket, key):
-    url = 's3://' + bucket + '/' + key
-    im = skio.imread(url)
-    return im
+    obj = s3c.get_object(Bucket=bucket, Key=key)
+    img = skio.imread(BytesIO(obj['Body'].read()))
+    return img
     
 def getNumpyArrayFromS3(bucket, key):
     #nparr = np.load(s3f.open('{}/{}'.format(bucket, key)))

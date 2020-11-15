@@ -57,7 +57,6 @@ export class ProcessPlateStack extends cdk.Stack {
     
     const plateToImages = new tasks.LambdaInvoke(this, 'Plate To Images', {
       lambdaFunction: props.imageManagementLambda,
-//      outputPath: '$.images',
     });
     
     const imageInspector = new tasks.LambdaInvoke(this, 'Image Inspector', {
