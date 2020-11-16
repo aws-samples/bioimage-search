@@ -1,12 +1,17 @@
 import dynamodb = require("@aws-cdk/aws-dynamodb");
-import { AttributeType, BillingMode, StreamViewType, ProjectionType, Table } from '@aws-cdk/aws-dynamodb';
+import {
+  AttributeType,
+  BillingMode,
+  StreamViewType,
+  ProjectionType,
+  Table,
+} from "@aws-cdk/aws-dynamodb";
 import lambda = require("@aws-cdk/aws-lambda");
 import iam = require("@aws-cdk/aws-iam");
 import cdk = require("@aws-cdk/core");
-import * as sfn from '@aws-cdk/aws-stepfunctions';
-import * as tasks from '@aws-cdk/aws-stepfunctions-tasks';
-import * as logs from '@aws-cdk/aws-logs';
-
+import * as sfn from "@aws-cdk/aws-stepfunctions";
+import * as tasks from "@aws-cdk/aws-stepfunctions-tasks";
+import * as logs from "@aws-cdk/aws-logs";
 
 export interface ProcessPlateStackProps extends cdk.StackProps {
   messageLambda: lambda.Function;
@@ -32,58 +37,65 @@ export class ProcessPlateStack extends cdk.Stack {
         timeout: cdk.Duration.minutes(15),
         environment: {
           MESSAGE_LAMBDA_ARN: props.messageLambda.functionArn,
-          IMAGE_MANAGEMENT_LAMBDA_ARN: props.imageManagementLambda.functionArn
+          IMAGE_MANAGEMENT_LAMBDA_ARN: props.imageManagementLambda.functionArn,
         },
       }
     );
-    
+
     ///////////////////////////////////////////
     //
     // PlateProcessing StepFunction
     //
     ///////////////////////////////////////////
-    
+
     // input from processPlate is: { "plateId" : plateId }
     // input needed to imageManagementLambda is : { "method" : "getImagesByPlateId", "plateId" : <plateId> }
-    
+
     // const parameterStr = `{ "method" : "getImagesByPlateId", "plateId" : \$.plateId }`
-    
-    const plateFormat = new sfn.Pass(this, 'Plate Format', {
+
+    const plateFormat = new sfn.Pass(this, "Plate Format", {
       parameters: {
         method: "getImagesByPlateId",
-        plateId: sfn.JsonPath.stringAt('$.plateId')
-      }
+        plateId: sfn.JsonPath.stringAt("$.plateId"),
+      },
     });
-    
-    const plateToImages = new tasks.LambdaInvoke(this, 'Plate To Images', {
+
+    const plateToImages = new tasks.LambdaInvoke(this, "Plate To Images", {
       lambdaFunction: props.imageManagementLambda,
     });
-    
-    const imageInspector = new tasks.LambdaInvoke(this, 'Image Inspector', {
-      lambdaFunction: this.imageInspectorLambda,
-    })
 
-    const inspectorMap = new sfn.Map(this, 'Inspector Map', {
+    const imageInspector = new tasks.LambdaInvoke(this, "Image Inspector", {
+      lambdaFunction: this.imageInspectorLambda,
+    });
+
+    const inspectorMap = new sfn.Map(this, "Inspector Map", {
       maxConcurrency: 0,
-      itemsPath: '$.Payload.body',
+      itemsPath: "$.Payload.body",
+      outputPath: "$.Payload.body.Item.imageId"
     });
     inspectorMap.iterator(imageInspector);
-    
-    const processPlateStepFunctionDef = plateFormat.next(plateToImages).next(inspectorMap)
-    
-    const logGroup = new logs.LogGroup(this, 'ProcessPlateLogGroup');
 
-    this.processPlateStateMachine = new sfn.StateMachine(this, 'Process Plate StateMachine', {
-      definition: processPlateStepFunctionDef,
-      timeout: cdk.Duration.minutes(3),
-      logs: {
-        destination: logGroup,
-        level: sfn.LogLevel.ALL,
+    const processPlateStepFunctionDef = plateFormat
+      .next(plateToImages)
+      .next(inspectorMap)
+
+    const logGroup = new logs.LogGroup(this, "ProcessPlateLogGroup");
+
+    this.processPlateStateMachine = new sfn.StateMachine(
+      this,
+      "Process Plate StateMachine",
+      {
+        definition: processPlateStepFunctionDef,
+        timeout: cdk.Duration.minutes(3),
+        logs: {
+          destination: logGroup,
+          level: sfn.LogLevel.ALL,
+        },
       }
-    });
-    
+    );
+
     //////////////////////////////////////////
-    
+
     this.processPlateLambda = new lambda.Function(
       this,
       "processPlateFunction",
@@ -96,11 +108,9 @@ export class ProcessPlateStack extends cdk.Stack {
         environment: {
           MESSAGE_LAMBDA_ARN: props.messageLambda.functionArn,
           IMAGE_MANAGEMENT_LAMBDA_ARN: props.imageManagementLambda.functionArn,
-          PROCESS_PLATE_SFN_ARN: this.processPlateStateMachine.stateMachineArn
+          PROCESS_PLATE_SFN_ARN: this.processPlateStateMachine.stateMachineArn,
         },
       }
     );
-    
   }
-
 }

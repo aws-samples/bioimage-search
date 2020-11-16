@@ -1,4 +1,10 @@
+import boto3
 import bioimageimage as bi
+import os
+import json
+
+MESSAGE_LAMBDA_ARN = os.environ['MESSAGE_LAMBDA_ARN']
+IMAGE_MANAGEMENT_LAMBDA_ARN = os.environ['IMAGE_MANAGEMENT_LAMBDA_ARN']
 
 """
 
@@ -38,6 +44,8 @@ response = {
 
 """
 
+s3c = boto3.client('s3')
+
 def passZeroCheck(np):
     shape=np.shape
     if len(shape) > 1 and shape[-1] > 0 and shape[-2] > 0:
@@ -51,6 +59,21 @@ def getDimensions(np):
         depth = np.shape[-3]
     return (np.shape[-1], np.shape[-2], depth)
     
+def applyInspectionResult(inspection):
+    inspectionStr = json.dumps(inspection)
+    request = '{{ "method": "applyInspectionResult", "inspectionResult": {} }}'.format(inspectionStr)
+    #print("applyInspectionResult() request=", request)
+    payload = bytes(request, encoding='utf-8')
+    lambdaClient = boto3.client('lambda')
+    response = lambdaClient.invoke(
+        FunctionName=IMAGE_MANAGEMENT_LAMBDA_ARN,
+        InvocationType='RequestResponse',
+        Payload=payload
+        )
+
+def applyErrorResult(imageId):
+    result = { "imageId" : imageId, "valid" : False, "width": -1, "height" : -1, "depth" : -1, "channels" : -1 }
+    applyInspectionResult(result)    
 
 def handler(event, context):
     item = event['Item']
@@ -73,10 +96,13 @@ def handler(event, context):
         except Exception as err:
             errStr = "exception={0}".format(err)
             print("Error loading bucket="+bucket+" key="+imageKeys[0]+" "+errStr)
-            return { "imageId" : imageId, "valid" : False, "width": -1, "height" : -1, "depth" : -1, "channels" : -1 }
+            applyErrorResult(imageId)
+            return { "d": "" }
         if passZeroCheck(np):
             dims = getDimensions(np)
-            return { "imageId" : imageId, "valid" : True, "width": dims[0], "height": dims[1], "depth": dims[2], "channels": 1 }
+            result = { "imageId" : imageId, "valid" : True, "width": dims[0], "height": dims[1], "depth": dims[2], "channels": 1 }
+            applyInspectionResult(result)
+            return { "d": "" }
     else:
         dims=[]
         for i, channel in enumerate(item['channelKeys']):
@@ -85,7 +111,8 @@ def handler(event, context):
             except Exception as err:
                 errStr = "exception={0}".format(err)
                 print("Error loading bucket="+bucket+ " key="+imageKeys[i]+" "+errStr)
-                return { "imageId" : imageId, "valid" : False, "width": -1, "height" : -1, "depth" : -1, "channels" : -1 }
+                applyErrorResult(imageId)
+                return { "d" : "" }
             ndims = getDimensions(np)
             if i==0:
                 dims.append(ndims[0])
@@ -94,8 +121,8 @@ def handler(event, context):
             else:
                 if not(dims[0]==ndims[0] and dims[1]==dims[1] and dims[2]==dims[2]):
                     print("Error dimensions do not match for channel  bucket="+bucket+ " key="+imageKeys[i])
-                    return { "imageId" : imageId, "valid" : False, "width": -1, "height" : -1, "depth" : -1, "channels" : -1 }
+                    applyErrorResult(imageId)
+                    return { "d" : "" }
         result = { "imageId" : imageId, "valid" : True, "width" : dims[0], "height" : dims[1], "depth" : dims[2], "channels" : numChannels }
-        # DEBUG
-        print(result)
-        return result
+        applyInspectionResult(result)
+        return { "d" : "" }

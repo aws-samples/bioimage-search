@@ -157,6 +157,18 @@ export class ResourcePermissionsStack extends cdk.Stack {
     //processPlateStepFunctionsPolicy.addStatements(fullS3AccessPolicyStatement);
     
     props.processPlateLambda!.role!.attachInlinePolicy(processPlateStepFunctionsPolicy);
+    
+    const imageInspectorPolicy = new iam.Policy(this, "imageInspectorPolicy");
+    
+    const invokeImageManagementPolicyStatement = new iam.PolicyStatement({
+      actions: ["lambda:InvokeFunction"],
+      effect: iam.Effect.ALLOW,
+      resources: [props.imageManagementLambda.functionArn]
+    });
+    
+    imageInspectorPolicy.addStatements(invokeImageManagementPolicyStatement);
+    props.imageInspectorLambda!.role!.attachInlinePolicy(imageInspectorPolicy);
+
   }
   
 }

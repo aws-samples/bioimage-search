@@ -1,16 +1,17 @@
 const AWS = require("aws-sdk");
-const s3 = new AWS.S3({apiVersion: '2006-03-01'});
-const lambda = new AWS.Lambda({apiVersion: '2015-03-31'});
+const s3 = new AWS.S3({ apiVersion: "2006-03-01" });
+const lambda = new AWS.Lambda({ apiVersion: "2015-03-31" });
 const db = new AWS.DynamoDB.DocumentClient();
 const dy = require("bioimage-dynamo");
 const la = require("bioimage-lambda");
-const su = require("short-uuid")
+const su = require("short-uuid");
 
 const TABLE_NAME = process.env.TABLE_NAME || "";
 const PARTITION_KEY_IMGID = process.env.PARTITION_KEY || "";
 const SORT_KEY_TRNID = process.env.SORT_KEY || "";
 const PLATE_INDEX = process.env.PLATE_INDEX || "";
-const TRAINING_CONFIGURATION_LAMBDA_ARN = process.env.TRAINING_CONFIGURATION_LAMBDA_ARN || "";
+const TRAINING_CONFIGURATION_LAMBDA_ARN =
+  process.env.TRAINING_CONFIGURATION_LAMBDA_ARN || "";
 const MESSAGE_LAMBDA_ARN = process.env.MESSAGE_LAMBDA_ARN || "";
 
 //const PROCESS_PLATE_SFN = process.env.PROCESS_PLATE_SFN || "";
@@ -37,7 +38,7 @@ const DEPTH_ATTRIBUTE = "depth";
 const CHANNELS_ATTRIBUTE = "channels";
 const BUCKET_ATTRIBUTE = "bucket";
 const KEY_ATTRIBUTE = "key";
-const CHANNEL_KEYS_ATTRIBUTE = "channelKeys"
+const CHANNEL_KEYS_ATTRIBUTE = "channelKeys";
 const TAG_ARRAY_ATTRIBUTE = "tagArr";
 const ROI_ARRAY_ATTRIBUTE = "roiArr";
 const ROI_EMBEDDING_ARRAY_ATTRIBUTE = "roiEmbeddingArr";
@@ -67,119 +68,134 @@ async function createMessage(message: any) {
   var params = {
     FunctionName: MESSAGE_LAMBDA_ARN,
     InvocationType: "RequestResponse",
-    Payload: JSON.stringify({ "method": "createMessage", "message" : message })
+    Payload: JSON.stringify({ method: "createMessage", message: message }),
   };
   const data = await lambda.invoke(params).promise();
   const createMessageResponse = la.getResponseBody(data);
-  const messageId = createMessageResponse['messageId']
-  return messageId
+  const messageId = createMessageResponse["messageId"];
+  return messageId;
 }
 
 async function getTrainInfo(trainId: any) {
   var params = {
-    FunctionName: TRAINING_CONFIGURATION_LAMBDA_ARN, 
-    InvocationType: "RequestResponse", 
-    Payload: JSON.stringify({ "method": "getTraining", "train_id": trainId })
+    FunctionName: TRAINING_CONFIGURATION_LAMBDA_ARN,
+    InvocationType: "RequestResponse",
+    Payload: JSON.stringify({ method: "getTraining", train_id: trainId }),
   };
   const data = await lambda.invoke(params).promise();
-  const trainInfoResponse =  la.getResponseBody(data)
-  return trainInfoResponse['Item']
+  const trainInfoResponse = la.getResponseBody(data);
+  return trainInfoResponse["Item"];
 }
 
 async function validateTrainId(trainId: any) {
   const trainInfo: any = await getTrainInfo(trainId);
   if (!trainInfo) {
-    throw new Error(`trainInfo not available for trainId=${trainId}}`)
+    throw new Error(`trainInfo not available for trainId=${trainId}}`);
   }
   if (!(trainInfo.train_id == trainId)) {
-    const errMsg = `trainId=${trainId} does not match ${trainInfo.train_id}`
-    throw new Error(errMsg)
+    const errMsg = `trainId=${trainId} does not match ${trainInfo.train_id}`;
+    throw new Error(errMsg);
   }
-  return trainInfo
+  return trainInfo;
 }
 
 // This function validates the TrainId, and then adds 'origin' information from
 // the SourcePlateInfo data. It then hands off processing to the 'ProcessPlate' StepFunction.
 
 async function uploadSourcePlate(inputBucket: any, inputKey: any) {
-  const data = await s3.getObject({ Bucket: inputBucket, Key: inputKey}).promise();
+  const data = await s3
+    .getObject({ Bucket: inputBucket, Key: inputKey })
+    .promise();
   if (!data) {
-    throw new Error("sourcePlateInfo object null")
+    throw new Error("sourcePlateInfo object null");
   }
-  const sourcePlateInfoStr = data.Body.toString('utf-8');
-  const sourcePlateInfo = JSON.parse(sourcePlateInfoStr)
-  if (!('trainId' in sourcePlateInfo)) {
-    throw new Error("trainId required")
+  const sourcePlateInfoStr = data.Body.toString("utf-8");
+  const sourcePlateInfo = JSON.parse(sourcePlateInfoStr);
+  if (!("trainId" in sourcePlateInfo)) {
+    throw new Error("trainId required");
   }
-  const trainId = sourcePlateInfo['trainId']    
-  const trainInfo = validateTrainId(trainId)
-  if (!('plateSourceId' in sourcePlateInfo)) {
-    throw new Error("plateSourceId required")
+  const trainId = sourcePlateInfo["trainId"];
+  const trainInfo = validateTrainId(trainId);
+  if (!("plateSourceId" in sourcePlateInfo)) {
+    throw new Error("plateSourceId required");
   }
-  const plateSourceId = sourcePlateInfo['plateSourceId']
-  if (!('images' in sourcePlateInfo)) {
-    throw new Error("images required")
+  const plateSourceId = sourcePlateInfo["plateSourceId"];
+  if (!("images" in sourcePlateInfo)) {
+    throw new Error("images required");
   }
-  const plateId = su.generate()
-  const images: any[] = sourcePlateInfo['images']
-  const wellDict: Map<string,string> = new Map();
-  const fields: any[] = ['wellSourceId', 'imageSourceId', 'sourceBucket', 'sourceKey']
-  const timestamp = Date.now().toString()
-  const p: any[] = []
+  const plateId = su.generate();
+  const images: any[] = sourcePlateInfo["images"];
+  const wellDict: Map<string, string> = new Map();
+  const fields: any[] = [
+    "wellSourceId",
+    "imageSourceId",
+    "sourceBucket",
+    "sourceKey",
+  ];
+  const timestamp = Date.now().toString();
+  const p: any[] = [];
   for (const image of images) {
-    const imageId = su.generate()
+    const imageId = su.generate();
     for (const field of fields) {
       if (!(field in image)) {
-        throw new Error(`field ${field} required in sourcePlateId ${plateSourceId}`)
+        throw new Error(
+          `field ${field} required in sourcePlateId ${plateSourceId}`
+        );
       }
     }
-    const wellSourceId = image['wellSourceId']
-    const imageSourceId = image['imageSourceId']
-    const sourceBucket = image['sourceBucket']
-    const sourceKey = image['sourceKey']
-    var wellId:string = ""
+    const wellSourceId = image["wellSourceId"];
+    const imageSourceId = image["imageSourceId"];
+    const sourceBucket = image["sourceBucket"];
+    const sourceKey = image["sourceKey"];
+    var wellId: string = "";
     if (wellSourceId in wellDict) {
-      wellId = wellDict.get(wellSourceId)!
+      wellId = wellDict.get(wellSourceId)!;
     } else {
-      wellId = su.generate()
-      wellDict.set(wellSourceId, wellId)
+      wellId = su.generate();
+      wellDict.set(wellSourceId, wellId);
     }
-    const messageId = await createMessage(`Creation of imageId=${imageId}`)
+    const messageId = await createMessage(`Creation of imageId=${imageId}`);
     const imageEntry = {
-      [PARTITION_KEY_IMGID] : imageId,
-      [SORT_KEY_TRNID] : ORIGIN,
-      [PLATE_ID_ATTRIBUTE] : plateId,
-      [WELL_ID_ATTRIBUTE] : wellId,
-      [PLATE_SOURCE_ID_ATTRIBUTE] : plateSourceId,
-      [WELL_SOURCE_ID_ATTRIBUTE] : wellSourceId,
-      [IMAGE_SOURCE_ID_ATTRIBUTE] : imageSourceId,
-      [CREATE_TIMESTAMP_ATTRIBUTE] : timestamp,
-      [MESSAGE_ID_ATTRIBUTE] : messageId,
-      [BUCKET_ATTRIBUTE] : sourceBucket,
-      [KEY_ATTRIBUTE] : sourceKey,
-      ...('channelKeys' in image) && { [CHANNEL_KEYS_ATTRIBUTE] : image['channelKeys'] },
-      ...('category' in image) && { [TRAIN_CATEGORY_ATTRIBUTE] : image['category'] },
-      ...('label' in image) && { [TRAIN_LABEL_ATTRIBUTE] : image['label'] },
-      ...('experiment' in image) && { [EXPERIMENT_ATTRIBUTE] : image['experiment'] }
-    }
+      [PARTITION_KEY_IMGID]: imageId,
+      [SORT_KEY_TRNID]: ORIGIN,
+      [PLATE_ID_ATTRIBUTE]: plateId,
+      [WELL_ID_ATTRIBUTE]: wellId,
+      [PLATE_SOURCE_ID_ATTRIBUTE]: plateSourceId,
+      [WELL_SOURCE_ID_ATTRIBUTE]: wellSourceId,
+      [IMAGE_SOURCE_ID_ATTRIBUTE]: imageSourceId,
+      [CREATE_TIMESTAMP_ATTRIBUTE]: timestamp,
+      [MESSAGE_ID_ATTRIBUTE]: messageId,
+      [BUCKET_ATTRIBUTE]: sourceBucket,
+      [KEY_ATTRIBUTE]: sourceKey,
+      ...("channelKeys" in image && {
+        [CHANNEL_KEYS_ATTRIBUTE]: image["channelKeys"],
+      }),
+      ...("category" in image && {
+        [TRAIN_CATEGORY_ATTRIBUTE]: image["category"],
+      }),
+      ...("label" in image && { [TRAIN_LABEL_ATTRIBUTE]: image["label"] }),
+      ...("experiment" in image && {
+        [EXPERIMENT_ATTRIBUTE]: image["experiment"],
+      }),
+    };
     const params = {
       TableName: TABLE_NAME,
       Item: imageEntry,
     };
     p.push(db.put(params).promise());
   }
-  await Promise.all(p)
+  await Promise.all(p);
 
-//   const sfnName = plateId + '-' + su.generate()
-//   var processPlateSfnParams = {
-//     stateMachineArn: PROCESS_PLATE_SFN,
-//     input: { "plateId" : plateId },
-//     name: sfnName,
-// //    traceHeader: 'STRING_VALUE'
-//   };
-//   await sfn.startExecution(processPlateSfnParams).promise();
+  //   const sfnName = plateId + '-' + su.generate()
+  //   var processPlateSfnParams = {
+  //     stateMachineArn: PROCESS_PLATE_SFN,
+  //     input: { "plateId" : plateId },
+  //     name: sfnName,
+  // //    traceHeader: 'STRING_VALUE'
+  //   };
+  //   await sfn.startExecution(processPlateSfnParams).promise();
 
-  return { "plateId" : plateId }
+  return { plateId: plateId };
 }
 
 async function getImageRow(imageId: any, trainId: any) {
@@ -187,14 +203,15 @@ async function getImageRow(imageId: any, trainId: any) {
     TableName: TABLE_NAME,
     Key: {
       [PARTITION_KEY_IMGID]: imageId,
-      [SORT_KEY_TRNID]: trainId
+      [SORT_KEY_TRNID]: trainId,
     },
   };
   return db.get(params).promise();
 }
 
 async function getImagesByPlateId(plateId: any) {
-  const keyConditionExpression = [PLATE_ID_ATTRIBUTE] + " = :" + [PLATE_ID_ATTRIBUTE];
+  const keyConditionExpression =
+    [PLATE_ID_ATTRIBUTE] + " = :" + [PLATE_ID_ATTRIBUTE];
   const expressionAttributeValues =
     '":' + [PLATE_ID_ATTRIBUTE] + '" : "' + plateId + '"';
   const params = {
@@ -206,19 +223,33 @@ async function getImagesByPlateId(plateId: any) {
     ),
   };
   const imageRowInfo: any[] = await dy.getAllQueryData(db, params);
-  let rows: any[] = []
-  const p: any[] = []
+  let rows: any[] = [];
+  const p: any[] = [];
   for (let ir of imageRowInfo) {
-    p.push((getImageRow(ir[PARTITION_KEY_IMGID], ir[SORT_KEY_TRNID]).then( (result:any) => (rows.push(result)))))
+    p.push(
+      getImageRow(
+        ir[PARTITION_KEY_IMGID],
+        ir[SORT_KEY_TRNID]
+      ).then((result: any) => rows.push(result))
+    );
   }
-  await Promise.all(p)
+  await Promise.all(p);
   return rows;
+}
+
+//async function applyInspectionResult(inspectionResult: any) {
+function applyInspectionResult(inspectionResult: any) {
+  console.log("inspectionResult:");
+  console.log(inspectionResult);
+  return "";
 }
 
 /////////////////////////////////////////////////
 
 export const handler = async (event: any = {}): Promise<any> => {
-
+  
+  console.log("Check0")
+  
   if (!event.method) {
     console.log("Error: method parameter required - returning status code 400");
     return { statusCode: 400, body: `Error: method parameter required` };
@@ -227,7 +258,10 @@ export const handler = async (event: any = {}): Promise<any> => {
   if (event.method === "uploadSourcePlate") {
     if (event.inputBucket && event.inputKey) {
       try {
-        const response = await uploadSourcePlate(event.inputBucket, event.inputKey);
+        const response = await uploadSourcePlate(
+          event.inputBucket,
+          event.inputKey
+        );
         return { statusCode: 200, body: JSON.stringify(response) };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };
@@ -239,21 +273,45 @@ export const handler = async (event: any = {}): Promise<any> => {
       };
     }
   }
-  
-  if (event.method === "getImagesByPlateId") {
+
+  else if (event.method === "getImagesByPlateId") {
     if (event.plateId) {
       try {
         const response = await getImagesByPlateId(event.plateId);
-//        return { statusCode: 200, body: JSON.stringify(response) };
         return { statusCode: 200, body: response };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };
       }
     }
   }
+
+  else if (event.method === "applyInspectionResult") {
+    console.log("Check1")
+    if (event.inspectionResult) {
+      console.log("Check2")
+      try {
+        console.log("Check3")
+//        const response = await applyInspectionResult(event.inspectionResult);
+        const response = applyInspectionResult(event.inspectionResult);
+        console.log("Check4")
+        return { statusCode: 200, body: response };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
+    } else {
+      console.log("Check5")
+      return {
+        statusCode: 400,
+        body: `Error: inspectionResult required`,
+      };
+    }
+  } 
   
   else {
-    return { statusCode: 400, body: `Do not recognize method type ${event.method}` }
+    console.log("Check6")
+    return {
+      statusCode: 400,
+      body: `Do not recognize method type ${event.method}`,
+    };
   }
-
 };
