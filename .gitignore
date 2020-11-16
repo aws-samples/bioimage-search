@@ -9,3 +9,6 @@ cdk.out
 
 # Amplify
 !amplify/**/*.js
+
+# Cloud9
+*~c9*

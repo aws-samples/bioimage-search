@@ -44,6 +44,19 @@ const ROI_ARRAY_ATTRIBUTE = "roiArr";
 const ROI_EMBEDDING_ARRAY_ATTRIBUTE = "roiEmbeddingArr";
 
 /*
+  * Search Ready { PREVALIDATION, VALIDATED, ERROR, READY }
+      * PREVALIDATION =  before the image files have. been checked to match the embedding requirements
+      * VALIDATED = image dimensions match embedding
+      * ERROR = the images are not usable, possible due to format, dimensions, etc.
+      * READY = ready for search
+*/            
+
+const SR_PREVALIDATION = "PREVALIDATION"
+const SR_VALIDATED = "VALIDATED"
+const SR_ERROR = "ERROR"
+const SR_READY = "READY"
+
+/*
 
   SourcePlateInfo {
      trainId: <string>
@@ -185,16 +198,6 @@ async function uploadSourcePlate(inputBucket: any, inputKey: any) {
     p.push(db.put(params).promise());
   }
   await Promise.all(p);
-
-  //   const sfnName = plateId + '-' + su.generate()
-  //   var processPlateSfnParams = {
-  //     stateMachineArn: PROCESS_PLATE_SFN,
-  //     input: { "plateId" : plateId },
-  //     name: sfnName,
-  // //    traceHeader: 'STRING_VALUE'
-  //   };
-  //   await sfn.startExecution(processPlateSfnParams).promise();
-
   return { plateId: plateId };
 }
 
@@ -234,21 +237,57 @@ async function getImagesByPlateId(plateId: any) {
     );
   }
   await Promise.all(p);
-  return rows;
+  return rows
 }
 
-//async function applyInspectionResult(inspectionResult: any) {
-function applyInspectionResult(inspectionResult: any) {
-  console.log("inspectionResult:");
-  console.log(inspectionResult);
-  return "";
+//  inspectionResult = { "imageId" : imageId, "valid" : True, "width" : dims[0], "height" : dims[1], "depth" : dims[2], "channels" : numChannels }
+
+async function applyInspectionResult(inspectionResult: any) {
+  var searchReady = SR_PREVALIDATION
+  if (inspectionResult.valid) {
+    searchReady = SR_VALIDATED
+  } else {
+    searchReady = SR_ERROR
+  }
+  const key = {
+    [PARTITION_KEY_IMGID]: inspectionResult.imageId,
+    [SORT_KEY_TRNID]: ORIGIN,
+  };
+  const expressionAttributeNames = '"#r" : "' + [SEARCH_READY_ATTRIBUTE] + '",' +
+                                   '"#w" : "' + [WIDTH_ATTRIBUTE]        + '",' +
+                                   '"#h" : "' + [HEIGHT_ATTRIBUTE]       + '",' +
+                                   '"#d" : "' + [DEPTH_ATTRIBUTE]        + '",' +
+                                   '"#c" : "' + [CHANNELS_ATTRIBUTE]     + '"'
+                                   
+  const expressionAttributeValues = '":r" : "' + searchReady               + '",' +
+                                    '":w" : "' + inspectionResult.width    + '",' +
+                                    '":h" : "' + inspectionResult.height   + '",' +
+                                    '":d" : "' + inspectionResult.depth    + '",' +
+                                    '":c" : "' + inspectionResult.channels + '"'
+                                    
+  const updateExpression = "set #r = :r, " +
+                               "#w = :w, " +
+                               "#h = :h, " +
+                               "#d = :d, " +
+                               "#c = :c"
+
+  const namesParse = "{" + expressionAttributeNames + "}"
+  const valuesParse = "{" + expressionAttributeValues + "}"
+  
+  const params = {
+    TableName: TABLE_NAME,
+    Key: key,
+    UpdateExpression: updateExpression,
+    ExpressionAttributeNames: JSON.parse(namesParse),
+    ExpressionAttributeValues: JSON.parse(valuesParse)
+  };
+  console.log(params)
+  return await db.update(params).promise();
 }
 
 /////////////////////////////////////////////////
 
 export const handler = async (event: any = {}): Promise<any> => {
-  
-  console.log("Check0")
   
   if (!event.method) {
     console.log("Error: method parameter required - returning status code 400");
@@ -286,20 +325,15 @@ export const handler = async (event: any = {}): Promise<any> => {
   }
 
   else if (event.method === "applyInspectionResult") {
-    console.log("Check1")
     if (event.inspectionResult) {
-      console.log("Check2")
       try {
-        console.log("Check3")
-//        const response = await applyInspectionResult(event.inspectionResult);
-        const response = applyInspectionResult(event.inspectionResult);
-        console.log("Check4")
+        const response = await applyInspectionResult(event.inspectionResult);
         return { statusCode: 200, body: response };
       } catch (dbError) {
+        console.log("dbError="+dbError)
         return { statusCode: 500, body: JSON.stringify(dbError) };
       }
     } else {
-      console.log("Check5")
       return {
         statusCode: 400,
         body: `Error: inspectionResult required`,
@@ -308,7 +342,6 @@ export const handler = async (event: any = {}): Promise<any> => {
   } 
   
   else {
-    console.log("Check6")
     return {
       statusCode: 400,
       body: `Do not recognize method type ${event.method}`,
