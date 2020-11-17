@@ -85,7 +85,12 @@ stringBuffer = io.StringIO()
 #r = imageManagementClient.uploadSourcePlate(TEST_INPUT_BUCKET, plateSourceKey)
 
 #print(r)
-r = imageManagementClient.getImagesByPlateId('3YpbgZCfkNLfZHDTZU3E2x')
+
+#r = imageManagementClient.getImagesByPlateId('3YpbgZCfkNLfZHDTZU3E2x')
+
+#print(r)
+
+r = imageManagementClient.getPlateStatus('3YpbgZCfkNLfZHDTZU3E2x')
 
 print(r)
 

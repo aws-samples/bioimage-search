@@ -756,6 +756,19 @@ class ImageManagementClient(BioimageSearchClient):
         jbody = getResponseBody(response)
         return jbody
         
+    def getPlateStatus(self, plateId):
+        request = '{{ "method": "getPlateStatus", "plateId": "{}" }}'.format(plateId)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self.getLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        jbody = getResponseBody(response)
+        return jbody
+        
+        
 #############################################
 #
 # PROCESS PLATE

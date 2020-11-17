@@ -51,6 +51,7 @@ const ROI_EMBEDDING_ARRAY_ATTRIBUTE = "roiEmbeddingArr";
       * READY = ready for search
 */            
 
+const SR_UNDEFINED = "UNDEFINED"
 const SR_PREVALIDATION = "PREVALIDATION"
 const SR_VALIDATED = "VALIDATED"
 const SR_ERROR = "ERROR"
@@ -285,6 +286,48 @@ async function applyInspectionResult(inspectionResult: any) {
   return await db.update(params).promise();
 }
 
+// const SR_UNDEFINED = "UNDEFINED"
+// const SR_PREVALIDATION = "PREVALIDATION"
+// const SR_VALIDATED = "VALIDATED"
+// const SR_ERROR = "ERROR"
+// const SR_READY = "READY"
+
+async function getPlateStatus(plateId: any) {
+  
+  const images = await getImagesByPlateId(plateId)
+  
+  let undefinedCount=0
+  let prevalidationCount=0
+  let validatedCount=0
+  let errorCount=0
+  let readyCount=0
+
+  for (let item of images) {
+    const image = item['Item']
+    if(!image.searchReady) {
+      undefinedCount += 1;
+    } else if (image.searchReady == SR_PREVALIDATION) {
+      prevalidationCount += 1;
+    } else if (image.searchReady == SR_VALIDATED) {
+      validatedCount += 1;
+    } else if (image.searchReady == SR_ERROR) {
+      errorCount += 1;
+    } else if (image.searchReady == SR_READY) {
+      readyCount += 1;
+    } else {
+      undefinedCount += 1;
+    }
+  }
+  
+  return {
+    [SR_UNDEFINED] : undefinedCount,
+    [SR_PREVALIDATION] : prevalidationCount,
+    [SR_VALIDATED] : validatedCount,
+    [SR_ERROR] : errorCount,
+    [SR_READY] : readyCount
+  }
+}
+
 /////////////////////////////////////////////////
 
 export const handler = async (event: any = {}): Promise<any> => {
@@ -341,6 +384,17 @@ export const handler = async (event: any = {}): Promise<any> => {
     }
   } 
   
+  else if (event.method === "getPlateStatus") {
+    if (event.plateId) {
+      try {
+        const response = await getPlateStatus(event.plateId);
+        return { statusCode: 200, body: response };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
+    }
+  }
+
   else {
     return {
       statusCode: 400,
