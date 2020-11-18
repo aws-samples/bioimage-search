@@ -669,8 +669,8 @@ class ArtifactClient(BioimageSearchClient):
     def getLambdaArn(self):
         return self._resources.getArtifactLambdaArn()
 
-    def getArtifacts(self, typeId, trainId):
-        request = '{{ "method": "getArtifacts", "typeId": "{}", "trainId": "{}" }}'.format(typeId, trainId)
+    def getArtifacts(self, contextId, trainId):
+        request = '{{ "method": "getArtifacts", "contextId": "{}", "trainId": "{}" }}'.format(contextId, trainId)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
@@ -696,8 +696,8 @@ class ArtifactClient(BioimageSearchClient):
         print(response)
         return getResponseBody(response)
 
-    def deleteArtifacts(self, typeId, trainId):
-        request = '{{ "method": "deleteArtifacts", "typeId": "{}", "trainId": "{}" }}'.format(typeId, trainId)
+    def deleteArtifacts(self, contextId, trainId):
+        request = '{{ "method": "deleteArtifacts", "contextId": "{}", "trainId": "{}" }}'.format(contextId, trainId)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
@@ -707,8 +707,8 @@ class ArtifactClient(BioimageSearchClient):
             )
         return getResponseBody(response)
 
-    def addAnnotation(self, typeId, trainId, s3key, annotation):
-        request = '{{ "method": "addAnnotation", "typeId": "{}", "trainid": "{}", "s3key": "{}", "annotation": "{}" }}'.format(typeId, trainId, s3key, annotation)
+    def addAnnotation(self, contextId, trainId, artifact, annotation):
+        request = '{{ "method": "addAnnotation", "contextId": "{}", "trainId": "{}", "artifact": "{}", "annotation": "{}" }}'.format(contextId, trainId, artifact, annotation)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(

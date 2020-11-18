@@ -16,11 +16,11 @@ mids=[]
 
 for i in range(10):
     artifact = {
-        "typeId" : 'plate-'+str(i),
+        "contextId" : 'plate-'+str(i),
         "trainId" : 'train-id-'+str(i),
-        "s3key" : 's3key-'+str(i),
+        "artifact" : 's3key#'+str(i),
         "s3bucket" : 's3bucket-'+str(i),
-        "type" : 'type-'+str(i)
+        "description" : 'type-'+str(i)
     }
     r = artifactClient.createArtifact(artifact)
     print(r)
@@ -31,11 +31,11 @@ for i in range(10):
 
 for i in range(10):
     artifact = {
-        "typeId" : 'plate-'+str(i),
+        "contextId" : 'plate-'+str(i),
         "trainId" : 'train-id-'+str(i),
-        "s3key" : 's3key-'+str(i)+'-2',
+        "artifact" : 's3key#'+str(i)+'-2',
         "s3bucket" : 's3bucket-'+str(i),
-        "type" : 'type-'+str(i)
+        "description" : 'type-'+str(i)
     }
     r = artifactClient.createArtifact(artifact)
     print(r)

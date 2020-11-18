@@ -20,19 +20,19 @@ const DDB_MAX_BATCH = 25;
 
 const S3BUCKET_ATTRIBUTE = "s3bucket";
 const CREATE_TIMESTAMP_ATTRIBUTE = "createTimestamp";
-const TYPE_ATTRIBUTE = "type";
+const DESCRIPTION_ATTRIBUTE = "description";
 const ANNOTATION_ATTRIBUTE = "annotation";
 
 /*
   Methods:
   
-  createArtifact(typeId, trainId, s3key, s3bucket, type, annotation)
+  createArtifact(contextId, trainId, artifact, s3bucket, description, annotation)
   
-  getArtifacts(typeId, trainId)
+  getArtifacts(contextId, trainId)
   
-  addAnnotation(typeId, trainId)
+  addAnnotation(contextId, trainId, artifact)
   
-  deleteArtifacts(typeId, trainId)
+  deleteArtifacts(contextId, trainId)
 
 */
 
@@ -42,12 +42,14 @@ async function createArtifact(artifact1: any) {
   if(artifact1.annotation) {
     annotationList.push(artifact1.annotation)
   }
+  const s3bucket = artifact1.s3bucket || "";
+  const description = artifact1.description || "";
   const artifact2 = {
-    [PARTITION_KEY] : `${artifact1.typeId}#${artifact1.trainId}`,
-    [SORT_KEY] : artifact1.s3key,
-    [S3BUCKET_ATTRIBUTE] : artifact1.s3bucket,
+    [PARTITION_KEY] : `${artifact1.contextId}#${artifact1.trainId}`,
+    [SORT_KEY] : artifact1.artifact,
+    [S3BUCKET_ATTRIBUTE] : s3bucket,
     [CREATE_TIMESTAMP_ATTRIBUTE] : timestamp,
-    [TYPE_ATTRIBUTE] : artifact1.type,
+    [DESCRIPTION_ATTRIBUTE] : description,
     [ANNOTATION_ATTRIBUTE] : annotationList
   }
   const params = {
@@ -57,10 +59,10 @@ async function createArtifact(artifact1: any) {
   return db.put(params).promise()
 }
 
-async function getArtifacts(typeId: any, trainId: any) {
+async function getArtifacts(contextId: any, trainId: any) {
   const keyConditionExpression = [PARTITION_KEY] + " = :" + [PARTITION_KEY];
   const expressionAttributeValues =
-    '":' + [PARTITION_KEY] + '" : "' + `${typeId}#${trainId}` + '"';
+    '":' + [PARTITION_KEY] + '" : "' + `${contextId}#${trainId}` + '"';
   const params = {
     TableName: TABLE_NAME,
     KeyConditionExpression: keyConditionExpression,
@@ -71,14 +73,14 @@ async function getArtifacts(typeId: any, trainId: any) {
   return result
 }
 
-async function addAnnotation(typeId: any, trainId: any, s3key: any, annotation: any) {
+async function addAnnotation(contextId: any, trainId: any, artifact: any, annotation: any) {
   const appendStr = `list_append ( ${[ANNOTATION_ATTRIBUTE]}, :val1 )`
   
   var params = {
     TableName:TABLE_NAME,
     Key:{
-      [PARTITION_KEY]: `${typeId}#${trainId}`,
-      [SORT_KEY]: s3key
+      [PARTITION_KEY]: `${contextId}#${trainId}`,
+      [SORT_KEY]: artifact
     },
     UpdateExpression: appendStr,
     ExpressionAttributeValues: JSON.parse(
@@ -90,8 +92,8 @@ async function addAnnotation(typeId: any, trainId: any, s3key: any, annotation: 
   return db.update(params).promise();
 }
 
-async function deleteArtifacts(typeId: any, trainId: any) {
-  let rows: any = await getArtifacts(typeId, trainId);
+async function deleteArtifacts(contextId: any, trainId: any) {
+  let rows: any = await getArtifacts(contextId, trainId);
   let p: any[] = [];
   let i = 0;
   while (i < rows.length) {
@@ -112,15 +114,11 @@ export const handler = async (event: any = {}): Promise<any> => {
     return { statusCode: 400, body: `Error: method parameter required` };
   }
 
-  // createArtifact(typeId, trainId, s3key, s3bucket, type, annotation)
-
   if (event.method === "createArtifact") {
     if (event.artifact &&
-        event.artifact.typeId && 
+        event.artifact.contextId && 
         event.artifact.trainId && 
-        event.artifact.s3key && 
-        event.artifact.s3bucket && 
-        event.artifact.type) {
+        event.artifact.artifact) {
       try {
        const response = await createArtifact(event.artifact);
         return { statusCode: 200, body: JSON.stringify(response) };
@@ -132,48 +130,42 @@ export const handler = async (event: any = {}): Promise<any> => {
     }
   }
 
-  // getArtifacts(typeId, trainId)
-
   if (event.method === "getArtifacts") {
-    if (event.typeId && event.trainId) {
+    if (event.contextId && event.trainId) {
       try {
-        const response = await getArtifacts(event.typeId, event.trainId);
+        const response = await getArtifacts(event.contextId, event.trainId);
         return { statusCode: 200, body: JSON.stringify(response) };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };
       }
     } else {
-      return { statusCode: 400, body: `Error: message required` };
+      return { statusCode: 400, body: `Error: contextId and trainId required` };
     }
   }
   
-  // addAnnotation(typeId, trainId)
-
   if (event.method === "addAnnotation") {
-    if (event.typeId && event.trainId && event.s3key && event.annotation) {
+    if (event.contextId && event.trainId && event.artifact && event.annotation) {
       try {
-        const response = await addAnnotation(event.typeId, event.trainId, event.s3key, event.annotation);
+        const response = await addAnnotation(event.contextId, event.trainId, event.artifact, event.annotation);
         return { statusCode: 200, body: JSON.stringify(response) };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };
       }
     } else {
-      return { statusCode: 400, body: `Error: messageId and message required` };
+      return { statusCode: 400, body: `Error: contextId, trainId, and artifact required` };
     }
   }
 
-  // deleteArtifacts(typeId, trainId)
-
   if (event.method === "deleteArtifacts") {
-    if (event.typeId && event.trainId) {
+    if (event.contextId && event.trainId) {
       try {
-      const response = await deleteArtifacts(event.typeId, event.trainId);
+      const response = await deleteArtifacts(event.contextId, event.trainId);
       return { statusCode: 200, body: JSON.stringify(response) };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };
       }
     } else {
-      return { statusCode: 400, body: `Error: messageId required` };
+      return { statusCode: 400, body: `Error: contextId, trainId required` };
     }
   }
 

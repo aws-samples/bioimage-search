@@ -27,11 +27,11 @@ export class ArtifactStack extends cdk.Stack {
       console.log("Creating new table "+TABLE_NAME)
       artifactTable = new dynamodb.Table(this, "artifact", {
         partitionKey: {
-          name: "compoundId",
+          name: "contextId",
           type: dynamodb.AttributeType.STRING,
         },
         sortKey: {
-          name: "s3key",
+          name: "artifact",
           type: dynamodb.AttributeType.STRING,
         },
         tableName: TABLE_NAME,
@@ -51,8 +51,8 @@ export class ArtifactStack extends cdk.Stack {
       runtime: lambda.Runtime.NODEJS_12_X,
       environment: {
         TABLE_NAME: artifactTable.tableName,
-        PARTITION_KEY: "compoundId",
-        SORT_KEY: "s3key",
+        PARTITION_KEY: "contextId",
+        SORT_KEY: "artifact",
       },
     });
 
