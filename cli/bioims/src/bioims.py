@@ -768,6 +768,29 @@ class ImageManagementClient(BioimageSearchClient):
         jbody = getResponseBody(response)
         return jbody
         
+    def createPlateMessageArtifact(self, plateId):
+        request = '{{ "method": "createPlateMessageArtifact", "plateId": "{}" }}'.format(plateId)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self.getLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        jbody = getResponseBody(response)
+        return jbody
+        
+    def getPlateMessageId(self, plateId):
+        request = '{{ "method": "getPlateMessageId", "plateId": "{}" }}'.format(plateId)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self.getLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        jbody = getResponseBody(response)
+        return jbody
         
 #############################################
 #

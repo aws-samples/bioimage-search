@@ -90,7 +90,17 @@ stringBuffer = io.StringIO()
 
 #print(r)
 
-r = imageManagementClient.getPlateStatus('3YpbgZCfkNLfZHDTZU3E2x')
+plateId1 = '3YpbgZCfkNLfZHDTZU3E2x'
+
+r = imageManagementClient.getPlateStatus(plateId1)
+
+print(r)
+
+#r = imageManagementClient.createPlateMessageArtifact(plateId1)
+
+#print(r)
+
+r = imageManagementClient.getPlateMessageId(plateId1)
 
 print(r)
 

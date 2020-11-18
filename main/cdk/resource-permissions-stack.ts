@@ -145,17 +145,9 @@ export class ResourcePermissionsStack extends cdk.Stack {
     props.imageInspectorLambda!.role!.attachInlinePolicy(this.externalResourcesPolicy);
     props.processPlateLambda!.role!.attachInlinePolicy(this.externalResourcesPolicy);
 
-    // For logging 
-    // const fullS3AccessPolicyStatement = new iam.PolicyStatement({
-    //   actions: ["s3:*"],
-    //   effect: iam.Effect.ALLOW,
-    //   resources: [ '*', '/*' ]
-    // });
-    
     const processPlateStepFunctionsPolicy = new iam.Policy(this, "processPlateStepFunctionsPolicy");
     processPlateStepFunctionsPolicy.addStatements(invokeStepFunctionsPolicyStatement);
-    //processPlateStepFunctionsPolicy.addStatements(fullS3AccessPolicyStatement);
-    
+
     props.processPlateLambda!.role!.attachInlinePolicy(processPlateStepFunctionsPolicy);
     
     const imageInspectorPolicy = new iam.Policy(this, "imageInspectorPolicy");
@@ -168,6 +160,17 @@ export class ResourcePermissionsStack extends cdk.Stack {
     
     imageInspectorPolicy.addStatements(invokeImageManagementPolicyStatement);
     props.imageInspectorLambda!.role!.attachInlinePolicy(imageInspectorPolicy);
+    
+    const imageManagementPolicyStatement = new iam.PolicyStatement({
+      actions: ["lambda:InvokeFunction"],
+      effect: iam.Effect.ALLOW,
+      resources: [props.messageLambda.functionArn,
+                  props.artifactLambdaArn
+                ]
+    });
+    const imageManagementPolicy = new iam.Policy(this, "imageManagementPolicy");
+    imageManagementPolicy.addStatements(imageManagementPolicyStatement);
+    props.imageManagementLambda!.role!.attachInlinePolicy(imageManagementPolicy);
 
   }
   

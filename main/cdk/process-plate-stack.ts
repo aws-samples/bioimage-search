@@ -41,6 +41,11 @@ export class ProcessPlateStack extends cdk.Stack {
         },
       }
     );
+    
+    // Todo: validation Lambda, to have variety of methods for validation
+    // of various stages of the plate processing workflow
+    
+    
 
     ///////////////////////////////////////////
     //

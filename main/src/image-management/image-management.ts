@@ -13,6 +13,7 @@ const PLATE_INDEX = process.env.PLATE_INDEX || "";
 const TRAINING_CONFIGURATION_LAMBDA_ARN =
   process.env.TRAINING_CONFIGURATION_LAMBDA_ARN || "";
 const MESSAGE_LAMBDA_ARN = process.env.MESSAGE_LAMBDA_ARN || "";
+const ARTIFACT_LAMBDA_ARN = process.env.ARTIFACT_LAMBDA_ARN || "";
 
 //const PROCESS_PLATE_SFN = process.env.PROCESS_PLATE_SFN || "";
 
@@ -78,6 +79,42 @@ const SR_READY = "READY"
 
 /////////////////////////////////////////////////
 
+async function createPlateMessageArtifact(plateId: any) {
+  const plateMessageId = await createMessage(`Message START for plateId ${plateId}`);
+  const artifact = {
+    "contextId" : plateId,
+    "trainId" : ORIGIN,
+    "artifact" : `messageId#${plateMessageId}`
+  }
+  var params = {
+    FunctionName: ARTIFACT_LAMBDA_ARN,
+    InvocationType: "RequestResponse",
+    Payload: JSON.stringify({ method: "createArtifact", artifact: artifact }),
+  };
+  await lambda.invoke(params).promise();
+  return plateMessageId
+}
+
+async function getPlateMessageId(plateId: any) {
+  var params = {
+    FunctionName: ARTIFACT_LAMBDA_ARN,
+    InvocationType: "RequestResponse",
+    Payload: JSON.stringify({ method: "getArtifacts", contextId: plateId, trainId: ORIGIN })
+  };
+  const response = await lambda.invoke(params).promise();
+  const rows = la.getResponseBody(response)
+  for (let r of rows) {
+    const a = r.artifact
+    if (a.startsWith('messageId#')) {
+      const ac = a.split('#')
+      const messageId= ac[1]
+      return messageId
+    }
+  }
+  const errMsg = `No messageId found for plate ${plateId}`;
+  throw new Error(errMsg)
+}
+
 async function createMessage(message: any) {
   var params = {
     FunctionName: MESSAGE_LAMBDA_ARN,
@@ -138,6 +175,10 @@ async function uploadSourcePlate(inputBucket: any, inputKey: any) {
     throw new Error("images required");
   }
   const plateId = su.generate();
+  
+  // Todo: create messageId for plateId
+  
+  
   const images: any[] = sourcePlateInfo["images"];
   const wellDict: Map<string, string> = new Map();
   const fields: any[] = [
@@ -392,6 +433,43 @@ export const handler = async (event: any = {}): Promise<any> => {
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };
       }
+    } else {
+      return {
+        statusCode: 400,
+        body: `Error: plateId required`,
+      };
+    }
+  }
+  
+    else if (event.method === "createPlateMessageArtifact") {
+    if (event.plateId) {
+      try {
+        const response = await createPlateMessageArtifact(event.plateId);
+        return { statusCode: 200, body: response };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
+    } else {
+      return {
+        statusCode: 400,
+        body: `Error: plateId required`,
+      };
+    }
+  }
+  
+  else if (event.method === "getPlateMessageId") {
+    if (event.plateId) {
+      try {
+        const response = await getPlateMessageId(event.plateId);
+        return { statusCode: 200, body: response };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
+    } else {
+      return {
+        statusCode: 400,
+        body: `Error: plateId required`,
+      };
     }
   }
 

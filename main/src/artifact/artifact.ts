@@ -69,6 +69,7 @@ async function getArtifacts(contextId: any, trainId: any) {
     ExpressionAttributeValues: JSON.parse(
       "{" + expressionAttributeValues + "}"),
   };
+  const paramStr = JSON.stringify(params)
   const result = await dy.getAllQueryData(db, params);
   return result
 }

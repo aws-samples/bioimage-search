@@ -15,6 +15,7 @@ import * as tasks from "@aws-cdk/aws-stepfunctions-tasks";
 export interface ImageManagementStackProps extends cdk.StackProps {
   trainingConfigurationLambdaArn: string;
   messageLambda: lambda.Function;
+  artifactLambdaArn: string;
   dynamoTableNames: any;
 }
 
@@ -87,6 +88,7 @@ export class ImageManagementStack extends cdk.Stack {
           TRAINING_CONFIGURATION_LAMBDA_ARN:
             props.trainingConfigurationLambdaArn,
           MESSAGE_LAMBDA_ARN: props.messageLambda.functionArn,
+          ARTIFACT_LAMBDA_ARN: props.artifactLambdaArn,
         },
         memorySize: 3008,
         timeout: cdk.Duration.minutes(15),

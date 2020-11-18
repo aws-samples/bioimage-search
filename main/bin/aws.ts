@@ -69,6 +69,7 @@ const artifactStack = new ArtifactStack(app, 'BioimageSearchArtifactStack', {
 const imageManagementStack = new ImageManagementStack(app, 'BioimageSearchImageManagementStack', {
     trainingConfigurationLambdaArn: trainingConfigurationStack.trainingConfigurationLambdaArn,
     messageLambda: messageStack.messageLambda,
+    artifactLambdaArn: artifactStack.artifactLambdaArn,
     dynamoTableNames: dynamoTableNames
 })
 
