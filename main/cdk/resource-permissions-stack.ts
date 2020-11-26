@@ -6,7 +6,7 @@ import * as sfn from '@aws-cdk/aws-stepfunctions';
 import crs = require("crypto-random-string");
 
 export interface ResourcePermissionsStackProps extends cdk.StackProps {
-  testBucket: s3.Bucket;
+  dataBucket: s3.Bucket;
   batchInstanceRole: iam.Role;
   configurationLambdaArn: string;
   labelLambdaArn: string;
@@ -87,8 +87,8 @@ export class ResourcePermissionsStack extends cdk.Stack {
       actions: ["s3:*"],
       effect: iam.Effect.ALLOW,
       resources: [
-        props.testBucket.bucketArn,
-        props.testBucket.bucketArn + "/*",
+        props.dataBucket.bucketArn,
+        props.dataBucket.bucketArn + "/*",
       ],
     });
 

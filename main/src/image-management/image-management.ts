@@ -10,8 +10,7 @@ const TABLE_NAME = process.env.TABLE_NAME || "";
 const PARTITION_KEY_IMGID = process.env.PARTITION_KEY || "";
 const SORT_KEY_TRNID = process.env.SORT_KEY || "";
 const PLATE_INDEX = process.env.PLATE_INDEX || "";
-const TRAINING_CONFIGURATION_LAMBDA_ARN =
-  process.env.TRAINING_CONFIGURATION_LAMBDA_ARN || "";
+const TRAINING_CONFIGURATION_LAMBDA_ARN = process.env.TRAINING_CONFIGURATION_LAMBDA_ARN || "";
 const MESSAGE_LAMBDA_ARN = process.env.MESSAGE_LAMBDA_ARN || "";
 const ARTIFACT_LAMBDA_ARN = process.env.ARTIFACT_LAMBDA_ARN || "";
 
@@ -166,9 +165,11 @@ async function uploadSourcePlate(inputBucket: any, inputKey: any) {
     throw new Error("trainId required");
   }
   const trainId = sourcePlateInfo["trainId"];
-  const trainInfo = validateTrainId(trainId);
-  if (!("plateSourceId" in sourcePlateInfo)) {
-    throw new Error("plateSourceId required");
+  if (trainId != ORIGIN) {
+    const trainInfo = validateTrainId(trainId);
+    if (!("plateSourceId" in sourcePlateInfo)) {
+      throw new Error("plateSourceId required");
+    }
   }
   const plateSourceId = sourcePlateInfo["plateSourceId"];
   if (!("images" in sourcePlateInfo)) {
@@ -369,6 +370,11 @@ async function getPlateStatus(plateId: any) {
   }
 }
 
+async function validatePlate(plateId: any) {
+  const plateStatus = await getPlateStatus(plateId);
+  
+}
+
 /////////////////////////////////////////////////
 
 export const handler = async (event: any = {}): Promise<any> => {
@@ -472,6 +478,23 @@ export const handler = async (event: any = {}): Promise<any> => {
       };
     }
   }
+  
+  else if (event.method === "validatePlate") {
+    if (event.plateId) {
+      try {
+        const response = await validatePlate(event.plateId);
+        return { statusCode: 200, body: response };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
+    } else {
+      return {
+        statusCode: 400,
+        body: `Error: plateId required`,
+      };
+    }
+  }
+
 
   else {
     return {

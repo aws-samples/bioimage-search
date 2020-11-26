@@ -79,7 +79,7 @@ const processPlateStack = new ProcessPlateStack(app, 'BioimageSearchProcessPlate
 })
 
 const resourcePermissionsStack = new ResourcePermissionsStack(app, 'BioimageSearchResourcePermissionsStack', {
-    testBucket: baseStack.testBucket,
+    dataBucket: baseStack.dataBucket,
     batchInstanceRole: batchSetupStack.batchInstanceRole,
     configurationLambdaArn: configurationStack.configurationLambdaArn,
     labelLambdaArn: labelStack.labelLambdaArn,

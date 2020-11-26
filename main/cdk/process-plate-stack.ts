@@ -78,10 +78,28 @@ export class ProcessPlateStack extends cdk.Stack {
       itemsPath: "$.Payload.body"
     });
     inspectorMap.iterator(imageInspector);
+    
+    // const plateValidationParams = new sfn.Pass(this, "Plate Validation Params", {
+    //   parameters: {
+    //     method: "validatePlate",
+    //     plateId: sfn.JsonPath.stringAt("$.plateId"),
+    //   }
+    // });
+    
+    const plateValidationParams = sfn.TaskInput.fromObject( {
+      method: "validatePlate",
+      plateId: sfn.JsonPath.stringAt("$.plateId"),
+    });
+    
+    const plateValidator = new tasks.LambdaInvoke(this, "Plate Validator", {
+      lambdaFunction: props.imageManagementLambda,
+      payload: plateValidationParams,
+    });
 
     const processPlateStepFunctionDef = plateFormat
       .next(plateToImages)
       .next(inspectorMap)
+      .next(plateValidator)
 
     const logGroup = new logs.LogGroup(this, "ProcessPlateLogGroup");
 

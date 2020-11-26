@@ -18,7 +18,6 @@ const DDB_MAX_BATCH = 25;
 
 */
 
-const S3BUCKET_ATTRIBUTE = "s3bucket";
 const CREATE_TIMESTAMP_ATTRIBUTE = "createTimestamp";
 const DESCRIPTION_ATTRIBUTE = "description";
 const ANNOTATION_ATTRIBUTE = "annotation";
@@ -47,7 +46,6 @@ async function createArtifact(artifact1: any) {
   const artifact2 = {
     [PARTITION_KEY] : `${artifact1.contextId}#${artifact1.trainId}`,
     [SORT_KEY] : artifact1.artifact,
-    [S3BUCKET_ATTRIBUTE] : s3bucket,
     [CREATE_TIMESTAMP_ATTRIBUTE] : timestamp,
     [DESCRIPTION_ATTRIBUTE] : description,
     [ANNOTATION_ATTRIBUTE] : annotationList
