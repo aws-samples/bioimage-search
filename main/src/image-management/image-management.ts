@@ -152,7 +152,7 @@ async function validateTrainId(trainId: any) {
 // This function validates the TrainId, and then adds 'origin' information from
 // the SourcePlateInfo data. It then hands off processing to the 'ProcessPlate' StepFunction.
 
-async function uploadSourcePlate(inputBucket: any, inputKey: any) {
+async function populateSourcePlate(inputBucket: any, inputKey: any) {
   const data = await s3
     .getObject({ Bucket: inputBucket, Key: inputKey })
     .promise();
@@ -387,11 +387,11 @@ export const handler = async (event: any = {}): Promise<any> => {
     console.log("Error: method parameter required - returning status code 400");
     return { statusCode: 400, body: `Error: method parameter required` };
   }
-
-  if (event.method === "uploadSourcePlate") {
+  
+  if (event.method === "populateSourcePlate") {
     if (event.inputBucket && event.inputKey) {
       try {
-        const response = await uploadSourcePlate(
+        const response = await populateSourcePlate(
           event.inputBucket,
           event.inputKey
         );
@@ -451,7 +451,7 @@ export const handler = async (event: any = {}): Promise<any> => {
     }
   }
   
-    else if (event.method === "createPlateMessageArtifact") {
+  else if (event.method === "createPlateMessageArtifact") {
     if (event.plateId) {
       try {
         const response = await createPlateMessageArtifact(event.plateId);
@@ -499,11 +499,11 @@ export const handler = async (event: any = {}): Promise<any> => {
     }
   }
 
-
   else {
     return {
       statusCode: 400,
       body: `Do not recognize method type ${event.method}`,
     };
   }
+  
 };

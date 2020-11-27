@@ -21,6 +21,7 @@ export interface ProcessPlateStackProps extends cdk.StackProps {
 export class ProcessPlateStack extends cdk.Stack {
   public imageInspectorLambda: lambda.Function;
   public processPlateLambda: lambda.Function;
+  public uploadSourcePlateStateMachine: sfn.StateMachine;
   public processPlateStateMachine: sfn.StateMachine;
 
   constructor(app: cdk.App, id: string, props: ProcessPlateStackProps) {
@@ -42,21 +43,11 @@ export class ProcessPlateStack extends cdk.Stack {
       }
     );
     
-    // Todo: validation Lambda, to have variety of methods for validation
-    // of various stages of the plate processing workflow
-    
-    
-
     ///////////////////////////////////////////
     //
-    // PlateProcessing StepFunction
+    // UploadSourcePlate StepFunction
     //
     ///////////////////////////////////////////
-
-    // input from processPlate is: { "plateId" : plateId }
-    // input needed to imageManagementLambda is : { "method" : "getImagesByPlateId", "plateId" : <plateId> }
-
-    // const parameterStr = `{ "method" : "getImagesByPlateId", "plateId" : \$.plateId }`
 
     const plateFormat = new sfn.Pass(this, "Plate Format", {
       parameters: {
@@ -79,13 +70,31 @@ export class ProcessPlateStack extends cdk.Stack {
     });
     inspectorMap.iterator(imageInspector);
     
-    // const plateValidationParams = new sfn.Pass(this, "Plate Validation Params", {
-    //   parameters: {
-    //     method: "validatePlate",
-    //     plateId: sfn.JsonPath.stringAt("$.plateId"),
-    //   }
-    // });
-    
+    const uploadSourcePlateStepFunctionDef = plateFormat
+      .next(plateToImages)
+      .next(inspectorMap)
+
+    const uploadSourcePlateGroup = new logs.LogGroup(this, "UploadSourcePlateLogGroup");
+
+    this.uploadSourcePlateStateMachine = new sfn.StateMachine(
+      this,
+      "Upload Source Plate StateMachine",
+      {
+        definition: uploadSourcePlateStepFunctionDef,
+        timeout: cdk.Duration.minutes(5),
+        logs: {
+          destination: uploadSourcePlateGroup,
+          level: sfn.LogLevel.ALL,
+        },
+      }
+    );
+
+    ///////////////////////////////////////////
+    //
+    // PlateProcessing StepFunction
+    //
+    ///////////////////////////////////////////
+
     const plateValidationParams = sfn.TaskInput.fromObject( {
       method: "validatePlate",
       plateId: sfn.JsonPath.stringAt("$.plateId"),
@@ -98,7 +107,6 @@ export class ProcessPlateStack extends cdk.Stack {
 
     const processPlateStepFunctionDef = plateFormat
       .next(plateToImages)
-      .next(inspectorMap)
       .next(plateValidator)
 
     const logGroup = new logs.LogGroup(this, "ProcessPlateLogGroup");
@@ -131,6 +139,7 @@ export class ProcessPlateStack extends cdk.Stack {
           MESSAGE_LAMBDA_ARN: props.messageLambda.functionArn,
           IMAGE_MANAGEMENT_LAMBDA_ARN: props.imageManagementLambda.functionArn,
           PROCESS_PLATE_SFN_ARN: this.processPlateStateMachine.stateMachineArn,
+          UPLOAD_SOURCE_PLATE_SFN_ARN: this.uploadSourcePlateStateMachine.stateMachineArn,
         },
       }
     );
