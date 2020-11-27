@@ -50,9 +50,6 @@ class BioimageSearchResources:
     def getPlatePreprocessingStack(self):
         return self.getStackByName('BioimageSearchPlatePreprocessingStack')
         
-    def getEmbeddingConfigurationStack(self):
-        return self.getStackByName('BioimageSearchEmbeddingConfigurationStack')
-        
     def getTrainingConfigurationStack(self):
         return self.getStackByName('BioimageSearchTrainingConfigurationStack')
         
@@ -94,9 +91,6 @@ class BioimageSearchResources:
     def getDefaultArtifactLambdaArn(self):
         return self.getStackOutputByPrefix(self.getImageArtifactStack(), 'ExportsOutputFnGetAttdefaultArtifactFunction')
         
-    def getEmbeddingConfigurationLambdaArn(self):
-        return self.getStackOutputByPrefix(self.getEmbeddingConfigurationStack(), 'ExportsOutputFnGetAttembeddingConfigurationFunction')
-
     def getTrainingConfigurationLambdaArn(self):
         return self.getStackOutputByPrefix(self.getTrainingConfigurationStack(), 'ExportsOutputFnGetAtttrainingConfigurationFunction')
 
@@ -136,8 +130,6 @@ def client(serviceName):
         return ImageArtifactClient()
     elif serviceName == 'plate-preprocessing':
         return PlatePreprocessingClient()
-    elif serviceName == 'embedding-configuration':
-        return EmbeddingConfigurationClient()
     elif serviceName == 'training-configuration':
         return TrainingConfigurationClient()
     elif serviceName == 'artifact':
@@ -548,56 +540,6 @@ class PlatePreprocessingClient(BioimageSearchClient):
 
 #############################################
 #
-# EMBEDDING CONFIGURATION
-#
-#############################################
-
-class EmbeddingConfigurationClient(BioimageSearchClient):
-    def __init__(self):
-        super().__init__()
-
-    def getLambdaArn(self):
-        return self._resources.getEmbeddingConfigurationLambdaArn()
-        
-    def createEmbedding(self, embedding):
-        embeddingStr = json.dumps(embedding)
-        request = '{{ "method": "createEmbedding", "embedding": {} }}'.format(embeddingStr)
-        payload = bytes(request, encoding='utf-8')
-        lambdaClient = boto3.client('lambda')
-        lambdaArn = self.getLambdaArn(),
-        response = lambdaClient.invoke(
-            FunctionName=lambdaArn,
-            InvocationType='RequestResponse',
-            Payload=payload
-            )
-        return getResponseBody(response)
-        
-    def getEmbedding(self, name):
-        request = '{{ "method": "getEmbedding", "name": "{}" }}'.format(name)
-        payload = bytes(request, encoding='utf-8')
-        lambdaClient = boto3.client('lambda')
-        response = lambdaClient.invoke(
-            FunctionName=self.getLambdaArn(),
-            InvocationType='RequestResponse',
-            Payload=payload
-            )
-        jbody = getResponseBody(response)
-        jvalue = json.loads(jbody)
-        return jvalue['Item']
-
-    def deleteEmbedding(self, name):
-        request = '{{ "method": "deleteEmbedding", "name": "{}" }}'.format(name)
-        payload = bytes(request, encoding='utf-8')
-        lambdaClient = boto3.client('lambda')
-        response = lambdaClient.invoke(
-            FunctionName=self.getLambdaArn(),
-            InvocationType='Event',
-            Payload=payload
-            )
-        return getResponseBody(response)
-
-#############################################
-#
 # TRAINING CONFIGURATION
 #
 #############################################
@@ -647,6 +589,57 @@ class TrainingConfigurationClient(BioimageSearchClient):
 
     def deleteTraining(self, train_id):
         request = '{{ "method": "deleteTraining", "train_id": "{}" }}'.format(train_id)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self.getLambdaArn(),
+            InvocationType='Event',
+            Payload=payload
+            )
+        return getResponseBody(response)
+
+    def createEmbedding(self, embedding):
+        embeddingStr = json.dumps(embedding)
+        request = '{{ "method": "createEmbedding", "embedding": {} }}'.format(embeddingStr)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        lambdaArn = self.getLambdaArn(),
+        response = lambdaClient.invoke(
+            FunctionName=lambdaArn,
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        return getResponseBody(response)
+        
+    def getEmbeddingInfo(self, name):
+        request = '{{ "method": "getEmbeddingInfo", "name": "{}" }}'.format(name)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self.getLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        jbody = getResponseBody(response)
+        jvalue = json.loads(jbody)
+        return jvalue['Item']
+        
+    def getEmbeddingTrainings(self, name):
+        request = '{{ "method": "getEmbeddingTrainings", "name": "{}" }}'.format(name)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self.getLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        jbody = getResponseBody(response)
+        jvalue = json.loads(jbody)
+        return jvalue
+        
+
+    def deleteEmbedding(self, name):
+        request = '{{ "method": "deleteEmbedding", "name": "{}" }}'.format(name)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
