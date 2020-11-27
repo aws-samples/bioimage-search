@@ -21,7 +21,6 @@ cd src/image-preprocessing; ./build.sh; cd ../..
 cd src/configuration; ./build.sh; cd ../..
 cd src/label; ./build.sh; cd ../..
 cd src/message; ./build.sh; cd ../..
-cd src/embedding-configuration; ./build.sh; cd ../..
 cd src/training-configuration; ./build.sh; cd ../..
 cd src/artifact; ./build.sh; cd ../..
 cd src/image-management; ./build.sh; cd ../..
@@ -38,7 +37,6 @@ cdk deploy BioimageSearchMessageStack --require-approval never
 cdk deploy BioimageSearchImageArtifactStack --require-approval never
 cdk deploy BioimageSearchPlatePreprocessingStack --require-approval never
 cdk deploy BioimageSearchImagePreprocessingStack --require-approval never
-cdk deploy BioimageSearchEmbeddingConfigurationStack --require-approval never
 cdk deploy BioimageSearchTrainingConfigurationStack --require-approval never
 cdk deploy BioimageSearchArtifactStack --require-approval never
 cdk deploy BioimageSearchImageManagementStack --require-approval never

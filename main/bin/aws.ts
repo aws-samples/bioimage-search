@@ -11,7 +11,6 @@ import { ImageArtifactStack } from '../cdk/image-artifact-stack';
 import { ResourcePermissionsStack } from '../cdk/resource-permissions-stack';
 import { PlatePreprocessingStack } from '../cdk/plate-preprocessing-stack';
 import { ImagePreprocessingStack } from '../cdk/image-preprocessing-stack';
-import { EmbeddingConfigurationStack } from '../cdk/embedding-configuration-stack';
 import { TrainingConfigurationStack } from '../cdk/training-configuration-stack';
 import { ArtifactStack } from '../cdk/artifact-stack';
 import { ImageManagementStack } from '../cdk/image-management-stack';
@@ -54,10 +53,6 @@ const platePreprocessingStack = new PlatePreprocessingStack(app, 'BioimageSearch
 
 const imagePreprocessingStack = new ImagePreprocessingStack(app, 'BioimageSearchImagePreprocessingStack');
 
-const embeddingConfigurationStack = new EmbeddingConfigurationStack(app, 'BioimageSearchEmbeddingConfigurationStack', {
-    dynamoTableNames: dynamoTableNames
-})
-
 const trainingConfigurationStack = new TrainingConfigurationStack(app, 'BioimageSearchTrainingConfigurationStack', {
     dynamoTableNames: dynamoTableNames
 })
@@ -85,7 +80,6 @@ const resourcePermissionsStack = new ResourcePermissionsStack(app, 'BioimageSear
     labelLambdaArn: labelStack.labelLambdaArn,
     messageLambda: messageStack.messageLambda,
     defaultArtifactLambda: imageArtifactStack.defaultArtifactLambda,
-    embeddingConfigurationLambdaArn: embeddingConfigurationStack.embeddingConfigurationLambdaArn,
     trainingConfigurationLambdaArn: trainingConfigurationStack.trainingConfigurationLambdaArn,
     artifactLambdaArn: artifactStack.artifactLambdaArn,
     imageManagementLambda: imageManagementStack.imageManagementLambda,

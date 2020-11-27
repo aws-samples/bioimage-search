@@ -12,7 +12,6 @@ export interface ResourcePermissionsStackProps extends cdk.StackProps {
   labelLambdaArn: string;
   messageLambda: lambda.Function;
   defaultArtifactLambda: lambda.Function;
-  embeddingConfigurationLambdaArn: string;
   trainingConfigurationLambdaArn: string;
   artifactLambdaArn: string;
   imageManagementLambda: lambda.Function;
@@ -120,7 +119,6 @@ export class ResourcePermissionsStack extends cdk.Stack {
                   props.labelLambdaArn,
                   props.messageLambda.functionArn,
                   props.defaultArtifactLambda.functionArn,
-                  props.embeddingConfigurationLambdaArn,
                   props.trainingConfigurationLambdaArn,
                   props.artifactLambdaArn,
                   props.imageManagementLambda.functionArn,
