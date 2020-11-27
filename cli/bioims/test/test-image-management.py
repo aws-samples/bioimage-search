@@ -11,6 +11,8 @@ TEST_OUTPUT_BUCKET = "bioimage-search-output"
 trainingConfigurationClient = bioims.client('training-configuration')
 imageManagementClient = bioims.client('image-management')
 
+# NOTE: 'origin' is not actually a valid trainId
+
 training = {
     "train_id": "origin",
     "filterBucket": "bioimage-search-input",
@@ -24,7 +26,6 @@ training = {
 }
 
 #  SourcePlateInfo {
-#     trainId: <string>
 #     plateSourceId: <string>
 #     images: [
 #       wellSourceId: <string>
@@ -38,7 +39,6 @@ training = {
 #   }
 
 plateSourceInfo = {
-    "trainId": training["train_id"],
     "plateSourceId" : "plateSourceId-1",
     "images" : [
             {

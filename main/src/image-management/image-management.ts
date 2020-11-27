@@ -161,16 +161,20 @@ async function uploadSourcePlate(inputBucket: any, inputKey: any) {
   }
   const sourcePlateInfoStr = data.Body.toString("utf-8");
   const sourcePlateInfo = JSON.parse(sourcePlateInfoStr);
-  if (!("trainId" in sourcePlateInfo)) {
-    throw new Error("trainId required");
-  }
-  const trainId = sourcePlateInfo["trainId"];
-  if (trainId != ORIGIN) {
-    const trainInfo = validateTrainId(trainId);
-    if (!("plateSourceId" in sourcePlateInfo)) {
-      throw new Error("plateSourceId required");
-    }
-  }
+
+  // NOTE: trainId no longer permitted - all uploads are 'origin'
+  //
+  // if (!("trainId" in sourcePlateInfo)) {
+  //   throw new Error("trainId required");
+  // }
+  // const trainId = sourcePlateInfo["trainId"];
+  // if (trainId != ORIGIN) {
+  //   const trainInfo = validateTrainId(trainId);
+  //   if (!("plateSourceId" in sourcePlateInfo)) {
+  //     throw new Error("plateSourceId required");
+  //   }
+  // }
+  
   const plateSourceId = sourcePlateInfo["plateSourceId"];
   if (!("images" in sourcePlateInfo)) {
     throw new Error("images required");
