@@ -51,17 +51,17 @@ export class ImageManagementStack extends cdk.Stack {
       });
       
       imageManagementTable.addGlobalSecondaryIndex({
-      indexName: "plateIdIndex",
-      partitionKey: {
-        name: "plateId",
-        type: dynamodb.AttributeType.STRING,
-      },
-      sortKey: {
-        name: "imageId",
-        type: dynamodb.AttributeType.STRING,
-      },
-      projectionType: ProjectionType.KEYS_ONLY,
-    });
+        indexName: "plateIdIndex",
+        partitionKey: {
+          name: "plateId",
+          type: dynamodb.AttributeType.STRING,
+        },
+        sortKey: {
+          name: "imageId",
+          type: dynamodb.AttributeType.STRING,
+        },
+        projectionType: ProjectionType.KEYS_ONLY,
+      });
 
     } else {
       console.log("Using already existing table " + TABLE_NAME);

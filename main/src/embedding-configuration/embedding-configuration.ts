@@ -7,6 +7,7 @@ const LATEST = "LATEST";
 const DDB_MAX_BATCH = 25;
 
 const NAME = "name1";
+
 const PLATE_PROCESSING_ARN_ATTRIBUTE = "plateMethodArn";
 const WELL_PROCESSING_ARN_ATTRIBUTE = "wellMethodArn";
 const IMAGE_PROCESSING_ARN_ATTRIBUTE = "imageMethodArn";
