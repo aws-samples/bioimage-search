@@ -28,8 +28,7 @@ This is the json format for SourcePlateInfo:
 parser = argparse.ArgumentParser()
 
 parser.add_argument('--bbbc021Bucket', type=str, help='bucket with BBBC-021 data')
-parser.add_argument('--outputBucket', type=str, help='output bucket')
-parser.add_argument('--plate', type=str, help='plate label, e.g., Week_2241')
+parser.add_argument('--plate', type=str, help='plate label, e.g., Week1_22141')
 
 args = parser.parse_args()
 
