@@ -724,8 +724,8 @@ class ImageManagementClient(BioimageSearchClient):
     def getLambdaArn(self):
         return self._resources.getImageManagementLambdaArn()
 
-    def uploadSourcePlate(self, inputBucket, inputKey):
-        request = '{{ "method": "uploadSourcePlate", "inputBucket": "{}", "inputKey": "{}" }}'.format(inputBucket, inputKey)
+    def populateSourcePlate(self, inputBucket, inputKey):
+        request = '{{ "method": "populateSourcePlate", "inputBucket": "{}", "inputKey": "{}" }}'.format(inputBucket, inputKey)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
@@ -811,4 +811,16 @@ class ProcessPlateClient(BioimageSearchClient):
         jvalue = json.loads(jbody)
         return jvalue
         
+    def uploadSourcePlate(self, inputBucket, inputKey):
+        request = '{{ "method": "uploadSourcePlate", "inputBucket": "{}", "inputKey": "{}" }}'.format(inputBucket, inputKey)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self.getLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        jbody = getResponseBody(response)
+        jvalue = json.loads(jbody)
+        return jvalue
         

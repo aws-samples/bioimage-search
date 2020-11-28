@@ -49,14 +49,14 @@ export class ProcessPlateStack extends cdk.Stack {
     //
     ///////////////////////////////////////////
 
-    const plateFormat = new sfn.Pass(this, "Plate Format", {
+    const plateFormat1 = new sfn.Pass(this, "Plate Format 1", {
       parameters: {
         method: "getImagesByPlateId",
         plateId: sfn.JsonPath.stringAt("$.plateId"),
       },
     });
 
-    const plateToImages = new tasks.LambdaInvoke(this, "Plate To Images", {
+    const plateToImages1 = new tasks.LambdaInvoke(this, "Plate To Images 1", {
       lambdaFunction: props.imageManagementLambda,
     });
 
@@ -70,8 +70,8 @@ export class ProcessPlateStack extends cdk.Stack {
     });
     inspectorMap.iterator(imageInspector);
     
-    const uploadSourcePlateStepFunctionDef = plateFormat
-      .next(plateToImages)
+    const uploadSourcePlateStepFunctionDef = plateFormat1
+      .next(plateToImages1)
       .next(inspectorMap)
 
     const uploadSourcePlateGroup = new logs.LogGroup(this, "UploadSourcePlateLogGroup");
@@ -94,6 +94,18 @@ export class ProcessPlateStack extends cdk.Stack {
     // PlateProcessing StepFunction
     //
     ///////////////////////////////////////////
+    
+    const plateFormat2 = new sfn.Pass(this, "Plate Format 2", {
+      parameters: {
+        method: "getImagesByPlateId",
+        plateId: sfn.JsonPath.stringAt("$.plateId"),
+      },
+    });
+
+    const plateToImages2 = new tasks.LambdaInvoke(this, "Plate To Images 2", {
+      lambdaFunction: props.imageManagementLambda,
+    });
+
 
     const plateValidationParams = sfn.TaskInput.fromObject( {
       method: "validatePlate",
@@ -105,8 +117,8 @@ export class ProcessPlateStack extends cdk.Stack {
       payload: plateValidationParams,
     });
 
-    const processPlateStepFunctionDef = plateFormat
-      .next(plateToImages)
+    const processPlateStepFunctionDef = plateFormat2
+      .next(plateToImages2)
       .next(plateValidator)
 
     const logGroup = new logs.LogGroup(this, "ProcessPlateLogGroup");
@@ -125,7 +137,10 @@ export class ProcessPlateStack extends cdk.Stack {
     );
 
     //////////////////////////////////////////
-
+    
+    const MESSAGE_LAMBDA_ARN = props.messageLambda.functionArn;
+    const IMAGE_MANAGEMENT_LAMBDA_ARN = props.imageManagementLambda.functionArn;
+    
     this.processPlateLambda = new lambda.Function(
       this,
       "processPlateFunction",

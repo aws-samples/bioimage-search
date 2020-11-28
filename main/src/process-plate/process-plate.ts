@@ -1,16 +1,16 @@
 const AWS = require("aws-sdk");
-const lambda = new AWS.Lambda({apiVersion: '2015-03-31'});
+const lambda = new AWS.Lambda({ apiVersion: "2015-03-31" });
 const sfn = new AWS.StepFunctions();
 const la = require("bioimage-lambda");
-const su = require("short-uuid")
+const su = require("short-uuid");
 
 const MESSAGE_LAMBDA_ARN = process.env.MESSAGE_LAMBDA_ARN || "";
-const IMAGE_MANAGEMENT_LAMBDA_ARN = process.env.IMAGE_MANAGEMENT_LAMBA_ARN || "";
+const IMAGE_MANAGEMENT_LAMBDA_ARN = process.env.IMAGE_MANAGEMENT_LAMBDA_ARN || "";
 const PROCESS_PLATE_SFN_ARN = process.env.PROCESS_PLATE_SFN_ARN || "";
 const UPLOAD_SOURCE_PLATE_SFN_ARN = process.env.UPLOAD_SOURCE_PLATE_SFN_ARN || "";
 
 async function startUploadSourcePlate(plateId: string) {
-  const executionName = "UploadSourcePlate-"+plateId+"-"+su.generate()
+  const executionName = "UploadSourcePlate-" + plateId + "-" + su.generate();
   const inputStr = `{ "plateId" : \"${plateId}\" }`;
   console.log("inputStr=", inputStr);
   var params = {
@@ -18,13 +18,14 @@ async function startUploadSourcePlate(plateId: string) {
     input: inputStr,
     name: executionName,
   };
-  console.log("params=", params)
-  const response = await sfn.startExecution(params).promise()
-  return response
+  console.log("startUploadSourcePlate params=");
+  console.log(params);
+  const response = await sfn.startExecution(params).promise();
+  return response;
 }
 
 async function startProcessPlate(plateId: string) {
-  const executionName = "ProcessPlate-"+plateId+"-"+su.generate()
+  const executionName = "ProcessPlate-" + plateId + "-" + su.generate();
   const inputStr = `{ "plateId" : \"${plateId}\" }`;
   console.log("inputStr=", inputStr);
   var params = {
@@ -32,17 +33,24 @@ async function startProcessPlate(plateId: string) {
     input: inputStr,
     name: executionName,
   };
-  console.log("params=", params)
-  const response = await sfn.startExecution(params).promise()
-  return response
+  console.log("startProcessPlate params=");
+  console.log(params);
+  const response = await sfn.startExecution(params).promise();
+  return response;
 }
 
 async function populateSourcePlate(inputBucket: any, inputKey: any) {
   var params = {
     FunctionName: IMAGE_MANAGEMENT_LAMBDA_ARN,
     InvocationType: "RequestResponse",
-    Payload: JSON.stringify({ method: "populateSourcePlate", inputBucket: inputBucket, inputKey: inputKey }),
+    Payload: JSON.stringify({
+      method: "populateSourcePlate",
+      inputBucket: inputBucket,
+      inputKey: inputKey,
+    }),
   };
+  console.log("populateSourcePlate params=");
+  console.log(params);
   const data = await lambda.invoke(params).promise();
   const response = la.getResponseBody(data);
   return response["plateId"];
@@ -51,13 +59,13 @@ async function populateSourcePlate(inputBucket: any, inputKey: any) {
 /////////////////////////////////////////////////
 
 export const handler = async (event: any = {}): Promise<any> => {
-
+  
   if (!event.method) {
     console.log("Error: method parameter required - returning status code 400");
     return { statusCode: 400, body: `Error: method parameter required` };
   }
-  
-    if (event.method === "uploadSourcePlate") {
+
+  if (event.method === "uploadSourcePlate") {
     if (event.inputBucket && event.inputKey) {
       try {
         const plateId = await populateSourcePlate(
@@ -75,9 +83,7 @@ export const handler = async (event: any = {}): Promise<any> => {
         body: `Error: embedding required`,
       };
     }
-  }
-
-  else if (event.method === "processPlate") {
+  } else if (event.method === "processPlate") {
     if (event.plateId) {
       try {
         const response = await startProcessPlate(event.plateId);
@@ -91,10 +97,10 @@ export const handler = async (event: any = {}): Promise<any> => {
         body: `Error: embedding required`,
       };
     }
+  } else {
+    return {
+      statusCode: 400,
+      body: `Do not recognize method type ${event.method}`,
+    };
   }
-  
-  else {
-    return { statusCode: 400, body: `Do not recognize method type ${event.method}` }
-  }
-
 };

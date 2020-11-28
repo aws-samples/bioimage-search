@@ -18,6 +18,7 @@ export interface ResourcePermissionsStackProps extends cdk.StackProps {
   imageInspectorLambda: lambda.Function;
   processPlateLambda: lambda.Function;
   processPlateStateMachine: sfn.StateMachine;
+  uploadSourcePlateStateMachine: sfn.StateMachine;
 }
 
 export class ResourcePermissionsStack extends cdk.Stack {
@@ -130,7 +131,9 @@ export class ResourcePermissionsStack extends cdk.Stack {
     const invokeStepFunctionsPolicyStatement = new iam.PolicyStatement({
       actions: ["states:StartExecution"],
       effect: iam.Effect.ALLOW,
-      resources: [props.processPlateStateMachine.stateMachineArn]
+      resources: [props.processPlateStateMachine.stateMachineArn,
+                  props.uploadSourcePlateStateMachine.stateMachineArn
+      ]
     });
 
     this.bioimageSearchManagedPolicy.addStatements(
@@ -142,11 +145,20 @@ export class ResourcePermissionsStack extends cdk.Stack {
     props.imageManagementLambda!.role!.attachInlinePolicy(this.externalResourcesPolicy);
     props.imageInspectorLambda!.role!.attachInlinePolicy(this.externalResourcesPolicy);
     props.processPlateLambda!.role!.attachInlinePolicy(this.externalResourcesPolicy);
+    
+    const processPlatePolicyStatement = new iam.PolicyStatement({
+      actions: ["lambda:InvokeFunction"],
+      effect: iam.Effect.ALLOW,
+      resources: [props.messageLambda.functionArn,
+                  props.imageManagementLambda.functionArn
+                ]
+    })
 
-    const processPlateStepFunctionsPolicy = new iam.Policy(this, "processPlateStepFunctionsPolicy");
-    processPlateStepFunctionsPolicy.addStatements(invokeStepFunctionsPolicyStatement);
+    const processPlatePolicy = new iam.Policy(this, "processPlateStepPolicy");
+    processPlatePolicy.addStatements(invokeStepFunctionsPolicyStatement);
+    processPlatePolicy.addStatements(processPlatePolicyStatement);
 
-    props.processPlateLambda!.role!.attachInlinePolicy(processPlateStepFunctionsPolicy);
+    props.processPlateLambda!.role!.attachInlinePolicy(processPlatePolicy);
     
     const imageInspectorPolicy = new iam.Policy(this, "imageInspectorPolicy");
     

@@ -70,7 +70,7 @@ const imageManagementStack = new ImageManagementStack(app, 'BioimageSearchImageM
 
 const processPlateStack = new ProcessPlateStack(app, 'BioimageSearchProcessPlateStack', {
     messageLambda: messageStack.messageLambda,
-    imageManagementLambda: imageManagementStack.imageManagementLambda,
+    imageManagementLambda: imageManagementStack.imageManagementLambda
 })
 
 const resourcePermissionsStack = new ResourcePermissionsStack(app, 'BioimageSearchResourcePermissionsStack', {
@@ -85,7 +85,8 @@ const resourcePermissionsStack = new ResourcePermissionsStack(app, 'BioimageSear
     imageManagementLambda: imageManagementStack.imageManagementLambda,
     imageInspectorLambda: processPlateStack.imageInspectorLambda,
     processPlateLambda: processPlateStack.processPlateLambda,
-    processPlateStateMachine: processPlateStack.processPlateStateMachine
+    processPlateStateMachine: processPlateStack.processPlateStateMachine,
+    uploadSourcePlateStateMachine: processPlateStack.uploadSourcePlateStateMachine
 })
 
 })();
