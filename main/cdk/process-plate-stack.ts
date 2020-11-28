@@ -138,9 +138,6 @@ export class ProcessPlateStack extends cdk.Stack {
 
     //////////////////////////////////////////
     
-    const MESSAGE_LAMBDA_ARN = props.messageLambda.functionArn;
-    const IMAGE_MANAGEMENT_LAMBDA_ARN = props.imageManagementLambda.functionArn;
-    
     this.processPlateLambda = new lambda.Function(
       this,
       "processPlateFunction",

@@ -15,6 +15,7 @@ import { TrainingConfigurationStack } from '../cdk/training-configuration-stack'
 import { ArtifactStack } from '../cdk/artifact-stack';
 import { ImageManagementStack } from '../cdk/image-management-stack';
 import { ProcessPlateStack } from '../cdk/process-plate-stack';
+import { TrainStack } from '../cdk/train-stack';
 import * as Dynamodb from 'aws-sdk/clients/dynamodb';
 import { SharedIniFileCredentials } from 'aws-sdk';
 
@@ -62,7 +63,7 @@ const artifactStack = new ArtifactStack(app, 'BioimageSearchArtifactStack', {
 })
 
 const imageManagementStack = new ImageManagementStack(app, 'BioimageSearchImageManagementStack', {
-    trainingConfigurationLambdaArn: trainingConfigurationStack.trainingConfigurationLambdaArn,
+    trainingConfigurationLambda: trainingConfigurationStack.trainingConfigurationLambda,
     messageLambda: messageStack.messageLambda,
     artifactLambdaArn: artifactStack.artifactLambdaArn,
     dynamoTableNames: dynamoTableNames
@@ -73,6 +74,12 @@ const processPlateStack = new ProcessPlateStack(app, 'BioimageSearchProcessPlate
     imageManagementLambda: imageManagementStack.imageManagementLambda
 })
 
+const trainStack = new TrainStack(app, 'BioimageSearchTrainStack', {
+    messageLambda: messageStack.messageLambda,
+    imageManagementLambda: imageManagementStack.imageManagementLambda,
+    trainingConfigurationLambda: trainingConfigurationStack.trainingConfigurationLambda,
+})
+
 const resourcePermissionsStack = new ResourcePermissionsStack(app, 'BioimageSearchResourcePermissionsStack', {
     dataBucket: baseStack.dataBucket,
     batchInstanceRole: batchSetupStack.batchInstanceRole,
@@ -80,13 +87,15 @@ const resourcePermissionsStack = new ResourcePermissionsStack(app, 'BioimageSear
     labelLambdaArn: labelStack.labelLambdaArn,
     messageLambda: messageStack.messageLambda,
     defaultArtifactLambda: imageArtifactStack.defaultArtifactLambda,
-    trainingConfigurationLambdaArn: trainingConfigurationStack.trainingConfigurationLambdaArn,
+    trainingConfigurationLambda: trainingConfigurationStack.trainingConfigurationLambda,
     artifactLambdaArn: artifactStack.artifactLambdaArn,
     imageManagementLambda: imageManagementStack.imageManagementLambda,
     imageInspectorLambda: processPlateStack.imageInspectorLambda,
     processPlateLambda: processPlateStack.processPlateLambda,
     processPlateStateMachine: processPlateStack.processPlateStateMachine,
-    uploadSourcePlateStateMachine: processPlateStack.uploadSourcePlateStateMachine
+    uploadSourcePlateStateMachine: processPlateStack.uploadSourcePlateStateMachine,
+    trainLambda: trainStack.trainLambda,
+    trainStateMachine: trainStack.trainStateMachine
 })
 
 })();

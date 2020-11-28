@@ -13,7 +13,7 @@ import * as sfn from "@aws-cdk/aws-stepfunctions";
 import * as tasks from "@aws-cdk/aws-stepfunctions-tasks";
 
 export interface ImageManagementStackProps extends cdk.StackProps {
-  trainingConfigurationLambdaArn: string;
+  trainingConfigurationLambda: lambda.Function;
   messageLambda: lambda.Function;
   artifactLambdaArn: string;
   dynamoTableNames: any;
@@ -86,7 +86,7 @@ export class ImageManagementStack extends cdk.Stack {
           SORT_KEY: "trainId",
           PLATE_INDEX: "plateIdIndex",
           TRAINING_CONFIGURATION_LAMBDA_ARN:
-            props.trainingConfigurationLambdaArn,
+            props.trainingConfigurationLambda.functionArn,
           MESSAGE_LAMBDA_ARN: props.messageLambda.functionArn,
           ARTIFACT_LAMBDA_ARN: props.artifactLambdaArn,
         },

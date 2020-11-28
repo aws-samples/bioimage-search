@@ -17,7 +17,7 @@ export interface TrainingConfigurationStackProps extends cdk.StackProps {
 const TABLE_NAME = "BioimsTrainingConfiguration";
 
 export class TrainingConfigurationStack extends cdk.Stack {
-  public trainingConfigurationLambdaArn: string;
+  public trainingConfigurationLambda: lambda.Function;
 
   constructor(
     app: cdk.App,
@@ -76,7 +76,7 @@ export class TrainingConfigurationStack extends cdk.Stack {
       ) as Table;
     }
 
-    const trainingConfigurationLambda = new lambda.Function(
+    this.trainingConfigurationLambda = new lambda.Function(
       this,
       "trainingConfigurationFunction",
       {
@@ -103,10 +103,7 @@ export class TrainingConfigurationStack extends cdk.Stack {
     
     const lambdaPolicy = new iam.Policy(this, "traningConfigurationAccessPolicy");
     lambdaPolicy.addStatements(trainTableAccessPolicy);
-    trainingConfigurationLambda.role!.attachInlinePolicy(lambdaPolicy);
-
-    this.trainingConfigurationLambdaArn =
-      trainingConfigurationLambda.functionArn;
+    this.trainingConfigurationLambda.role!.attachInlinePolicy(lambdaPolicy);
 
   }
 }
