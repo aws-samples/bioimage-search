@@ -80,8 +80,9 @@ export class TrainStack extends cdk.Stack {
         },
       }
     );
-    
-    const trainLambdaOutput = new cdk.CfnOutput(this, 'trainLambda', { value: this.trainLambda.functionArn } )
+
+    // This is not necessary if the function is included in external iam policy in resource-permissions-stack    
+    //const trainLambdaOutput = new cdk.CfnOutput(this, 'trainLambda', { value: this.trainLambda.functionArn } )
 
   }
 }

@@ -107,8 +107,8 @@ class BioimageSearchResources:
         return self.getStackOutputByPrefix(self.getProcessPlateStack(), 'ExportsOutputFnGetAttprocessPlateFunction')
         
     def getTrainLambdaArn(self):
-        #return self.getStackOutputByPrefix(self.getTrainStack(), 'ExportOutputFnGetAtttrainFunction')
-        return self.getStackOutputByPrefix(self.getTrainStack(), 'trainLambda')
+        return self.getStackOutputByPrefix(self.getTrainStack(), 'ExportsOutputFnGetAtttrainFunction')
+        #return self.getStackOutputByPrefix(self.getTrainStack(), 'trainLambda')
 
 ##### BATCH QUEUE
 

@@ -126,7 +126,8 @@ export class ResourcePermissionsStack extends cdk.Stack {
                   props.artifactLambdaArn,
                   props.imageManagementLambda.functionArn,
                   props.imageInspectorLambda.functionArn,
-                  props.processPlateLambda.functionArn
+                  props.processPlateLambda.functionArn,
+                  props.trainLambda.functionArn
                 ]
     });
     
