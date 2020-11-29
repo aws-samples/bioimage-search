@@ -45,16 +45,16 @@ const MODEL_KEY_ATTRIBUTE = "modelKey"
     embedding: embedding
   }
   
-  deleteEmbedding(name):
+  deleteEmbedding(embeddingName):
   {
     method: 'deleteEmbedding',
-    name: name
+    embeddingName: embeddingName
   }
   
-  getEmbedding(name):
+  getEmbedding(embeddingName):
   {
     method: 'getEmbedding',
-    name: name
+    embeddingName: embeddingName
   }
 
   Example test:
@@ -62,7 +62,7 @@ const MODEL_KEY_ATTRIBUTE = "modelKey"
   {
     "method": "createEmbedding",
     "embedding": {
-      "name1" : "embeddingName1",
+      "embeddingName1" : "embeddingName1",
       "image-method-arn" : "testImageMethodArn1",
       "image-post-method-arn" : "testImagePostMethodArn1",
       "input-height" : 1000,
@@ -85,7 +85,7 @@ const MODEL_KEY_ATTRIBUTE = "modelKey"
   deleteTraining(training):
   {
     method: 'deleteTraining',
-    train_id: train_id
+    trainId: trainId
   }
   
   updateTraining(training):
@@ -127,11 +127,11 @@ async function createTraining(training: any) {
   return db.put(params).promise();
 }
 
-async function getEmbeddingNameForTrainId(train_id: any) {
+async function getEmbeddingNameForTrainId(trainId: any) {
   const keyConditionExpression =
     [SORT_KEY_TRNID] + " = :" + [SORT_KEY_TRNID];
   const expressionAttributeValues =
-    '":' + [SORT_KEY_TRNID] + '" : "' + train_id + '"';
+    '":' + [SORT_KEY_TRNID] + '" : "' + trainId + '"';
   const params = {
     TableName: TABLE_NAME,
     IndexName: TRAIN_INDEX,
@@ -145,18 +145,18 @@ async function getEmbeddingNameForTrainId(train_id: any) {
   return row[PARTITION_KEY_EMB_NAME]
 }
 
-async function updateTraining(train_id: any, attribute: any, value: any) {
+async function updateTraining(trainId: any, attribute: any, value: any) {
   if (!validTrainAttribute(attribute)) {
     return { statusCode: 500, body: `Invalid attribute ${attribute}` }
   }
-  const embeddingName = await getEmbeddingNameForTrainId(train_id)
+  const embeddingName = await getEmbeddingNameForTrainId(trainId)
   const setStr = `set ${attribute} = :val1`
   
   var params = {
     TableName:TABLE_NAME,
     Key:{
       [PARTITION_KEY_EMB_NAME]: embeddingName,
-      [SORT_KEY_TRNID]: train_id,
+      [SORT_KEY_TRNID]: trainId,
     },
     UpdateExpression: setStr,
     ExpressionAttributeValues: JSON.parse(
@@ -168,25 +168,25 @@ async function updateTraining(train_id: any, attribute: any, value: any) {
   return db.update(params).promise();
 }
 
-async function deleteTraining(train_id: any) {
-  const embeddingName = await getEmbeddingNameForTrainId(train_id)
+async function deleteTraining(trainId: any) {
+  const embeddingName = await getEmbeddingNameForTrainId(trainId)
   const deleteParams = {
     TableName: TABLE_NAME,
     Key: {
       [PARTITION_KEY_EMB_NAME]: embeddingName,
-      [SORT_KEY_TRNID]: train_id
+      [SORT_KEY_TRNID]: trainId
     }
   };
   return db.delete(deleteParams).promise();
 }
 
-async function getTraining(train_id: any) {
-  const embeddingName = await getEmbeddingNameForTrainId(train_id)
+async function getTraining(trainId: any) {
+  const embeddingName = await getEmbeddingNameForTrainId(trainId)
   const params = {
     TableName: TABLE_NAME,
     Key: {
       [PARTITION_KEY_EMB_NAME]: embeddingName,
-      [SORT_KEY_TRNID]: train_id
+      [SORT_KEY_TRNID]: trainId
     }
   };
   return db.get(params).promise();
@@ -221,11 +221,11 @@ async function createEmbedding(embedding: any) {
   return db.put(params).promise();
 }
 
-async function deleteEmbedding(name: any) {
+async function deleteEmbedding(embeddingName: any) {
   let rows: any = await dy.getPartitionRows(
     db,
     PARTITION_KEY_EMB_NAME,
-    name,
+    embeddingName,
     TABLE_NAME
   );
   let p: any[] = [];
@@ -243,21 +243,21 @@ async function deleteEmbedding(name: any) {
   return Promise.all(p);
 }
 
-async function getEmbeddingInfo(name: any) {
+async function getEmbeddingInfo(embeddingName: any) {
   const params = {
     TableName: TABLE_NAME,
     Key: {
-      [PARTITION_KEY_EMB_NAME]: name,
+      [PARTITION_KEY_EMB_NAME]: embeddingName,
       [SORT_KEY_TRNID]: ORIGIN,
     },
   };
   return db.get(params).promise();
 }
 
-async function getEmbeddingTrainings(name: any) {
+async function getEmbeddingTrainings(embeddingName: any) {
   const keyConditionExpression = [PARTITION_KEY_EMB_NAME] + " = :" + [PARTITION_KEY_EMB_NAME];
   const expressionAttributeValues =
-    '":' + [PARTITION_KEY_EMB_NAME] + '" : "' + name + '"';
+    '":' + [PARTITION_KEY_EMB_NAME] + '" : "' + embeddingName + '"';
   const params = {
     TableName: TABLE_NAME,
     KeyConditionExpression: keyConditionExpression,
@@ -301,9 +301,9 @@ export const handler = async (event: any = {}): Promise<any> => {
   }
   
   else if (event.method === "getTraining") {
-      if (event.train_id) {
+      if (event.trainId) {
         try {
-          const response = await getTraining(event.train_id)
+          const response = await getTraining(event.trainId)
           return { statusCode: 200, body: JSON.stringify(response) };
         } catch (dbError) {
           return { statusCode: 500, body: JSON.stringify(dbError) };
@@ -311,15 +311,15 @@ export const handler = async (event: any = {}): Promise<any> => {
       } else {
           return {
               statusCode: 400,
-              body: `Error: train_id required`,
+              body: `Error: trainId required`,
           }
       }
   }
   
   else if (event.method === "updateTraining") {
-    if (event.train_id && event.attribute && event.value) {
+    if (event.trainId && event.attribute && event.value) {
       try {
-        const response = await updateTraining(event.train_id, event.attribute, event.value);
+        const response = await updateTraining(event.trainId, event.attribute, event.value);
         return { statusCode: 201, body: JSON.stringify(response) };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };
@@ -333,9 +333,9 @@ export const handler = async (event: any = {}): Promise<any> => {
   }
 
   else if (event.method === "deleteTraining") {
-    if (event.train_id) {
+    if (event.trainId) {
       try {
-        const response = await deleteTraining(event.train_id);
+        const response = await deleteTraining(event.trainId);
         return { statusCode: 200, body: JSON.stringify(response) };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };
@@ -343,7 +343,7 @@ export const handler = async (event: any = {}): Promise<any> => {
     } else {
       return {
         statusCode: 400,
-        body: `Error: train_id required`,
+        body: `Error: trainId required`,
       };
     }
   }
@@ -371,9 +371,9 @@ export const handler = async (event: any = {}): Promise<any> => {
   }
 
   else if (event.method === "getEmbeddingInfo") {
-    if (event.name) {
+    if (event.embeddingName) {
       try {
-        const response = await getEmbeddingInfo(event.name);
+        const response = await getEmbeddingInfo(event.embeddingName);
         return { statusCode: 200, body: JSON.stringify(response) };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };
@@ -381,15 +381,15 @@ export const handler = async (event: any = {}): Promise<any> => {
     } else {
       return {
         statusCode: 400,
-        body: `Error: name required`,
+        body: `Error: embeddingName required`,
       };
     }
   }
 
   else if (event.method === "getEmbeddingTrainings") {
-    if (event.name) {
+    if (event.embeddingName) {
       try {
-        const response = await getEmbeddingTrainings(event.name);
+        const response = await getEmbeddingTrainings(event.embeddingName);
         return { statusCode: 200, body: JSON.stringify(response) };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };
@@ -397,15 +397,15 @@ export const handler = async (event: any = {}): Promise<any> => {
     } else {
       return {
         statusCode: 400,
-        body: `Error: name required`,
+        body: `Error: embeddingName required`,
       };
     }
   }
 
   else if (event.method === "deleteEmbedding") {
-    if (event.name) {
+    if (event.embeddingName) {
       try {
-        const response = await deleteEmbedding(event.name)
+        const response = await deleteEmbedding(event.embeddingName)
         return { statusCode: 200, body: JSON.stringify(response) };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };
@@ -413,7 +413,7 @@ export const handler = async (event: any = {}): Promise<any> => {
     } else {
       return {
         statusCode: 400,
-        body: `Error: name required`,
+        body: `Error: embeddingName required`,
       };
     }
   }

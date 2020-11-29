@@ -37,9 +37,14 @@ async function validateEmbeddingName(embeddingName: string) {
   console.log(params);
   const data = await lambda.invoke(params).promise();
   const response = la.getResponseBody(data);
-  console.log("getEmbeddingInfo response=");
-  console.log(response)
-  return true;
+  if ('Item' in response) {
+    if ('embeddingName' in response['Item']) {
+      if (response['Item']['embeddingName'] == embeddingName) {
+        return true
+      }
+    }
+  }
+  return false;
 }
 
 /////////////////////////////////////////////////
@@ -55,8 +60,6 @@ export const handler = async (event: any = {}): Promise<any> => {
     if (event.embeddingName) {
       try {
         const validEmbedding = await validateEmbeddingName(event.embeddingName);
-        console.log("validEmbedding=")
-        console.log(validEmbedding)
         if (!validEmbedding) {
           const errMsg = `Embedding ${event.embeddingName} is not valid`;
           console.log(errMsg)

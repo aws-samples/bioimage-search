@@ -107,7 +107,8 @@ class BioimageSearchResources:
         return self.getStackOutputByPrefix(self.getProcessPlateStack(), 'ExportsOutputFnGetAttprocessPlateFunction')
         
     def getTrainLambdaArn(self):
-        return self.getStackOutputByPrefix(self.getTrainStack(), 'ExportOutputFnGetAtttrainFunction')
+        #return self.getStackOutputByPrefix(self.getTrainStack(), 'ExportOutputFnGetAtttrainFunction')
+        return self.getStackOutputByPrefix(self.getTrainStack(), 'trainLambda')
 
 ##### BATCH QUEUE
 
@@ -183,6 +184,7 @@ def getResponseBody(response):
         statusCode = jresponse['statusCode']
         if statusCode > 299:
             errMsg = "Error: " + jresponse['body']
+            print(errMsg)
             raise Exception(errMsg)
         return jresponse['body']
     else:
@@ -846,7 +848,7 @@ class TrainClient(BioimageSearchClient):
         return self._resources.getTrainLambdaArn()
 
     def train(self, embeddingName, filterBucket='', filterKey=''):
-        request = '{{ "method": "train", "embeddingName": "{}", filterBucket": "{}", "filterKey": "{}" }}'.format(embeddingName, filterBucket, filterKey)
+        request = '{{ "method": "train", "embeddingName": "{}", "filterBucket": "{}", "filterKey": "{}" }}'.format(embeddingName, filterBucket, filterKey)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(

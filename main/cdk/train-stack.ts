@@ -75,9 +75,13 @@ export class TrainStack extends cdk.Stack {
         environment: {
           MESSAGE_LAMBDA_ARN: props.messageLambda.functionArn,
           IMAGE_MANAGEMENT_LAMBDA_ARN: props.imageManagementLambda.functionArn,
+          TRAIN_CONFIGURATION_LAMBDA_ARN: props.trainingConfigurationLambda.functionArn,
           TRAIN_SFN_ARN: this.trainStateMachine.stateMachineArn,
         },
       }
     );
+    
+    const trainLambdaOutput = new cdk.CfnOutput(this, 'trainLambda', { value: this.trainLambda.functionArn } )
+
   }
 }
