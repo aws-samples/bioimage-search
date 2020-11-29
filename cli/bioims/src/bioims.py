@@ -61,6 +61,9 @@ class BioimageSearchResources:
         
     def getProcessPlateStack(self):
         return self.getStackByName('BioimageSearchProcessPlateStack')
+
+    def getTrainStack(self):
+        return self.getStackByName('BioimageSearchTrainStack')
         
 ##### FUNCTIONS
 
@@ -102,6 +105,9 @@ class BioimageSearchResources:
 
     def getProcessPlateLambdaArn(self):
         return self.getStackOutputByPrefix(self.getProcessPlateStack(), 'ExportsOutputFnGetAttprocessPlateFunction')
+        
+    def getTrainLambdaArn(self):
+        return self.getStackOutputByPrefix(self.getTrainStack(), 'ExportOutputFnGetAtttrainFunction')
 
 ##### BATCH QUEUE
 
@@ -138,6 +144,8 @@ def client(serviceName):
         return ImageManagementClient()
     elif serviceName == 'process-plate':
         return ProcessPlateClient()
+    elif serviceName == 'train':
+        return TrainClient()
     else:
         print('service type {} not recognized'.format(serviceName))
         return False
@@ -603,7 +611,7 @@ class TrainingConfigurationClient(BioimageSearchClient):
         request = '{{ "method": "createEmbedding", "embedding": {} }}'.format(embeddingStr)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
-        lambdaArn = self.getLambdaArn(),
+        lambdaArn = self.getLambdaArn()
         response = lambdaClient.invoke(
             FunctionName=lambdaArn,
             InvocationType='RequestResponse',
@@ -813,6 +821,32 @@ class ProcessPlateClient(BioimageSearchClient):
         
     def uploadSourcePlate(self, inputBucket, inputKey):
         request = '{{ "method": "uploadSourcePlate", "inputBucket": "{}", "inputKey": "{}" }}'.format(inputBucket, inputKey)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self.getLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        jbody = getResponseBody(response)
+        jvalue = json.loads(jbody)
+        return jvalue
+        
+#############################################
+#
+# TRAIN
+#
+#############################################
+    
+class TrainClient(BioimageSearchClient):
+    def __init__(self):
+        super().__init__()
+
+    def getLambdaArn(self):
+        return self._resources.getTrainLambdaArn()
+
+    def train(self, embeddingName, filterBucket='', filterKey=''):
+        request = '{{ "method": "train", "embeddingName": "{}", filterBucket": "{}", "filterKey": "{}" }}'.format(embeddingName, filterBucket, filterKey)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(

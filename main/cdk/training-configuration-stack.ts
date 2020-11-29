@@ -43,11 +43,11 @@ export class TrainingConfigurationStack extends cdk.Stack {
         "training-configuration",
         {
           partitionKey: {
-            name: "embedding_name",
+            name: "embeddingName",
             type: dynamodb.AttributeType.STRING,
           },
           sortKey: {
-            name: "train_id",
+            name: "trainId",
             type: dynamodb.AttributeType.STRING,
           },
           tableName: TABLE_NAME,
@@ -85,8 +85,8 @@ export class TrainingConfigurationStack extends cdk.Stack {
         runtime: lambda.Runtime.NODEJS_12_X,
         environment: {
           TABLE_NAME: trainingConfigurationTable.tableName,
-          PARTITION_KEY: "embedding_name",
-          SORT_KEY: "train_id",
+          PARTITION_KEY: "embeddingName",
+          SORT_KEY: "trainId",
           TRAIN_INDEX: "trainIdIndex",
         },
       }
