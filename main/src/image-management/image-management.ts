@@ -78,40 +78,81 @@ const SR_READY = "READY"
 
 /////////////////////////////////////////////////
 
-async function createPlateMessageArtifact(plateId: any) {
+async function createPlateMessageId(plateId: any) {
   const plateMessageId = await createMessage(`Message START for plateId ${plateId}`);
-  const artifact = {
-    "contextId" : plateId,
-    "trainId" : ORIGIN,
-    "artifact" : `messageId#${plateMessageId}`
-  }
-  var params = {
-    FunctionName: ARTIFACT_LAMBDA_ARN,
-    InvocationType: "RequestResponse",
-    Payload: JSON.stringify({ method: "createArtifact", artifact: artifact }),
+
+  const partitionKey = 'plate#' + plateId
+  const key = {
+    [PARTITION_KEY_IMGID]: partitionKey,
+    [SORT_KEY_TRNID]: ORIGIN,
   };
-  await lambda.invoke(params).promise();
+  const expressionAttributeNames = '"#m" : "' + [MESSAGE_ID_ATTRIBUTE] + '"'
+  const expressionAttributeValues = '":m" : "' + plateMessageId + '"'
+  const updateExpression = "set #m = :m"
+  const namesParse = "{" + expressionAttributeNames + "}"
+  const valuesParse = "{" + expressionAttributeValues + "}"
+  
+  const params = {
+    TableName: TABLE_NAME,
+    Key: key,
+    UpdateExpression: updateExpression,
+    ExpressionAttributeNames: JSON.parse(namesParse),
+    ExpressionAttributeValues: JSON.parse(valuesParse)
+  };
+  console.log(params)
+  return await db.update(params).promise();
+
+  // const artifact = {
+  //   "contextId" : plateId,
+  //   "trainId" : ORIGIN,
+  //   "artifact" : `messageId#${plateMessageId}`
+  // }
+  // var params = {
+  //   FunctionName: ARTIFACT_LAMBDA_ARN,
+  //   InvocationType: "RequestResponse",
+  //   Payload: JSON.stringify({ method: "createArtifact", artifact: artifact }),
+  // };
+  // await lambda.invoke(params).promise();
+
   return plateMessageId
 }
 
 async function getPlateMessageId(plateId: any) {
-  var params = {
-    FunctionName: ARTIFACT_LAMBDA_ARN,
-    InvocationType: "RequestResponse",
-    Payload: JSON.stringify({ method: "getArtifacts", contextId: plateId, trainId: ORIGIN })
+
+  
+  // var params = {
+  //   FunctionName: ARTIFACT_LAMBDA_ARN,
+  //   InvocationType: "RequestResponse",
+  //   Payload: JSON.stringify({ method: "getArtifacts", contextId: plateId, trainId: ORIGIN })
+  // };
+  // const response = await lambda.invoke(params).promise();
+  // const rows = la.getResponseBody(response)
+  // for (let r of rows) {
+  //   const a = r.artifact
+  //   if (a.startsWith('messageId#')) {
+  //     const ac = a.split('#')
+  //     const messageId= ac[1]
+  //     return messageId
+  //   }
+  // }
+  // const errMsg = `No messageId found for plate ${plateId}`;
+  // throw new Error(errMsg)
+
+  const partitionKey = 'plate#' + plateId;
+  const params = {
+    TableName: TABLE_NAME,
+    Key: {
+      [PARTITION_KEY_IMGID]: partitionKey,
+      [SORT_KEY_TRNID]: ORIGIN,
+    },
   };
-  const response = await lambda.invoke(params).promise();
-  const rows = la.getResponseBody(response)
-  for (let r of rows) {
-    const a = r.artifact
-    if (a.startsWith('messageId#')) {
-      const ac = a.split('#')
-      const messageId= ac[1]
-      return messageId
+  const row = db.get(params).promise();
+  if ('Item' in row) {
+    if (MESSAGE_ID_ATTRIBUTE in row['Item']) {
+      return row['Item'][MESSAGE_ID_ATTRIBUTE]
     }
   }
-  const errMsg = `No messageId found for plate ${plateId}`;
-  throw new Error(errMsg)
+  throw new Error("MessageID not found for plateId=" + plateId)
 }
 
 async function createMessage(message: any) {
@@ -180,10 +221,20 @@ async function populateSourcePlate(inputBucket: any, inputKey: any) {
     throw new Error("images required");
   }
   const plateId = su.generate();
-  
-  // Todo: create messageId for plateId
-  
-  
+  const plateKey = 'plate#' + plateId;
+  const plateEntry = {
+    [PARTITION_KEY_IMGID]: plateKey,
+    [SORT_KEY_TRNID]: ORIGIN
+  }
+  const params = {
+    TableName: TABLE_NAME,
+    Item: plateEntry,
+  };
+  await db.put(params).promise();
+  const plateMessageId = await createPlateMessageId(plateId)
+  console.log("plateMessageId=")
+  console.log(plateMessageId)
+
   const images: any[] = sourcePlateInfo["images"];
   const wellDict: Map<string, string> = new Map();
   const fields: any[] = [
@@ -338,7 +389,7 @@ async function applyInspectionResult(inspectionResult: any) {
 // const SR_ERROR = "ERROR"
 // const SR_READY = "READY"
 
-async function getPlateStatus(plateId: any) {
+async function getPlateImageStatus(plateId: any) {
   
   const images = await getImagesByPlateId(plateId)
   
@@ -374,9 +425,97 @@ async function getPlateStatus(plateId: any) {
   }
 }
 
-async function validatePlate(plateId: any) {
-  const plateStatus = await getPlateStatus(plateId);
+async function updatePlateStatus(plateId: any,
+  status: any,
+  width: any,
+  height: any,
+  depth: any,
+  channels: any) {
   
+  const partitionKey = 'plate#' + plateId
+  const key = {
+    [PARTITION_KEY_IMGID]: partitionKey,
+    [SORT_KEY_TRNID]: ORIGIN,
+  };
+  const expressionAttributeNames = '"#r" : "' + [SEARCH_READY_ATTRIBUTE] + '",' +
+                                   '"#w" : "' + [WIDTH_ATTRIBUTE]        + '",' +
+                                   '"#h" : "' + [HEIGHT_ATTRIBUTE]       + '",' +
+                                   '"#d" : "' + [DEPTH_ATTRIBUTE]        + '",' +
+                                   '"#c" : "' + [CHANNELS_ATTRIBUTE]     + '"'
+                                   
+  const expressionAttributeValues = '":r" : "' + status               + '",' +
+                                    '":w" : "' + width    + '",' +
+                                    '":h" : "' + height   + '",' +
+                                    '":d" : "' + depth    + '",' +
+                                    '":c" : "' + channels + '"'
+                                    
+  const updateExpression = "set #r = :r, " +
+                               "#w = :w, " +
+                               "#h = :h, " +
+                               "#d = :d, " +
+                               "#c = :c"
+
+  const namesParse = "{" + expressionAttributeNames + "}"
+  const valuesParse = "{" + expressionAttributeValues + "}"
+  
+  const params = {
+    TableName: TABLE_NAME,
+    Key: key,
+    UpdateExpression: updateExpression,
+    ExpressionAttributeNames: JSON.parse(namesParse),
+    ExpressionAttributeValues: JSON.parse(valuesParse)
+  };
+  console.log(params)
+  return await db.update(params).promise();
+}
+
+async function validatePlate(plateId: any) {
+  const plateImageStatus = await getPlateImageStatus(plateId);
+
+  let plateStatus = SR_UNDEFINED;
+  if (plateImageStatus[SR_ERROR]>0) {
+    plateStatus = SR_ERROR;
+  } else if (plateImageStatus[SR_UNDEFINED]>0) {
+    plateStatus = SR_UNDEFINED;
+  } else if (plateImageStatus[SR_PREVALIDATION]>0) {
+    plateStatus = SR_PREVALIDATION;
+  } else if (plateImageStatus[SR_VALIDATED]>0) {
+    plateStatus = SR_VALIDATED;
+  } else if (plateImageStatus[SR_READY]>0) {
+    plateStatus = SR_READY;
+  }
+  
+  let height = 0
+  let width = 0
+  let depth = 0
+  let channels = 0
+    
+  if (plateStatus==SR_VALIDATED || plateStatus==SR_READY) {
+    const images = await getImagesByPlateId(plateId);
+    let count = 0
+    for (let item of images) {
+      const image = item['Item']
+      if (count==0) {
+        height = image[HEIGHT_ATTRIBUTE]
+        width = image[WIDTH_ATTRIBUTE]
+        depth = image[DEPTH_ATTRIBUTE]
+        channels = image[CHANNELS_ATTRIBUTE]
+      } else {
+        if (!(height==image[HEIGHT_ATTRIBUTE] &&
+              width==image[WIDTH_ATTRIBUTE] &&
+              depth==image[DEPTH_ATTRIBUTE] &&
+              channels==image[CHANNELS_ATTRIBUTE])) {
+                break;
+              }
+      }
+      count += 1
+    }
+    if (count==images.length && height>0 && width>0 && depth>0 && channels>0) {
+      plateStatus=SR_VALIDATED;
+    }
+  }
+  
+  return await updatePlateStatus(plateId, plateStatus, width, height, depth, channels);
 }
 
 /////////////////////////////////////////////////
@@ -435,10 +574,10 @@ export const handler = async (event: any = {}): Promise<any> => {
     }
   } 
   
-  else if (event.method === "getPlateStatus") {
+  else if (event.method === "getPlateImageStatus") {
     if (event.plateId) {
       try {
-        const response = await getPlateStatus(event.plateId);
+        const response = await getPlateImageStatus(event.plateId);
         return { statusCode: 200, body: response };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };
@@ -451,10 +590,10 @@ export const handler = async (event: any = {}): Promise<any> => {
     }
   }
   
-  else if (event.method === "createPlateMessageArtifact") {
+  else if (event.method === "createPlateMessageId") {
     if (event.plateId) {
       try {
-        const response = await createPlateMessageArtifact(event.plateId);
+        const response = await createPlateMessageId(event.plateId);
         return { statusCode: 200, body: response };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };

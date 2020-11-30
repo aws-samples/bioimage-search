@@ -78,3 +78,20 @@ export const deleteRows = async (
   const params = { RequestItems: requestItems };
   return db.batchWrite(params).promise();
 }
+
+export const getAllExecuteStatement = async (db: any, params: any) => {
+  const _getAllData = async (params: any, startToken: any) => {
+    if (startToken) {
+      params.NextToken = startToken;
+    }
+    return db.executeStatement(params).promise();
+  };
+  let lastEvaluatedToken = null;
+  let rows: any[] = [];
+  do {
+    const result: any = await _getAllData(params, lastEvaluatedToken);
+    rows = rows.concat(result.Items);
+    lastEvaluatedToken = result.NextToken;
+  } while (lastEvaluatedToken);
+  return rows;
+};

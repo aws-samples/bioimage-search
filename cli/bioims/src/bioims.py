@@ -759,8 +759,8 @@ class ImageManagementClient(BioimageSearchClient):
         jbody = getResponseBody(response)
         return jbody
         
-    def getPlateStatus(self, plateId):
-        request = '{{ "method": "getPlateStatus", "plateId": "{}" }}'.format(plateId)
+    def getPlateImageStatus(self, plateId):
+        request = '{{ "method": "getPlateImageStatus", "plateId": "{}" }}'.format(plateId)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
@@ -771,8 +771,8 @@ class ImageManagementClient(BioimageSearchClient):
         jbody = getResponseBody(response)
         return jbody
         
-    def createPlateMessageArtifact(self, plateId):
-        request = '{{ "method": "createPlateMessageArtifact", "plateId": "{}" }}'.format(plateId)
+    def createPlateMessageId(self, plateId):
+        request = '{{ "method": "createPlateMessageId", "plateId": "{}" }}'.format(plateId)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
@@ -785,6 +785,18 @@ class ImageManagementClient(BioimageSearchClient):
         
     def getPlateMessageId(self, plateId):
         request = '{{ "method": "getPlateMessageId", "plateId": "{}" }}'.format(plateId)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self.getLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        jbody = getResponseBody(response)
+        return jbody
+
+    def validatePlate(self, plateId):
+        request = '{{ "method": "validatePlate", "plateId": "{}" }}'.format(plateId)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(

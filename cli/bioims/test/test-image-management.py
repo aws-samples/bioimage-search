@@ -13,17 +13,17 @@ imageManagementClient = bioims.client('image-management')
 
 # NOTE: 'origin' is not actually a valid trainId
 
-training = {
-    "train_id": "origin",
-    "filterBucket": "bioimage-search-input",
-    "filterIncludeKey": "",
-    "filterExcludeKey": "",
-    "embeddingName": "embedding-name1",
-    "sagemakerTrainId": "sagemaker-train-id1",
-    "trainMessageId": "train-message-id1",
-    "modelBucket" : "model-bucket1",
-    "modelKey" : "model-key1"
-}
+# training = {
+#     "train_id": "origin",
+#     "filterBucket": "bioimage-search-input",
+#     "filterIncludeKey": "",
+#     "filterExcludeKey": "",
+#     "embeddingName": "embedding-name1",
+#     "sagemakerTrainId": "sagemaker-train-id1",
+#     "trainMessageId": "train-message-id1",
+#     "modelBucket" : "model-bucket1",
+#     "modelKey" : "model-key1"
+# }
 
 #  SourcePlateInfo {
 #     plateSourceId: <string>
@@ -38,33 +38,33 @@ training = {
 #     ]
 #   }
 
-plateSourceInfo = {
-    "plateSourceId" : "plateSourceId-1",
-    "images" : [
-            {
-                "wellSourceId" : "wellSourceId-1",
-                "imageSourceId" : "imageSourceId-1",
-                "sourceBucket" : "sourceBucket-1",
-                "sourceKey" : "sourceKey-1",
-                "experiment" : "experiment-1",
-                "category" : "category-1",
-                "label" : "label-1"
-            },
-            {
-                "wellSourceId" : "wellSourceId-2",
-                "imageSourceId" : "imageSourceId-2",
-                "sourceBucket" : "sourceBucket-2",
-                "sourceKey" : "sourceKey-2",
-                "experiment" : "experiment-2",
-                "category" : "category-2",
-                "label" : "label-2"
-            }
-        ]
-}
+# plateSourceInfo = {
+#     "plateSourceId" : "plateSourceId-1",
+#     "images" : [
+#             {
+#                 "wellSourceId" : "wellSourceId-1",
+#                 "imageSourceId" : "imageSourceId-1",
+#                 "sourceBucket" : "sourceBucket-1",
+#                 "sourceKey" : "sourceKey-1",
+#                 "experiment" : "experiment-1",
+#                 "category" : "category-1",
+#                 "label" : "label-1"
+#             },
+#             {
+#                 "wellSourceId" : "wellSourceId-2",
+#                 "imageSourceId" : "imageSourceId-2",
+#                 "sourceBucket" : "sourceBucket-2",
+#                 "sourceKey" : "sourceKey-2",
+#                 "experiment" : "experiment-2",
+#                 "category" : "category-2",
+#                 "label" : "label-2"
+#             }
+#         ]
+# }
 
-s3 = boto3.client('s3')
+#s3 = boto3.client('s3')
 
-stringBuffer = io.StringIO()
+#stringBuffer = io.StringIO()
 
 #stringBuffer.write(json.dumps(plateSourceInfo))
 
@@ -72,7 +72,7 @@ stringBuffer = io.StringIO()
 
 # plateSourceKey = "plateSourceKey.json"
 
-#plateSourceKey = "SourcePlateInfo_Week1_22123.json"
+#plateSourceKey = "SourcePlateInfo_Week1_22123.json"a
 
 # s3.upload_fileobj(ioBuffer, TEST_INPUT_BUCKET, plateSourceKey)
 
@@ -86,24 +86,10 @@ stringBuffer = io.StringIO()
 
 #print(r)
 
-#r = imageManagementClient.getImagesByPlateId('3YpbgZCfkNLfZHDTZU3E2x')
+##################################################
 
-#print(r)
+plateId = 'edZqhahFK8cWqvyJsot4zW'
 
-plateId1 = '3YpbgZCfkNLfZHDTZU3E2x'
-
-r = imageManagementClient.getPlateStatus(plateId1)
+r = imageManagementClient.validatePlate(plateId)
 
 print(r)
-
-#r = imageManagementClient.createPlateMessageArtifact(plateId1)
-
-#print(r)
-
-r = imageManagementClient.getPlateMessageId(plateId1)
-
-print(r)
-
-#r = trainingConfigurationClient.deleteTraining(training["train_id"])
-
-# print(r)

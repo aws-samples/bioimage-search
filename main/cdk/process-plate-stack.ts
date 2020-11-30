@@ -54,25 +54,45 @@ export class ProcessPlateStack extends cdk.Stack {
         method: "getImagesByPlateId",
         plateId: sfn.JsonPath.stringAt("$.plateId"),
       },
+      resultPath: '$.getImagesInput',
     });
 
     const plateToImages1 = new tasks.LambdaInvoke(this, "Plate To Images 1", {
       lambdaFunction: props.imageManagementLambda,
+      inputPath: '$.getImagesInput',
+      resultPath: '$.imageList'
     });
 
     const imageInspector = new tasks.LambdaInvoke(this, "Image Inspector", {
       lambdaFunction: this.imageInspectorLambda,
+      outputPath: '$.Payload'
     });
 
     const inspectorMap = new sfn.Map(this, "Inspector Map", {
       maxConcurrency: 0,
-      itemsPath: "$.Payload.body"
+      itemsPath: '$.imageList.Payload.body',
+      resultPath: '$.inspectorMapResult',
     });
     inspectorMap.iterator(imageInspector);
     
-    const uploadSourcePlateStepFunctionDef = plateFormat1
+    const plateValidatorInput = new sfn.Pass(this, "Plate Validator Input", {
+      parameters: {
+        method: "validatePlate",
+        plateId: sfn.JsonPath.stringAt("$.plateId")
+      },
+      resultPath: '$.validatorInput',
+    });
+    
+    const plateValidator = new tasks.LambdaInvoke(this, "Plate Validator", {
+      lambdaFunction: props.imageManagementLambda,
+      inputPath: '$.validatorInput',
+    });
+    
+    const uploadSourcePlateStepFunctionDef = plateValidatorInput
+      .next(plateFormat1)
       .next(plateToImages1)
       .next(inspectorMap)
+      .next(plateValidator)
 
     const uploadSourcePlateGroup = new logs.LogGroup(this, "UploadSourcePlateLogGroup");
 
@@ -93,6 +113,8 @@ export class ProcessPlateStack extends cdk.Stack {
     //
     // PlateProcessing StepFunction
     //
+    //.    this is called with a specific trainId
+    //
     ///////////////////////////////////////////
     
     const plateFormat2 = new sfn.Pass(this, "Plate Format 2", {
@@ -106,20 +128,20 @@ export class ProcessPlateStack extends cdk.Stack {
       lambdaFunction: props.imageManagementLambda,
     });
 
-
     const plateValidationParams = sfn.TaskInput.fromObject( {
       method: "validatePlate",
       plateId: sfn.JsonPath.stringAt("$.plateId"),
     });
-    
-    const plateValidator = new tasks.LambdaInvoke(this, "Plate Validator", {
-      lambdaFunction: props.imageManagementLambda,
-      payload: plateValidationParams,
-    });
+
+    // This needs to do an Embedding compatibility check    
+    // const plateValidator = new tasks.LambdaInvoke(this, "Plate Validator", {
+    //   lambdaFunction: props.imageManagementLambda,
+    //   payload: plateValidationParams,
+    // });
 
     const processPlateStepFunctionDef = plateFormat2
       .next(plateToImages2)
-      .next(plateValidator)
+//      .next(plateValidator)
 
     const logGroup = new logs.LogGroup(this, "ProcessPlateLogGroup");
 
