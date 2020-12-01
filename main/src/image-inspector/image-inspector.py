@@ -97,12 +97,12 @@ def handler(event, context):
             errStr = "exception={0}".format(err)
             print("Error loading bucket="+bucket+" key="+imageKeys[0]+" "+errStr)
             applyErrorResult(imageId)
-            return { "d": "" }
+            return { "imageId": imageId, "valid": False }
         if passZeroCheck(np):
             dims = getDimensions(np)
             result = { "imageId" : imageId, "valid" : True, "width": dims[0], "height": dims[1], "depth": dims[2], "channels": 1 }
             applyInspectionResult(result)
-            return { "d": "" }
+            return { "imageId": imageId, "valid": True }
     else:
         dims=[]
         for i, channel in enumerate(item['channelKeys']):
@@ -112,7 +112,7 @@ def handler(event, context):
                 errStr = "exception={0}".format(err)
                 print("Error loading bucket="+bucket+ " key="+imageKeys[i]+" "+errStr)
                 applyErrorResult(imageId)
-                return { "d" : "" }
+                return { "imageId" : imageId, "valid" : False }
             ndims = getDimensions(np)
             if i==0:
                 dims.append(ndims[0])
@@ -122,7 +122,7 @@ def handler(event, context):
                 if not(dims[0]==ndims[0] and dims[1]==dims[1] and dims[2]==dims[2]):
                     print("Error dimensions do not match for channel  bucket="+bucket+ " key="+imageKeys[i])
                     applyErrorResult(imageId)
-                    return { "d" : "" }
+                    return { "imageId" : imageId, "valid" : False }
         result = { "imageId" : imageId, "valid" : True, "width" : dims[0], "height" : dims[1], "depth" : dims[2], "channels" : numChannels }
         applyInspectionResult(result)
-        return { "d" : "" }
+        return { "imageId" : imageId, "valid" : True }

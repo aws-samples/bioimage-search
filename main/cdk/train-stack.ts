@@ -34,13 +34,16 @@ export class TrainStack extends cdk.Stack {
 
     const trainInfoRequestParameters = new sfn.Pass(this, "Train Info Request Parameters", {
       parameters: {
-        method: "getTrainInfo",
-        plateId: sfn.JsonPath.stringAt("$.embeddingName"),
+        method: "getTraining",
+        trainId: sfn.JsonPath.stringAt("$.trainId"),
       },
+      resultPath: '$.trainInfoRequest'
     });
 
     const trainInfoRequest = new tasks.LambdaInvoke(this, "Train Info Request", {
       lambdaFunction: props.trainingConfigurationLambda,
+      outputPath: sfn.JsonPath.stringAt('$.Payload.body'),
+      inputPath: '$.trainInfoRequest'
     });
 
     const trainStepFunctionDef = trainInfoRequestParameters

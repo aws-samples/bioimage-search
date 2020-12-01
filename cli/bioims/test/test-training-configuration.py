@@ -58,7 +58,11 @@ embedding = {
     "comments" : ""
 }
 
-r = trainingConfigurationClient.createEmbedding(embedding)
+#r = trainingConfigurationClient.createEmbedding(embedding)
+
+#print(r)
+
+r = trainingConfigurationClient.getTraining('2uqemYqVnt38iEKxqaacb8')
 
 print(r)
 

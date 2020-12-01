@@ -30,10 +30,9 @@ const COMMENTS_ATTRIBUTE = "comments";
 
 // Training
 const FILTER_BUCKET_ATTRIBUTE = "filterBucket";
-const FILTER_INCLUDE_KEY_ATTRIBUTE = "filterIncludeKey";
-const FILTER_EXCLUDE_KEY_ATTRIBUTE = "filterExcludeKey";
+const FILTER_KEY_ATTRIBUTE = "filterKey";
 const SAGEMAKER_TRAIN_ID_ATTRIBUTE = "sagemakerTrainId";
-const TRAINING_JOB_MESSAGE_ID_ATTRIBUTE = "trainMessageId";
+const TRAINING_MESSAGE_ID_ATTRIBUTE = "messageId";
 const MODEL_BUCKET_ATTRIBUTE = "modelBucket";
 const MODEL_KEY_ATTRIBUTE = "modelKey"
 
@@ -99,7 +98,8 @@ const MODEL_KEY_ATTRIBUTE = "modelKey"
 function validateTraining(training: any): boolean {
   if (
     training[PARTITION_KEY_EMB_NAME] &&
-    training[SORT_KEY_TRNID]
+    training[SORT_KEY_TRNID] &&
+    training[TRAINING_MESSAGE_ID_ATTRIBUTE]
   ) {
     return true;
   }
@@ -108,10 +108,9 @@ function validateTraining(training: any): boolean {
 
 function validTrainAttribute(attribute: any): boolean {
   if (attribute === FILTER_BUCKET_ATTRIBUTE ||
-    attribute === FILTER_INCLUDE_KEY_ATTRIBUTE ||
-    attribute === FILTER_EXCLUDE_KEY_ATTRIBUTE ||
+    attribute === FILTER_KEY_ATTRIBUTE ||
     attribute === SAGEMAKER_TRAIN_ID_ATTRIBUTE ||
-    attribute === TRAINING_JOB_MESSAGE_ID_ATTRIBUTE ||
+    attribute === TRAINING_MESSAGE_ID_ATTRIBUTE ||
     attribute === MODEL_BUCKET_ATTRIBUTE ||
     attribute === MODEL_KEY_ATTRIBUTE) {
       return true;
@@ -304,7 +303,7 @@ export const handler = async (event: any = {}): Promise<any> => {
       if (event.trainId) {
         try {
           const response = await getTraining(event.trainId)
-          return { statusCode: 200, body: JSON.stringify(response) };
+          return { statusCode: 200, body: response };
         } catch (dbError) {
           return { statusCode: 500, body: JSON.stringify(dbError) };
         }
@@ -413,7 +412,7 @@ export const handler = async (event: any = {}): Promise<any> => {
     } else {
       return {
         statusCode: 400,
-        body: `Error: embeddingName required`,
+        body: `Error: name required`,
       };
     }
   }

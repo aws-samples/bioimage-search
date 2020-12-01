@@ -9,9 +9,9 @@ const IMAGE_MANAGEMENT_LAMBDA_ARN = process.env.IMAGE_MANAGEMENT_LAMBDA_ARN || "
 const TRAIN_CONFIGURATION_LAMBDA_ARN = process.env.TRAIN_CONFIGURATION_LAMBDA_ARN || "";
 const TRAIN_SFN_ARN = process.env.TRAIN_SFN_ARN || "";
 
-async function startTrain(embeddingName: string, filterBucket: string, filterKey: string) {
-  const executionName = "Train-" + embeddingName + "-" + su.generate();
-  const inputStr = `{ "embeddingName" : \"${executionName}\", "filterBucket" : \"${filterBucket}\", "filterKey" : \"${filterKey}\" }`;
+async function startTraining(trainId: any) {
+  const executionName = "Train-" + trainId + "-" + su.generate();
+  const inputStr = `{ "trainId" : \"${trainId}\" }`;
   console.log("inputStr=", inputStr);
   var params = {
     stateMachineArn: TRAIN_SFN_ARN,
@@ -47,6 +47,28 @@ async function validateEmbeddingName(embeddingName: string) {
   return false;
 }
 
+async function createMessage(message: any) {
+  var params = {
+    FunctionName: MESSAGE_LAMBDA_ARN,
+    InvocationType: "RequestResponse",
+    Payload: JSON.stringify({ method: "createMessage", message: message }),
+  };
+  const data = await lambda.invoke(params).promise();
+  const createMessageResponse = la.getResponseBody(data);
+  const messageId = createMessageResponse["messageId"];
+  return messageId;
+}
+
+async function createTraining(training: any) {
+  var params = {
+    FunctionName: TRAIN_CONFIGURATION_LAMBDA_ARN,
+    InvocationType: "RequestResponse",
+    Payload: JSON.stringify({ method: "createTraining", training: training }),
+  };
+  const data = await lambda.invoke(params).promise();
+  return la.getResponseBody(data);
+}
+
 /////////////////////////////////////////////////
 
 export const handler = async (event: any = {}): Promise<any> => {
@@ -64,16 +86,21 @@ export const handler = async (event: any = {}): Promise<any> => {
           const errMsg = `Embedding ${event.embeddingName} is not valid`;
           console.log(errMsg)
           throw new Error(errMsg)
-        } else {
-          const filterBucket = event.filterBucket || "";
-          const filterKey = event.filterKey || "";
-          const response = await startTrain(
-            event.embeddingName,
-            event.filterBucket,
-            event.filterKey
-          );
-          return { statusCode: 200, body: JSON.stringify(response) };
         }
+        const trainId = su.generate();
+        const messageId = await createMessage(`Begin messages for trainid=${trainId}`);
+        const filterBucket = event.filterBucket || "";
+        const filterKey = event.filterKey || "";
+        const training = {
+          "embeddingName" : event.embeddingName,
+          "trainId" : trainId,
+          "messageId" : messageId,
+          "filterBucket" : filterBucket,
+          "filterKey" : filterKey
+        }
+        const trainingResponse = await createTraining(training);
+        const response = await startTraining(trainId);
+        return { statusCode: 200, body: JSON.stringify(response) };
       } catch (error) {
         return { statusCode: 500, body: JSON.stringify(error) };
       }

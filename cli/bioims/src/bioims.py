@@ -170,7 +170,7 @@ class BioimageSearchClient:
 #
 #############################################
 
-def getResponseBody(response):
+def getResponseBodyAsJson(response):
     if response['StatusCode']>299:
         raise Exception("lambda error")
     stream = response['Payload']
@@ -186,7 +186,12 @@ def getResponseBody(response):
             errMsg = "Error: " + jresponse['body']
             print(errMsg)
             raise Exception(errMsg)
-        return jresponse['body']
+        jbody = jresponse['body']
+        if type(jbody) is str:
+            jvalue = json.loads(jbody)
+        else:
+            jvalue = jbody
+        return jvalue
     else:
         return "";
 
@@ -212,7 +217,7 @@ class ConfigurationClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        return getResponseBody(response)
+        return getResponseBodyAsJson(response)
 
     def getParameter(self, key):
         request = '{{ "method": "getParameter", "key": "{}" }}'.format(key)
@@ -223,7 +228,7 @@ class ConfigurationClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        jbody = getResponseBody(response)
+        jbody = getResponseBodyAsJson(response)
         item =jbody['Item']
         value = item['value']
         return value
@@ -237,7 +242,7 @@ class ConfigurationClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        jbody = getResponseBody(response)
+        jbody = getResponseBodyAsJson(response)
         jvalue = json.loads(jbody)
         d = {}
         for j in jvalue:
@@ -253,7 +258,7 @@ class ConfigurationClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        jbody = getResponseBody(response)
+        jbody = getResponseBodyAsJson(response)
         jvalue = json.loads(jbody)
         a = []
         for j in jvalue:
@@ -272,7 +277,7 @@ class ConfigurationClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        return getResponseBody(response)        
+        return getResponseBodyAsJson(response)        
 
     def setDefaultTrainId(self, value):
         request = '{{ "method": "setDefaultTrainId", "value": "{}" }}'.format(value)
@@ -283,7 +288,7 @@ class ConfigurationClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        return getResponseBody(response)
+        return getResponseBodyAsJson(response)
 
     def deleteParameter(self, key):
         request = '{{ "method": "deleteParameter", "key": "{}" }}'.format(key)
@@ -294,7 +299,7 @@ class ConfigurationClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        return getResponseBody(response)
+        return getResponseBodyAsJson(response)
         
 #############################################
 #
@@ -319,7 +324,7 @@ class LabelClient(BioimageSearchClient):
             InvocationType='Event',
             Payload=payload
             )
-        return getResponseBody(response)
+        return getResponseBodyAsJson(response)
 
     def updateCategoryDescription(self, category, description):
         request = '{{ "method": "updateCategoryDescription", "category": "{}", "description": "{}" }}'.format(category, description)
@@ -330,7 +335,7 @@ class LabelClient(BioimageSearchClient):
             InvocationType='Event',
             Payload=payload
             )
-        return getResponseBody(response)
+        return getResponseBodyAsJson(response)
 
     def deleteCategory(self, category):
         request = '{{ "method": "deleteCategory", "category": "{}" }}'.format(category)
@@ -341,7 +346,7 @@ class LabelClient(BioimageSearchClient):
             InvocationType='Event',
             Payload=payload
             )
-        return getResponseBody(response)
+        return getResponseBodyAsJson(response)
 
     def createLabel(self, category, label):
         request = '{{ "method": "createLabel", "category": "{}", "label": "{}" }}'.format(category, label)
@@ -352,7 +357,7 @@ class LabelClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        jbody = getResponseBody(response)
+        jbody = getResponseBodyAsJson(response)
         jvalue = json.loads(jbody)
         return jvalue['index']
 
@@ -365,7 +370,7 @@ class LabelClient(BioimageSearchClient):
             InvocationType='Event',
             Payload=payload
             )
-        return getResponseBody(response)
+        return getResponseBodyAsJson(response)
 
     def getIndex(self, category, label):
         request = '{{ "method": "getIndex", "category": "{}", "label": "{}" }}'.format(category, label)
@@ -376,7 +381,7 @@ class LabelClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        jbody = getResponseBody(response)
+        jbody = getResponseBodyAsJson(response)
         jvalue = json.loads(jbody)
         return jvalue['index']
 
@@ -389,7 +394,7 @@ class LabelClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        jbody = getResponseBody(response)
+        jbody = getResponseBodyAsJson(response)
         jvalue = json.loads(jbody)
         a = []
         for j in jvalue:
@@ -405,7 +410,7 @@ class LabelClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        jbody = getResponseBody(response)
+        jbody = getResponseBodyAsJson(response)
         jvalue = json.loads(jbody)
         a = []
         for j in jvalue:
@@ -434,7 +439,7 @@ class MessageClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        jbody = getResponseBody(response)
+        jbody = getResponseBodyAsJson(response)
         jvalue = json.loads(jbody)
         item = jvalue['Item']
         return item['detail']
@@ -448,7 +453,7 @@ class MessageClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        jbody = getResponseBody(response)
+        jbody = getResponseBodyAsJson(response)
         jvalue = json.loads(jbody)
         return jvalue['messageId']
 
@@ -461,7 +466,7 @@ class MessageClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        jbody = getResponseBody(response)
+        jbody = getResponseBodyAsJson(response)
         jvalue = json.loads(jbody)
         return jvalue
 
@@ -474,7 +479,7 @@ class MessageClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        return getResponseBody(response)
+        return getResponseBodyAsJson(response)
 
     def addMessage(self, messageId, message):
         request = '{{ "method": "addMessage", "messageId": "{}", "message": "{}" }}'.format(messageId, message)
@@ -485,7 +490,7 @@ class MessageClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        return getResponseBody(response)
+        return getResponseBodyAsJson(response)
         
 #############################################
 #
@@ -571,10 +576,10 @@ class TrainingConfigurationClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        return getResponseBody(response)
+        return getResponseBodyAsJson(response)
 
     def updateTraining(self, train_id, attribute, value):
-        request = '{{ "method": "updateTraining", "train_id": "{}", "attribute": "{}", "value": "{}" }}'.format(train_id, attribute, value)
+        request = '{{ "method": "updateTraining", "trainId": "{}", "attribute": "{}", "value": "{}" }}'.format(train_id, attribute, value)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
@@ -582,10 +587,10 @@ class TrainingConfigurationClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        return getResponseBody(response)
+        return getResponseBodyAsJson(response)
 
     def getTraining(self, train_id):
-        request = '{{ "method": "getTraining", "train_id": "{}" }}'.format(train_id)
+        request = '{{ "method": "getTraining", "trainId": "{}" }}'.format(train_id)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
@@ -593,12 +598,11 @@ class TrainingConfigurationClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        jbody = getResponseBody(response)
-        jvalue = json.loads(jbody)
-        return jvalue['Item']
+        jbody = getResponseBodyAsJson(response)
+        return jbody['Item']
 
     def deleteTraining(self, train_id):
-        request = '{{ "method": "deleteTraining", "train_id": "{}" }}'.format(train_id)
+        request = '{{ "method": "deleteTraining", "trainId": "{}" }}'.format(train_id)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
@@ -606,7 +610,7 @@ class TrainingConfigurationClient(BioimageSearchClient):
             InvocationType='Event',
             Payload=payload
             )
-        return getResponseBody(response)
+        return getResponseBodyAsJson(response)
 
     def createEmbedding(self, embedding):
         embeddingStr = json.dumps(embedding)
@@ -619,10 +623,10 @@ class TrainingConfigurationClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        return getResponseBody(response)
+        return getResponseBodyAsJson(response)
         
     def getEmbeddingInfo(self, name):
-        request = '{{ "method": "getEmbeddingInfo", "name": "{}" }}'.format(name)
+        request = '{{ "method": "getEmbeddingInfo", "embeddingName": "{}" }}'.format(name)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
@@ -630,12 +634,12 @@ class TrainingConfigurationClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        jbody = getResponseBody(response)
+        jbody = getResponseBodyAsJson(response)
         jvalue = json.loads(jbody)
         return jvalue['Item']
         
     def getEmbeddingTrainings(self, name):
-        request = '{{ "method": "getEmbeddingTrainings", "name": "{}" }}'.format(name)
+        request = '{{ "method": "getEmbeddingTrainings", "embeddingName": "{}" }}'.format(name)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
@@ -643,13 +647,13 @@ class TrainingConfigurationClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        jbody = getResponseBody(response)
+        jbody = getResponseBodyAsJson(response)
         jvalue = json.loads(jbody)
         return jvalue
         
 
     def deleteEmbedding(self, name):
-        request = '{{ "method": "deleteEmbedding", "name": "{}" }}'.format(name)
+        request = '{{ "method": "deleteEmbedding", "embeddingName": "{}" }}'.format(name)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
@@ -657,7 +661,7 @@ class TrainingConfigurationClient(BioimageSearchClient):
             InvocationType='Event',
             Payload=payload
             )
-        return getResponseBody(response)
+        return getResponseBodyAsJson(response)
 
 #############################################
 #
@@ -681,7 +685,7 @@ class ArtifactClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        jbody = getResponseBody(response)
+        jbody = getResponseBodyAsJson(response)
         jvalue = json.loads(jbody)
         return jvalue
 
@@ -697,7 +701,7 @@ class ArtifactClient(BioimageSearchClient):
             Payload=payload
             )
         print(response)
-        return getResponseBody(response)
+        return getResponseBodyAsJson(response)
 
     def deleteArtifacts(self, contextId, trainId):
         request = '{{ "method": "deleteArtifacts", "contextId": "{}", "trainId": "{}" }}'.format(contextId, trainId)
@@ -708,7 +712,7 @@ class ArtifactClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        return getResponseBody(response)
+        return getResponseBodyAsJson(response)
 
     def addAnnotation(self, contextId, trainId, artifact, annotation):
         request = '{{ "method": "addAnnotation", "contextId": "{}", "trainId": "{}", "artifact": "{}", "annotation": "{}" }}'.format(contextId, trainId, artifact, annotation)
@@ -719,7 +723,7 @@ class ArtifactClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        return getResponseBody(response)
+        return getResponseBodyAsJson(response)
         
 #############################################
 #
@@ -743,7 +747,7 @@ class ImageManagementClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        jbody = getResponseBody(response)
+        jbody = getResponseBodyAsJson(response)
         jvalue = json.loads(jbody)
         return jvalue
         
@@ -756,7 +760,7 @@ class ImageManagementClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        jbody = getResponseBody(response)
+        jbody = getResponseBodyAsJson(response)
         return jbody
         
     def getPlateImageStatus(self, plateId):
@@ -768,7 +772,7 @@ class ImageManagementClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        jbody = getResponseBody(response)
+        jbody = getResponseBodyAsJson(response)
         return jbody
         
     def createPlateMessageId(self, plateId):
@@ -780,7 +784,7 @@ class ImageManagementClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        jbody = getResponseBody(response)
+        jbody = getResponseBodyAsJson(response)
         return jbody
         
     def getPlateMessageId(self, plateId):
@@ -792,7 +796,7 @@ class ImageManagementClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        jbody = getResponseBody(response)
+        jbody = getResponseBodyAsJson(response)
         return jbody
 
     def validatePlate(self, plateId):
@@ -804,7 +808,7 @@ class ImageManagementClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        jbody = getResponseBody(response)
+        jbody = getResponseBodyAsJson(response)
         return jbody
         
 #############################################
@@ -829,7 +833,7 @@ class ProcessPlateClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        jbody = getResponseBody(response)
+        jbody = getResponseBodyAsJson(response)
         jvalue = json.loads(jbody)
         return jvalue
         
@@ -842,7 +846,7 @@ class ProcessPlateClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        jbody = getResponseBody(response)
+        jbody = getResponseBodyAsJson(response)
         jvalue = json.loads(jbody)
         return jvalue
         
@@ -868,7 +872,7 @@ class TrainClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        jbody = getResponseBody(response)
+        jbody = getResponseBodyAsJson(response)
         jvalue = json.loads(jbody)
         return jvalue
         
