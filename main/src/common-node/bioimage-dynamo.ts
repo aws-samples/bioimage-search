@@ -79,6 +79,7 @@ export const deleteRows = async (
   return db.batchWrite(params).promise();
 }
 
+// SDK version does not seem up to date for db.executeStatement()
 export const getAllExecuteStatement = async (db: any, params: any) => {
   const _getAllData = async (params: any, startToken: any) => {
     if (startToken) {

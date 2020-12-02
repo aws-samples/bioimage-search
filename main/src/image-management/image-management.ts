@@ -518,6 +518,28 @@ async function validatePlate(plateId: any) {
   return await updatePlateStatus(plateId, plateStatus, width, height, depth, channels);
 }
 
+async function listCompatiblePlates(embeddingName: any,
+  width: any,
+  height: any,
+  depth: any,
+  channels: any) {
+
+    const params = {
+      TableName: TABLE_NAME,
+      ScanFilter: {
+        "imageId" : {
+          ComparisonOperator: 'BEGINS_WITH',
+          AttributeValueList: [
+            "plate"
+          ]
+        }
+      }
+    };
+    
+    const rows = await dy.getAllScanData(db, params);
+    return rows;
+  }
+
 /////////////////////////////////////////////////
 
 export const handler = async (event: any = {}): Promise<any> => {
@@ -628,6 +650,36 @@ export const handler = async (event: any = {}): Promise<any> => {
         const response = await validatePlate(event.plateId);
         return { statusCode: 200, body: response };
       } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
+    } else {
+      return {
+        statusCode: 400,
+        body: `Error: plateId required`,
+      };
+    }
+  }
+  
+  else if (event.method === "listCompatiblePlates") {
+    console.log("Check0")
+    if (event.embeddingName &&
+        event.width &&
+        event.height &&
+        event.depth &&
+        event.channels) {
+          console.log("Check1")
+      try {
+        const response = await listCompatiblePlates(event.embeddingName,
+        event.width,
+        event.height,
+        event.depth,
+        event.channels);
+        console.log("Check2 response=");
+        console.log(response);
+        return { statusCode: 200, body: response };
+      } catch (dbError) {
+        console.log("Check3 dbError=");
+        console.log(dbError);
         return { statusCode: 500, body: JSON.stringify(dbError) };
       }
     } else {

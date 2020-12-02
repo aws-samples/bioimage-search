@@ -5,6 +5,9 @@ export const getResponseBody = (response: any) => {
     if (payload.statusCode > 299) {
         throw new Error("lambda error")
     };
-    const bodyObj = JSON.parse(payload.body)
+    let bodyObj = payload.body
+    if (typeof payload.body == 'string') {
+        bodyObj = JSON.parse(payload.body)
+    }
     return bodyObj
 }

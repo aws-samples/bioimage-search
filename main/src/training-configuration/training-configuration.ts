@@ -303,7 +303,8 @@ export const handler = async (event: any = {}): Promise<any> => {
       if (event.trainId) {
         try {
           const response = await getTraining(event.trainId)
-          return { statusCode: 200, body: response };
+          const item = response.Item;
+          return { statusCode: 200, body: item };
         } catch (dbError) {
           return { statusCode: 500, body: JSON.stringify(dbError) };
         }
@@ -373,7 +374,7 @@ export const handler = async (event: any = {}): Promise<any> => {
     if (event.embeddingName) {
       try {
         const response = await getEmbeddingInfo(event.embeddingName);
-        return { statusCode: 200, body: JSON.stringify(response) };
+        return { statusCode: 200, body: response };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };
       }

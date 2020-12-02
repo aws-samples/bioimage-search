@@ -32,7 +32,7 @@ export class TrainStack extends cdk.Stack {
     //
     ///////////////////////////////////////////
 
-    const trainInfoRequestParameters = new sfn.Pass(this, "Train Info Request Parameters", {
+    const trainInfoRequest = new sfn.Pass(this, "Train Info Request", {
       parameters: {
         method: "getTraining",
         trainId: sfn.JsonPath.stringAt("$.trainId"),
@@ -40,14 +40,42 @@ export class TrainStack extends cdk.Stack {
       resultPath: '$.trainInfoRequest'
     });
 
-    const trainInfoRequest = new tasks.LambdaInvoke(this, "Train Info Request", {
+    const trainInfo = new tasks.LambdaInvoke(this, "Train Info", {
       lambdaFunction: props.trainingConfigurationLambda,
-      outputPath: sfn.JsonPath.stringAt('$.Payload.body'),
-      inputPath: '$.trainInfoRequest'
+      resultPath: sfn.JsonPath.stringAt('$.trainInfo'),
+      inputPath: '$.trainInfoRequest',
+    });
+    
+    const embeddingInfoRequest = new sfn.Pass(this, "Embedding Info Request", {
+      parameters: {
+        method: "getEmbeddingInfo",
+        embeddingName: sfn.JsonPath.stringAt('$.trainInfo.Payload.body.embeddingName')
+      },
+      resultPath: '$.embeddingInfoRequest'
+    })
+    
+    const embeddingInfo = new tasks.LambdaInvoke(this, "Embedding Info", {
+      lambdaFunction: props.trainingConfigurationLambda,
+      resultPath: sfn.JsonPath.stringAt('$.embeddingInfo'),
+      inputPath: '$.embeddingInfoRequest',
     });
 
-    const trainStepFunctionDef = trainInfoRequestParameters
-      .next(trainInfoRequest)
+    const plateSurveyRequest = new sfn.Pass(this, "Plate Survey Request", {
+      parameters: {
+        method: "listCompatiblePlates",
+        width: sfn.JsonPath.stringAt('$.embeddingInfo.Payload.body.Item.inputWidth'),
+        height: sfn.JsonPath.stringAt('$.embeddingInfo.Payload.body.Item.inputHeight'),
+        depth: sfn.JsonPath.stringAt('$.embeddingInfo.Payload.body.Item.inputDepth'),
+        channels: sfn.JsonPath.stringAt('$.embeddingInfo.Payload.body.Item.inputChannels')
+      },
+      resultPath: '$.plateSurveyRequest'
+    })
+
+    const trainStepFunctionDef = trainInfoRequest
+      .next(trainInfo)
+      .next(embeddingInfoRequest)
+      .next(embeddingInfo)
+      .next(plateSurveyRequest)      
 
     const trainLogGroup = new logs.LogGroup(this, "TrainLogGroup");
 

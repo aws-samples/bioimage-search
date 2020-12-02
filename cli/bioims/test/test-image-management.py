@@ -88,8 +88,12 @@ imageManagementClient = bioims.client('image-management')
 
 ##################################################
 
-plateId = 'edZqhahFK8cWqvyJsot4zW'
+#plateId = 'edZqhahFK8cWqvyJsot4zW'
 
-r = imageManagementClient.validatePlate(plateId)
+#r = imageManagementClient.validatePlate(plateId)
+
+#print(r)
+
+r = imageManagementClient.listCompatiblePlates('bbbc021', 1024, 1280, 1, 3)
 
 print(r)

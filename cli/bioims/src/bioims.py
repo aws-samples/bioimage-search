@@ -635,8 +635,7 @@ class TrainingConfigurationClient(BioimageSearchClient):
             Payload=payload
             )
         jbody = getResponseBodyAsJson(response)
-        jvalue = json.loads(jbody)
-        return jvalue['Item']
+        return jbody['Item']
         
     def getEmbeddingTrainings(self, name):
         request = '{{ "method": "getEmbeddingTrainings", "embeddingName": "{}" }}'.format(name)
@@ -811,6 +810,19 @@ class ImageManagementClient(BioimageSearchClient):
         jbody = getResponseBodyAsJson(response)
         return jbody
         
+    def listCompatiblePlates(self, embeddingName, width, height, depth, channels):
+        request = '{{ "method": "listCompatiblePlates", "embeddingName": "{}", "width": "{}", "height": "{}", "depth": "{}", "channels": "{}" }}'.format(embeddingName, width, height, depth, channels);
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self.getLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        jbody = getResponseBodyAsJson(response)
+        return jbody
+        
+        
 #############################################
 #
 # PROCESS PLATE
@@ -873,6 +885,5 @@ class TrainClient(BioimageSearchClient):
             Payload=payload
             )
         jbody = getResponseBodyAsJson(response)
-        jvalue = json.loads(jbody)
-        return jvalue
+        return jbody
         
