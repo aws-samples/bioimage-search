@@ -94,6 +94,6 @@ imageManagementClient = bioims.client('image-management')
 
 #print(r)
 
-r = imageManagementClient.listCompatiblePlates('bbbc021', 1024, 1280, 1, 3)
+r = imageManagementClient.listCompatiblePlates('bbbc021', 1280, 1024, 1, 3)
 
 print(r)

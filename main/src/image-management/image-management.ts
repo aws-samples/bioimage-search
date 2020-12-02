@@ -523,18 +523,29 @@ async function listCompatiblePlates(embeddingName: any,
   height: any,
   depth: any,
   channels: any) {
-
+    
     const params = {
       TableName: TABLE_NAME,
-      ScanFilter: {
-        "imageId" : {
-          ComparisonOperator: 'BEGINS_WITH',
-          AttributeValueList: [
-            "plate"
-          ]
-        }
+      
+      FilterExpression: "begins_with(#im, :pv) and #w = :wv and #h = :hv and #d = :dv and #c = :cv",
+      ExpressionAttributeNames: {
+        "#im": [PARTITION_KEY_IMGID],
+        "#w": [WIDTH_ATTRIBUTE],
+        "#h": [HEIGHT_ATTRIBUTE],
+        "#d": [DEPTH_ATTRIBUTE],
+        "#c": [CHANNELS_ATTRIBUTE]
+      },
+      ExpressionAttributeValues: {
+        ":pv": "plate#",
+        ":wv": width,
+        ":hv": height,
+        ":dv": depth,
+        ":cv": channels
       }
+
     };
+    
+    console.log(params);
     
     const rows = await dy.getAllScanData(db, params);
     return rows;
