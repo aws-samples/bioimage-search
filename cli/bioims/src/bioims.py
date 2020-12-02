@@ -810,8 +810,8 @@ class ImageManagementClient(BioimageSearchClient):
         jbody = getResponseBodyAsJson(response)
         return jbody
         
-    def listCompatiblePlates(self, embeddingName, width, height, depth, channels):
-        request = '{{ "method": "listCompatiblePlates", "embeddingName": "{}", "width": "{}", "height": "{}", "depth": "{}", "channels": "{}" }}'.format(embeddingName, width, height, depth, channels);
+    def listCompatiblePlates(self, width, height, depth, channels):
+        request = '{{ "method": "listCompatiblePlates", "width": {}, "height": {}, "depth": {}, "channels": {} }}'.format(width, height, depth, channels);
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(

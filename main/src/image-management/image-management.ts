@@ -518,11 +518,16 @@ async function validatePlate(plateId: any) {
   return await updatePlateStatus(plateId, plateStatus, width, height, depth, channels);
 }
 
-async function listCompatiblePlates(embeddingName: any,
-  width: any,
-  height: any,
-  depth: any,
-  channels: any) {
+async function listCompatiblePlates(
+  width: number,
+  height: number,
+  depth: number,
+  channels: number) {
+    
+    const widthStr:string    = width.toString();
+    const heightStr:string   = height.toString();
+    const depthStr:string    = depth.toString();
+    const channelsStr:string = channels.toString();
     
     const params = {
       TableName: TABLE_NAME,
@@ -537,10 +542,10 @@ async function listCompatiblePlates(embeddingName: any,
       },
       ExpressionAttributeValues: {
         ":pv": "plate#",
-        ":wv": width,
-        ":hv": height,
-        ":dv": depth,
-        ":cv": channels
+        ":wv": widthStr,
+        ":hv": heightStr,
+        ":dv": depthStr,
+        ":cv": channelsStr
       }
 
     };
@@ -548,7 +553,15 @@ async function listCompatiblePlates(embeddingName: any,
     console.log(params);
     
     const rows = await dy.getAllScanData(db, params);
-    return rows;
+    
+    let plateList: any[] = [];
+    
+    for (let row of rows) {
+      const imageId = row[PARTITION_KEY_IMGID];
+      const plateId = imageId.substr(6);
+      plateList.push(plateId);
+    }
+    return plateList;
   }
 
 /////////////////////////////////////////////////
@@ -672,31 +685,26 @@ export const handler = async (event: any = {}): Promise<any> => {
   }
   
   else if (event.method === "listCompatiblePlates") {
-    console.log("Check0")
-    if (event.embeddingName &&
-        event.width &&
+    if (event.width &&
         event.height &&
         event.depth &&
         event.channels) {
-          console.log("Check1")
       try {
-        const response = await listCompatiblePlates(event.embeddingName,
+        const response = await listCompatiblePlates(
         event.width,
         event.height,
         event.depth,
         event.channels);
-        console.log("Check2 response=");
         console.log(response);
         return { statusCode: 200, body: response };
       } catch (dbError) {
-        console.log("Check3 dbError=");
         console.log(dbError);
         return { statusCode: 500, body: JSON.stringify(dbError) };
       }
     } else {
       return {
         statusCode: 400,
-        body: `Error: plateId required`,
+        body: `Error: embeddingName, width, height, depth, channels required`,
       };
     }
   }

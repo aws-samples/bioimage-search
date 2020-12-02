@@ -70,12 +70,19 @@ export class TrainStack extends cdk.Stack {
       },
       resultPath: '$.plateSurveyRequest'
     })
+    
+    const plateList = new tasks.LambdaInvoke(this, "Plate List", {
+      lambdaFunction: props.imageManagementLambda,
+      resultPath: sfn.JsonPath.stringAt('$.plateList'),
+      inputPath: '$.plateSurveyRequest'
+    });
 
     const trainStepFunctionDef = trainInfoRequest
       .next(trainInfo)
       .next(embeddingInfoRequest)
       .next(embeddingInfo)
-      .next(plateSurveyRequest)      
+      .next(plateSurveyRequest)
+      .next(plateList)
 
     const trainLogGroup = new logs.LogGroup(this, "TrainLogGroup");
 
