@@ -115,24 +115,22 @@ export class ProcessPlateStack extends cdk.Stack {
     //
     ///////////////////////////////////////////
     
-    const plateFormat2 = new sfn.Pass(this, "Plate Format 2", {
+    const plateValidatorInputPP = new sfn.Pass(this, "Plate Validator Input PP", {
       parameters: {
-        method: "getImagesByPlateId",
-        plateId: sfn.JsonPath.stringAt("$.plateId"),
+        method: "validatePlate",
+        plateId: sfn.JsonPath.stringAt("$.plateId")
       },
+      resultPath: '$.validatorInput',
     });
-
-    const plateToImages2 = new tasks.LambdaInvoke(this, "Plate To Images 2", {
+    
+    const plateValidatorPP = new tasks.LambdaInvoke(this, "Plate Validator PP", {
       lambdaFunction: props.imageManagementLambda,
+      inputPath: '$.validatorInput',
+      resultPath: '$.plateStatus'
     });
 
-    const plateValidationParams = sfn.TaskInput.fromObject( {
-      method: "validatePlate",
-      plateId: sfn.JsonPath.stringAt("$.plateId"),
-    });
-
-    const processPlateStepFunctionDef = plateFormat2
-      .next(plateToImages2)
+    const processPlateStepFunctionDef = plateValidatorInputPP
+      .next(plateValidatorPP)
 
     const logGroup = new logs.LogGroup(this, "ProcessPlateLogGroup");
 
@@ -141,7 +139,7 @@ export class ProcessPlateStack extends cdk.Stack {
       "Process Plate StateMachine",
       {
         definition: processPlateStepFunctionDef,
-        timeout: cdk.Duration.minutes(3),
+        timeout: cdk.Duration.minutes(360),
         logs: {
           destination: logGroup,
           level: sfn.LogLevel.ALL,

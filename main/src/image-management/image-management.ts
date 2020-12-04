@@ -515,7 +515,8 @@ async function validatePlate(plateId: any) {
     }
   }
   
-  return await updatePlateStatus(plateId, plateStatus, width, height, depth, channels);
+  await updatePlateStatus(plateId, plateStatus, width, height, depth, channels);
+  return plateStatus;
 }
 
 async function listCompatiblePlates(
