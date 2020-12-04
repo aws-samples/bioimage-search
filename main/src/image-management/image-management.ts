@@ -559,7 +559,10 @@ async function listCompatiblePlates(
     for (let row of rows) {
       const imageId = row[PARTITION_KEY_IMGID];
       const plateId = imageId.substr(6);
-      plateList.push(plateId);
+      const item = {
+        "plateId" : plateId
+      }
+      plateList.push(item);
     }
     return plateList;
   }

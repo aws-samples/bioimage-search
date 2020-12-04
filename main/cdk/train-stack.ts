@@ -17,6 +17,7 @@ export interface TrainStackProps extends cdk.StackProps {
   messageLambda: lambda.Function;
   imageManagementLambda: lambda.Function;
   trainingConfigurationLambda: lambda.Function;
+  processPlateLambda: lambda.Function;
 }
 
 export class TrainStack extends cdk.Stack {
@@ -76,6 +77,23 @@ export class TrainStack extends cdk.Stack {
       resultPath: sfn.JsonPath.stringAt('$.plateList'),
       inputPath: '$.plateSurveyRequest'
     });
+    
+    const plateProcessor = new tasks.LambdaInvoke(this, "Process Plate", {
+      lambdaFunction: props.processPlateLambda,
+      outputPath: '$.Payload'
+    });
+
+    const plateProcessMap = new sfn.Map(this, "Plate Process Map", {
+      maxConcurrency: 0,
+      itemsPath: '$.plateList.Payload.body',
+      resultPath: '$.plateProcessMapResult',
+      parameters: {
+        method: "processPlate",
+        embeddingName: sfn.JsonPath.stringAt('$.trainInfo.Payload.body.embeddingName'),
+        'plateId.$' : "$$.Map.Item.Value.plateId"
+      }
+    });
+    plateProcessMap.iterator(plateProcessor);
 
     const trainStepFunctionDef = trainInfoRequest
       .next(trainInfo)
@@ -83,6 +101,7 @@ export class TrainStack extends cdk.Stack {
       .next(embeddingInfo)
       .next(plateSurveyRequest)
       .next(plateList)
+      .next(plateProcessMap)
 
     const trainLogGroup = new logs.LogGroup(this, "TrainLogGroup");
 

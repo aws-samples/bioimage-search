@@ -45,7 +45,7 @@ export class ProcessPlateStack extends cdk.Stack {
     
     ///////////////////////////////////////////
     //
-    // UploadSourcePlate StepFunction
+    // UploadSourcePlate State Machine
     //
     ///////////////////////////////////////////
 
@@ -111,9 +111,7 @@ export class ProcessPlateStack extends cdk.Stack {
 
     ///////////////////////////////////////////
     //
-    // PlateProcessing StepFunction
-    //
-    //.    this is called with a specific trainId
+    // Process Plate State Machine
     //
     ///////////////////////////////////////////
     
@@ -133,15 +131,8 @@ export class ProcessPlateStack extends cdk.Stack {
       plateId: sfn.JsonPath.stringAt("$.plateId"),
     });
 
-    // This needs to do an Embedding compatibility check    
-    // const plateValidator = new tasks.LambdaInvoke(this, "Plate Validator", {
-    //   lambdaFunction: props.imageManagementLambda,
-    //   payload: plateValidationParams,
-    // });
-
     const processPlateStepFunctionDef = plateFormat2
       .next(plateToImages2)
-//      .next(plateValidator)
 
     const logGroup = new logs.LogGroup(this, "ProcessPlateLogGroup");
 

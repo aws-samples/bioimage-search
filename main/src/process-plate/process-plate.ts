@@ -24,9 +24,9 @@ async function startUploadSourcePlate(plateId: string) {
   return response;
 }
 
-async function startProcessPlate(plateId: string) {
-  const executionName = "ProcessPlate-" + plateId + "-" + su.generate();
-  const inputStr = `{ "plateId" : \"${plateId}\" }`;
+async function startProcessPlate(plateId: string, embeddingName: string) {
+  const executionName = "ProcessPlate-" + plateId + "-" + embeddingName + "-" + su.generate();
+  const inputStr = `{ "plateId" : \"${plateId}\", "embeddingName" : \"${embeddingName}\" }`;
   console.log("inputStr=", inputStr);
   var params = {
     stateMachineArn: PROCESS_PLATE_SFN_ARN,
@@ -84,9 +84,9 @@ export const handler = async (event: any = {}): Promise<any> => {
       };
     }
   } else if (event.method === "processPlate") {
-    if (event.plateId) {
+    if (event.plateId && event.embeddingName) {
       try {
-        const response = await startProcessPlate(event.plateId);
+        const response = await startProcessPlate(event.plateId, event.embeddingName);
         return { statusCode: 200, body: JSON.stringify(response) };
       } catch (error) {
         return { statusCode: 500, body: JSON.stringify(error) };

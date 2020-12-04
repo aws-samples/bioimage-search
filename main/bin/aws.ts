@@ -78,6 +78,7 @@ const trainStack = new TrainStack(app, 'BioimageSearchTrainStack', {
     messageLambda: messageStack.messageLambda,
     imageManagementLambda: imageManagementStack.imageManagementLambda,
     trainingConfigurationLambda: trainingConfigurationStack.trainingConfigurationLambda,
+    processPlateLambda: processPlateStack.processPlateLambda
 })
 
 const resourcePermissionsStack = new ResourcePermissionsStack(app, 'BioimageSearchResourcePermissionsStack', {
