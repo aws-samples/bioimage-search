@@ -157,6 +157,25 @@ export class ProcessPlateStack extends cdk.Stack {
       inputPath: '$.validatorInput',
       resultPath: '$.plateStatus'
     });
+    
+    const plateValidationFailed = new sfn.Fail(this, 'Plate Validation Failed', {
+      cause: 'Plate Validation Failed',
+      error: 'Plate Validation Failed',
+    });
+    
+    const choiceTest1 = new sfn.Pass(this, "Choice Test1", {
+      parameters: {
+        test: "success1"
+      },
+      resultPath: '$.choiceTestResult1'
+    });
+
+    const choiceTest2 = new sfn.Pass(this, "Choice Test2", {
+      parameters: {
+        test: "success2"
+      },
+      resultPath: '$.choiceTestResult2'
+    });
 
     const processPlateStepFunctionDef = plateMessageInput
       .next(getPlateMessage)
@@ -164,6 +183,11 @@ export class ProcessPlateStack extends cdk.Stack {
       .next(startMessage)
       .next(plateValidatorInputPP)
       .next(plateValidatorPP)
+      .next(new sfn.Choice(this, 'Validation Check')
+        .when(sfn.Condition.not(sfn.Condition.stringEquals('$.plateStatus.Payload.body', 'VALIDATED')), plateValidationFailed)
+        .otherwise(choiceTest1)
+        .afterwards())
+      .next(choiceTest2)
 
     const logGroup = new logs.LogGroup(this, "ProcessPlateLogGroup");
 

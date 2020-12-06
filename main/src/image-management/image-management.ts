@@ -482,7 +482,9 @@ async function validatePlate(plateId: any) {
   } else if (plateImageStatus[SR_VALIDATED]>0) {
     plateStatus = SR_VALIDATED;
   } else if (plateImageStatus[SR_READY]>0) {
-    plateStatus = SR_READY;
+    // NOTE: a plate may participate in multiple embeddings, therefore it can only reach
+    // 'VALIDATED' and never 'READY'
+    plateStatus = SR_VALIDATED;;
   }
   
   let height = 0
