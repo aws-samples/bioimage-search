@@ -177,7 +177,10 @@ def getResponseBodyAsJson(response):
     bStrResponse = stream.read()
     strResponse = bStrResponse.decode("utf-8")
     if strResponse:
-        jresponse = json.loads(strResponse)
+        try:
+            jresponse = json.loads(strResponse)
+        except:
+            return strResponse
         if "statusCode" not in jresponse:
             errMsg = "Missing statusCode - message: " + strResponse
             raise Exception(errMsg)
@@ -188,12 +191,15 @@ def getResponseBodyAsJson(response):
             raise Exception(errMsg)
         jbody = jresponse['body']
         if type(jbody) is str:
-            jvalue = json.loads(jbody)
+            try:
+                jvalue = json.loads(jbody)
+            except:
+                return jbody
         else:
             jvalue = jbody
         return jvalue
     else:
-        return "";
+        return "{}";
 
 #############################################
 #

@@ -192,7 +192,7 @@ export const handler = async (event: any = {}): Promise<any> => {
     if (event.messageId && event.message) {
       try {
         const response = await addMessage(event.messageId, event.message);
-        return { statusCode: 200, body: JSON.stringify(response) };
+        return { statusCode: 200, body: response };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };
       }

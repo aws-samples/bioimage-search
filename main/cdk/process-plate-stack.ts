@@ -114,7 +114,36 @@ export class ProcessPlateStack extends cdk.Stack {
     // Process Plate State Machine
     //
     ///////////////////////////////////////////
+
+    const plateMessageInput = new sfn.Pass(this, "Plate Message Input", {
+      parameters: {
+        method: "getPlateMessageId",
+        plateId: sfn.JsonPath.stringAt("$.plateId")
+      },
+      resultPath: '$.plateMessageInput',
+    });
     
+    const getPlateMessage = new tasks.LambdaInvoke(this, "Get Plate Message", {
+      lambdaFunction: props.imageManagementLambda,
+      inputPath: '$.plateMessageInput',
+      resultPath: '$.plateMessageId'
+    });
+
+    const startMessageInput = new sfn.Pass(this, "Start Message Input", {
+      parameters: {
+        method: "addMessage",
+        messageId: sfn.JsonPath.stringAt("$.plateMessageId.Payload.body"),
+        message: "Process Plate Start" 
+      },
+      resultPath: '$.startMessageInput'
+    });
+    
+    const startMessage = new tasks.LambdaInvoke(this, "Start Message", {
+      lambdaFunction: props.messageLambda,
+      inputPath: '$.startMessageInput',
+      resultPath: '$.startMessageOutput'
+    });
+
     const plateValidatorInputPP = new sfn.Pass(this, "Plate Validator Input PP", {
       parameters: {
         method: "validatePlate",
@@ -129,7 +158,11 @@ export class ProcessPlateStack extends cdk.Stack {
       resultPath: '$.plateStatus'
     });
 
-    const processPlateStepFunctionDef = plateValidatorInputPP
+    const processPlateStepFunctionDef = plateMessageInput
+      .next(getPlateMessage)
+      .next(startMessageInput)
+      .next(startMessage)
+      .next(plateValidatorInputPP)
       .next(plateValidatorPP)
 
     const logGroup = new logs.LogGroup(this, "ProcessPlateLogGroup");

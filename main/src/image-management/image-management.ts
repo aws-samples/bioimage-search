@@ -146,7 +146,7 @@ async function getPlateMessageId(plateId: any) {
       [SORT_KEY_TRNID]: ORIGIN,
     },
   };
-  const row = db.get(params).promise();
+  const row = await db.get(params).promise();
   if ('Item' in row) {
     if (MESSAGE_ID_ATTRIBUTE in row['Item']) {
       return row['Item'][MESSAGE_ID_ATTRIBUTE]
