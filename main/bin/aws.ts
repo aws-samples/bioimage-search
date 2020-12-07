@@ -72,7 +72,8 @@ const imageManagementStack = new ImageManagementStack(app, 'BioimageSearchImageM
 const processPlateStack = new ProcessPlateStack(app, 'BioimageSearchProcessPlateStack', {
     messageLambda: messageStack.messageLambda,
     imageManagementLambda: imageManagementStack.imageManagementLambda,
-    trainingConfigurationLambda: trainingConfigurationStack.trainingConfigurationLambda
+    trainingConfigurationLambda: trainingConfigurationStack.trainingConfigurationLambda,
+    batchSpotQueue: batchSetupStack.batchSpotQueue
 })
 
 const trainStack = new TrainStack(app, 'BioimageSearchTrainStack', {

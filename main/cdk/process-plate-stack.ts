@@ -12,11 +12,13 @@ import cdk = require("@aws-cdk/core");
 import * as sfn from "@aws-cdk/aws-stepfunctions";
 import * as tasks from "@aws-cdk/aws-stepfunctions-tasks";
 import * as logs from "@aws-cdk/aws-logs";
+import batch = require("@aws-cdk/aws-batch");
 
 export interface ProcessPlateStackProps extends cdk.StackProps {
   messageLambda: lambda.Function;
   imageManagementLambda: lambda.Function;
   trainingConfigurationLambda: lambda.Function;
+  batchSpotQueue: batch.JobQueue;
 }
 
 export class ProcessPlateStack extends cdk.Stack {
@@ -220,8 +222,7 @@ export class ProcessPlateStack extends cdk.Stack {
       resultPath: '$.endpointStep'
     });
     
-    const plateBatchMessage = this.createSfnMessage("PlateBatch", "Initializing Plate Batch Job");
-    const plateLambdaMessage = this. createSfnMessage("PlateLambda", "Initializing Plate Lambda Job");
+    const processPlateLambda = this. createSfnMessage("PlateLambda", "Placeholder Plate Lambda Job");
     
     const plateArnFailureMessage = this.createSfnMessage("PlateArnFailureMessage", "Plate Arn Method Failed");
     
@@ -231,6 +232,21 @@ export class ProcessPlateStack extends cdk.Stack {
     });
     
     const plateArnFailure = plateArnFailureMessage.next(plateArnFailed);
+    
+    const processPlateBatch = new tasks.BatchSubmitJob (this, "PlateBatchJob", {
+      jobDefinition: batch.JobDefinition.fromJobDefinitionArn(this, "PlateBatchJobDefArn", sfn.JsonPath.stringAt('$.embeddingInfo.Payload.body.Item.plateMethodArn')),
+      jobName: sfn.JsonPath.stringAt('$.plateId'),
+      jobQueue: props.batchSpotQueue,
+      payload: {
+        type: sfn.InputType.OBJECT,
+        value: {
+          plateIdArg: '--plateId',
+          plateId: sfn.JsonPath.stringAt('$.plateId'),
+          embeddingNameArg: '--embeddingName',
+          embeddingName: sfn.JsonPath.stringAt('$.embeddingName')
+        }
+      }
+    });
 
     // Example Arns
     // arn:aws:lambda:us-east-1:580829821648:function:BioimageSearchLabelStack-labelFunction58A4020A-1TEZ4YLWTTXDH
@@ -248,8 +264,8 @@ export class ProcessPlateStack extends cdk.Stack {
       .next(embeddingInfoRequest)
       .next(embeddingInfo)
       .next(new sfn.Choice(this, "Plate Arn Service")
-        .when(sfn.Condition.stringMatches('$.embeddingInfo.Payload.body.Item.plateMethodArn', "arn:aws:lambda:*"), plateLambdaMessage)
-        .when(sfn.Condition.stringMatches('$.embeddingInfo.Payload.body.Item.plateMethodArn', "arn:aws:batch:*"), plateBatchMessage)
+        .when(sfn.Condition.stringMatches('$.embeddingInfo.Payload.body.Item.plateMethodArn', "arn:aws:lambda:*"), processPlateLambda)
+        .when(sfn.Condition.stringMatches('$.embeddingInfo.Payload.body.Item.plateMethodArn', "arn:aws:batch:*"), processPlateBatch)
         .otherwise(plateArnFailure)
         .afterwards())
       .next(endpointStep)
