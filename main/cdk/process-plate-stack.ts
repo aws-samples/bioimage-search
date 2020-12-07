@@ -16,6 +16,7 @@ import * as logs from "@aws-cdk/aws-logs";
 export interface ProcessPlateStackProps extends cdk.StackProps {
   messageLambda: lambda.Function;
   imageManagementLambda: lambda.Function;
+  trainingConfigurationLambda: lambda.Function;
 }
 
 export class ProcessPlateStack extends cdk.Stack {
@@ -187,23 +188,53 @@ export class ProcessPlateStack extends cdk.Stack {
       resultPath: '$.plateStatus'
     });
     
-    const failureMessage = this.createSfnMessage("FailureMessage", "Plate Validation Failed");
+    const validationFailureMessage = this.createSfnMessage("PlateValidationFailureMessage", "Plate Validation Failed");
     
     const plateValidationFailed = new sfn.Fail(this, 'Plate Validation Failed', {
       cause: 'Plate Validation Failed',
       error: 'Plate Validation Failed',
     });
     
-    const validationFailure = failureMessage.next(plateValidationFailed);
+    const validationFailure = validationFailureMessage.next(plateValidationFailed);
     
     const validationSucceededMessage = this.createSfnMessage("ValidationSucceeded", "Plate Validation Succeeded");
     
-    const choiceTest2 = new sfn.Pass(this, "Choice Test2", {
+    const embeddingInfoRequest = new sfn.Pass(this, "Embedding Info Request", {
       parameters: {
-        test: "success2"
+        method: "getEmbeddingInfo",
+        embeddingName: sfn.JsonPath.stringAt('$.embeddingName')
       },
-      resultPath: '$.choiceTestResult2'
+      resultPath: '$.embeddingInfoRequest'
+    })
+    
+    const embeddingInfo = new tasks.LambdaInvoke(this, "Embedding Info", {
+      lambdaFunction: props.trainingConfigurationLambda,
+      resultPath: sfn.JsonPath.stringAt('$.embeddingInfo'),
+      inputPath: '$.embeddingInfoRequest',
     });
+
+    const endpointStep = new sfn.Pass(this, "Endpoint Step", {
+      parameters: {
+        test: "success"
+      },
+      resultPath: '$.endpointStep'
+    });
+    
+    const plateBatchMessage = this.createSfnMessage("PlateBatch", "Initializing Plate Batch Job");
+    const plateLambdaMessage = this. createSfnMessage("PlateLambda", "Initializing Plate Lambda Job");
+    
+    const plateArnFailureMessage = this.createSfnMessage("PlateArnFailureMessage", "Plate Arn Method Failed");
+    
+    const plateArnFailed = new sfn.Fail(this, 'Plate Arn Failed', {
+      cause: 'Plate Arn Failed',
+      error: 'Plate Arn Failed',
+    });
+    
+    const plateArnFailure = plateArnFailureMessage.next(plateArnFailed);
+
+    // Example Arns
+    // arn:aws:lambda:us-east-1:580829821648:function:BioimageSearchLabelStack-labelFunction58A4020A-1TEZ4YLWTTXDH
+    // arn:aws:batch:us-east-1:580829821648:job-definition/platepreprocessingjobde-614a2d2923fd2c7:1
 
     const processPlateStepFunctionDef = plateMessageInput
       .next(getPlateMessage)
@@ -214,7 +245,14 @@ export class ProcessPlateStack extends cdk.Stack {
         .when(sfn.Condition.not(sfn.Condition.stringEquals('$.plateStatus.Payload.body', 'VALIDATED')), validationFailure)
         .otherwise(validationSucceededMessage)
         .afterwards())
-      .next(choiceTest2)
+      .next(embeddingInfoRequest)
+      .next(embeddingInfo)
+      .next(new sfn.Choice(this, "Plate Arn Service")
+        .when(sfn.Condition.stringMatches('$.embeddingInfo.Payload.body.Item.plateMethodArn', "arn:aws:lambda:*"), plateLambdaMessage)
+        .when(sfn.Condition.stringMatches('$.embeddingInfo.Payload.body.Item.plateMethodArn', "arn:aws:batch:*"), plateBatchMessage)
+        .otherwise(plateArnFailure)
+        .afterwards())
+      .next(endpointStep)
 
     const logGroup = new logs.LogGroup(this, "ProcessPlateLogGroup");
 
