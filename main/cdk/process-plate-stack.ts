@@ -23,9 +23,35 @@ export class ProcessPlateStack extends cdk.Stack {
   public processPlateLambda: lambda.Function;
   public uploadSourcePlateStateMachine: sfn.StateMachine;
   public processPlateStateMachine: sfn.StateMachine;
+  
+  private messageLambda: lambda.Function;
+  
+  createSfnMessage(messageName: any, messageContent:any) {
+    const inputName = messageName + "Input"
+    const outputName = messageName + "Output"
+    const inputPath = '$.' + inputName
+    const outputPath = '$.' + outputName
+    const messageInput = new sfn.Pass(this, inputName, {
+      parameters: {
+        method: "addMessage",
+        messageId: sfn.JsonPath.stringAt("$.plateMessageId.Payload.body"),
+        message: messageContent
+      },
+      resultPath: inputPath
+    })
+    const message = new tasks.LambdaInvoke(this, messageName, {
+      lambdaFunction: this.messageLambda,
+      inputPath: inputPath,
+      resultPath: outputPath
+    });
+    return messageInput.next(message);
+  }
+
 
   constructor(app: cdk.App, id: string, props: ProcessPlateStackProps) {
     super(app, id, props);
+    
+    this.messageLambda = props.messageLambda
 
     this.imageInspectorLambda = new lambda.Function(
       this,
@@ -114,6 +140,7 @@ export class ProcessPlateStack extends cdk.Stack {
     // Process Plate State Machine
     //
     ///////////////////////////////////////////
+    
 
     const plateMessageInput = new sfn.Pass(this, "Plate Message Input", {
       parameters: {
@@ -129,20 +156,22 @@ export class ProcessPlateStack extends cdk.Stack {
       resultPath: '$.plateMessageId'
     });
 
-    const startMessageInput = new sfn.Pass(this, "Start Message Input", {
-      parameters: {
-        method: "addMessage",
-        messageId: sfn.JsonPath.stringAt("$.plateMessageId.Payload.body"),
-        message: "Process Plate Start" 
-      },
-      resultPath: '$.startMessageInput'
-    });
+    // const startMessageInput = new sfn.Pass(this, "Start Message Input", {
+    //   parameters: {
+    //     method: "addMessage",
+    //     messageId: sfn.JsonPath.stringAt("$.plateMessageId.Payload.body"),
+    //     message: "Process Plate Start" 
+    //   },
+    //   resultPath: '$.startMessageInput'
+    // });
     
-    const startMessage = new tasks.LambdaInvoke(this, "Start Message", {
-      lambdaFunction: props.messageLambda,
-      inputPath: '$.startMessageInput',
-      resultPath: '$.startMessageOutput'
-    });
+    // const startMessage = new tasks.LambdaInvoke(this, "Start Message", {
+    //   lambdaFunction: props.messageLambda,
+    //   inputPath: '$.startMessageInput',
+    //   resultPath: '$.startMessageOutput'
+    // });
+    
+    const startMessage = this.createSfnMessage("StartMessage", "Process Plate Start");
 
     const plateValidatorInputPP = new sfn.Pass(this, "Plate Validator Input PP", {
       parameters: {
@@ -158,18 +187,17 @@ export class ProcessPlateStack extends cdk.Stack {
       resultPath: '$.plateStatus'
     });
     
+    const failureMessage = this.createSfnMessage("FailureMessage", "Plate Validation Failed");
+    
     const plateValidationFailed = new sfn.Fail(this, 'Plate Validation Failed', {
       cause: 'Plate Validation Failed',
       error: 'Plate Validation Failed',
     });
     
-    const choiceTest1 = new sfn.Pass(this, "Choice Test1", {
-      parameters: {
-        test: "success1"
-      },
-      resultPath: '$.choiceTestResult1'
-    });
-
+    const validationFailure = failureMessage.next(plateValidationFailed);
+    
+    const validationSucceededMessage = this.createSfnMessage("ValidationSucceeded", "Plate Validation Succeeded");
+    
     const choiceTest2 = new sfn.Pass(this, "Choice Test2", {
       parameters: {
         test: "success2"
@@ -179,13 +207,12 @@ export class ProcessPlateStack extends cdk.Stack {
 
     const processPlateStepFunctionDef = plateMessageInput
       .next(getPlateMessage)
-      .next(startMessageInput)
       .next(startMessage)
       .next(plateValidatorInputPP)
       .next(plateValidatorPP)
       .next(new sfn.Choice(this, 'Validation Check')
-        .when(sfn.Condition.not(sfn.Condition.stringEquals('$.plateStatus.Payload.body', 'VALIDATED')), plateValidationFailed)
-        .otherwise(choiceTest1)
+        .when(sfn.Condition.not(sfn.Condition.stringEquals('$.plateStatus.Payload.body', 'VALIDATED')), validationFailure)
+        .otherwise(validationSucceededMessage)
         .afterwards())
       .next(choiceTest2)
 
