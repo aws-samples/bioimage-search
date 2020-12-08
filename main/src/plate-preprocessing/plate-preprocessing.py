@@ -1,4 +1,5 @@
 import sys
+import os
 import boto3
 import pandas as pd
 import numpy as np
@@ -14,6 +15,7 @@ from pathlib import Path
 from io import StringIO, BytesIO
 import shortuuid as su
 import bioimageimage as bi
+import bioims
 
 print("Args=")
 print(sys.argv[1:])
@@ -26,12 +28,23 @@ print("Done args")
 
 parser = argparse.ArgumentParser()
 
+parser.add_argument('--region', type=str, help='AWS region')
 parser.add_argument('--plateId', type=str, help='plateId')
 parser.add_argument('--embeddingName', type=str, help='embeddingName')
 
 args = parser.parse_args()
 
-print("plateId={} embeddingName={}".format(args.plateId, args.embeddingName))
+print("region={} plateId={} embeddingName={}".format(args.region, args.plateId, args.embeddingName))
+
+os.environ['AWS_DEFAULT_REGION'] = args.region
+
+imageManagementClient = bioims.client('image-management')
+
+imlist = imageManagementClient.getImagesByPlateId(args.plateId)
+
+print(imlist)
+
+print("End")
 
 # parser.add_argument('--imageListBucket', type=str, help='bucket for image list')
 # parser.add_argument('--imageListKey', type=str, help='key for image list')

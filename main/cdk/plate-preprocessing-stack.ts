@@ -21,6 +21,8 @@ export class PlatePreprocessingStack extends cdk.Stack {
             readOnly: false,
             privileged: true,
             command: [
+              "Ref::regionArg",
+              "Ref::region",
               "Ref::plateIdArg",
               "Ref::plateId",
               "Ref::embeddingNameArg",

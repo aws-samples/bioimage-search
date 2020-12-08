@@ -240,6 +240,8 @@ export class ProcessPlateStack extends cdk.Stack {
       payload: {
         type: sfn.InputType.OBJECT,
         value: {
+          regionArg: '--region',
+          region: process.env.CDK_DEFAULT_REGION,
           plateIdArg: '--plateId',
           plateId: sfn.JsonPath.stringAt('$.plateId'),
           embeddingNameArg: '--embeddingName',
