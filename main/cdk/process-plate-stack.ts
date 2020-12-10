@@ -9,6 +9,7 @@ import {
 import lambda = require("@aws-cdk/aws-lambda");
 import iam = require("@aws-cdk/aws-iam");
 import cdk = require("@aws-cdk/core");
+import s3 = require("@aws-cdk/aws-s3");
 import * as sfn from "@aws-cdk/aws-stepfunctions";
 import * as tasks from "@aws-cdk/aws-stepfunctions-tasks";
 import * as logs from "@aws-cdk/aws-logs";
@@ -19,6 +20,8 @@ export interface ProcessPlateStackProps extends cdk.StackProps {
   imageManagementLambda: lambda.Function;
   trainingConfigurationLambda: lambda.Function;
   batchSpotQueue: batch.JobQueue;
+  batchOnDemandQueue: batch.JobQueue;
+  dataBucket: s3.Bucket;
 }
 
 export class ProcessPlateStack extends cdk.Stack {
@@ -159,21 +162,6 @@ export class ProcessPlateStack extends cdk.Stack {
       resultPath: '$.plateMessageId'
     });
 
-    // const startMessageInput = new sfn.Pass(this, "Start Message Input", {
-    //   parameters: {
-    //     method: "addMessage",
-    //     messageId: sfn.JsonPath.stringAt("$.plateMessageId.Payload.body"),
-    //     message: "Process Plate Start" 
-    //   },
-    //   resultPath: '$.startMessageInput'
-    // });
-    
-    // const startMessage = new tasks.LambdaInvoke(this, "Start Message", {
-    //   lambdaFunction: props.messageLambda,
-    //   inputPath: '$.startMessageInput',
-    //   resultPath: '$.startMessageOutput'
-    // });
-    
     const startMessage = this.createSfnMessage("StartMessage", "Process Plate Start");
 
     const plateValidatorInputPP = new sfn.Pass(this, "Plate Validator Input PP", {
@@ -236,12 +224,15 @@ export class ProcessPlateStack extends cdk.Stack {
     const processPlateBatch = new tasks.BatchSubmitJob (this, "PlateBatchJob", {
       jobDefinition: batch.JobDefinition.fromJobDefinitionArn(this, "PlateBatchJobDefArn", sfn.JsonPath.stringAt('$.embeddingInfo.Payload.body.Item.plateMethodArn')),
       jobName: sfn.JsonPath.stringAt('$.plateId'),
-      jobQueue: props.batchSpotQueue,
+//      jobQueue: props.batchSpotQueue,
+      jobQueue: props.batchOnDemandQueue,
       payload: {
         type: sfn.InputType.OBJECT,
         value: {
           regionArg: '--region',
           region: process.env.CDK_DEFAULT_REGION,
+          bucketArg: '--bucket',
+          bucket: props.dataBucket.bucketName,
           plateIdArg: '--plateId',
           plateId: sfn.JsonPath.stringAt('$.plateId'),
           embeddingNameArg: '--embeddingName',

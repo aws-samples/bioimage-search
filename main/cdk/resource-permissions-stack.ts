@@ -24,9 +24,10 @@ export interface ResourcePermissionsStackProps extends cdk.StackProps {
 }
 
 export class ResourcePermissionsStack extends cdk.Stack {
-  public bioimageSearchRole: iam.Role;
   public bioimageSearchManagedPolicy: iam.ManagedPolicy;
   public externalResourcesPolicy: iam.Policy;
+  public bioimageSearchUser: iam.User;
+  public bioimageSearchRole: iam.Role;
 
   addBucketResourceReadOnly(bucketname: string, policy: any) {
     const rs = crs({ length: 10 });
@@ -64,12 +65,13 @@ export class ResourcePermissionsStack extends cdk.Stack {
 
   constructor(app: cdk.App, id: string, props: ResourcePermissionsStackProps) {
     super(app, id, props);
-
-    const bioimageSearchUser = new iam.User(this, "bioimageSearchUser");
+    
+    this.bioimageSearchUser = new iam.User(this, "bioimageSearchUser");
 
     this.bioimageSearchRole = new iam.Role(this, "bioimageSearchRole", {
-      assumedBy: bioimageSearchUser,
+      assumedBy: this.bioimageSearchUser,
     });
+
 
     this.bioimageSearchManagedPolicy = new iam.ManagedPolicy(this, "biomageSearchManagedPolicy");
 
@@ -85,7 +87,7 @@ export class ResourcePermissionsStack extends cdk.Stack {
       resources: ["*"],
     });
 
-    const testBucketPolicyStatement = new iam.PolicyStatement({
+    const dataBucketPolicyStatement = new iam.PolicyStatement({
       actions: ["s3:*"],
       effect: iam.Effect.ALLOW,
       resources: [
@@ -95,8 +97,8 @@ export class ResourcePermissionsStack extends cdk.Stack {
     });
 
     this.bioimageSearchManagedPolicy.addStatements(cloudFormationPolicyStatement);
-    this.bioimageSearchManagedPolicy.addStatements(testBucketPolicyStatement);
-    this.bioimageSearchManagedPolicy.attachToUser(bioimageSearchUser);
+    this.bioimageSearchManagedPolicy.addStatements(dataBucketPolicyStatement);
+    this.bioimageSearchManagedPolicy.attachToUser(this.bioimageSearchUser);
     
     // EXTERNAL RESOURCES
 
@@ -111,8 +113,13 @@ export class ResourcePermissionsStack extends cdk.Stack {
     
     // BATCH
     
-    this.bioimageSearchManagedPolicy.attachToRole(props.batchInstanceRole)
+//            assumedBy: new iam.ServicePrincipal('batch.amazonaws.com'),
+//        managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSBatchServiceRole")],
+
     
+//    this.bioimageSearchManagedPolicy.attachToRole(props.batchInstanceRole)
+
+
     // LAMBDA
     
     const invokeLambdaPolicyStatement = new iam.PolicyStatement({
@@ -201,6 +208,20 @@ export class ResourcePermissionsStack extends cdk.Stack {
     trainPolicy.addStatements(trainPolicyStatement);
 
     props.trainLambda!.role!.attachInlinePolicy(trainPolicy);
+    
+    //////////////////////////////////////////////////////////////////////////////
+    // Batch
+    //////////////////////////////////////////////////////////////////////////////
+
+    const batchInstancePolicy = new iam.Policy(this, "BatchInstancePolicy");
+    batchInstancePolicy.addStatements(cloudFormationPolicyStatement);
+    batchInstancePolicy.addStatements(dataBucketPolicyStatement);
+    batchInstancePolicy.addStatements(invokeLambdaPolicyStatement);
+    this.addBucketResourceReadOnly("bioimagesearchbbbc021stack-bbbc021bucket544c3e64-10ecnwo51127", batchInstancePolicy);
+
+
+    props.batchInstanceRole.attachInlinePolicy(batchInstancePolicy);
+
 
   }
   

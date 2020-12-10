@@ -119,7 +119,6 @@ async function createPlateMessageId(plateId: any) {
 
 async function getPlateMessageId(plateId: any) {
 
-  
   // var params = {
   //   FunctionName: ARTIFACT_LAMBDA_ARN,
   //   InvocationType: "RequestResponse",

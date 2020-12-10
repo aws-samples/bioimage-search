@@ -50,7 +50,9 @@ const messageStack = new MessageStack(app, 'BioimageSearchMessageStack', {
 
 const imageArtifactStack = new ImageArtifactStack(app, 'BioimageSearchImageArtifactStack');
 
-const platePreprocessingStack = new PlatePreprocessingStack(app, 'BioimageSearchPlatePreprocessingStack');
+const platePreprocessingStack = new PlatePreprocessingStack(app, 'BioimageSearchPlatePreprocessingStack', {
+    batchInstanceRole: batchSetupStack.batchInstanceRole
+})
 
 const imagePreprocessingStack = new ImagePreprocessingStack(app, 'BioimageSearchImagePreprocessingStack');
 
@@ -73,7 +75,9 @@ const processPlateStack = new ProcessPlateStack(app, 'BioimageSearchProcessPlate
     messageLambda: messageStack.messageLambda,
     imageManagementLambda: imageManagementStack.imageManagementLambda,
     trainingConfigurationLambda: trainingConfigurationStack.trainingConfigurationLambda,
-    batchSpotQueue: batchSetupStack.batchSpotQueue
+    batchSpotQueue: batchSetupStack.batchSpotQueue,
+    batchOnDemandQueue: batchSetupStack.batchOnDemandQueue,
+    dataBucket: baseStack.dataBucket
 })
 
 const trainStack = new TrainStack(app, 'BioimageSearchTrainStack', {

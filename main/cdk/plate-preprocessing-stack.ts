@@ -6,12 +6,17 @@ import ecs = require("@aws-cdk/aws-ecs")
 
 import crs = require("crypto-random-string");
 
+
+export interface PlatePreprocessingStackProps extends cdk.StackProps {
+    batchInstanceRole: iam.Role;
+}
+
 export class PlatePreprocessingStack extends cdk.Stack {
   public platePreprocessingJobDefinition: batch.JobDefinition;
   public platePreprocessingJobDefinitionArn: cdk.CfnOutput;
   
-  constructor(app: cdk.App, id: string) {
-    super(app, id);
+  constructor(app: cdk.App, id: string, props: PlatePreprocessingStackProps) {
+    super(app, id, props);
     
     this.platePreprocessingJobDefinition = new batch.JobDefinition(this, 'plate-preprocessing-job-def', {
         container: {
@@ -23,13 +28,16 @@ export class PlatePreprocessingStack extends cdk.Stack {
             command: [
               "Ref::regionArg",
               "Ref::region",
+              "Ref::bucketArg",
+              "Ref::bucket",
               "Ref::plateIdArg",
               "Ref::plateId",
               "Ref::embeddingNameArg",
               "Ref::embeddingName"
               ],
+//            jobRole: props.batchInstanceRole
         },
-        retryAttempts: 3,
+        retryAttempts: 1,
         timeout: cdk.Duration.minutes(30)
     })
     

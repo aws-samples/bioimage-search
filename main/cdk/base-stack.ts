@@ -3,8 +3,6 @@ import ec2 = require("@aws-cdk/aws-ec2");
 import iam = require("@aws-cdk/aws-iam");
 import s3 = require("@aws-cdk/aws-s3");
 import * as fsx from '@aws-cdk/aws-fsx';
-//import s3assets = require("@aws-cdk/aws-s3-assets");
-//import fs = require("fs");
 
 export class BaseStack extends cdk.Stack {
   public dataBucket: s3.Bucket;
