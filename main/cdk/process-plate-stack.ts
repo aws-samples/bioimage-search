@@ -210,16 +210,9 @@ export class ProcessPlateStack extends cdk.Stack {
       resultPath: '$.endpointStep'
     });
     
-    const processPlateLambda = this. createSfnMessage("PlateLambda", "Placeholder Plate Lambda Job");
+    const processPlateLambda = this.createSfnMessage("PlateLambda", "Placeholder Plate Lambda Task");
     
-    const plateArnFailureMessage = this.createSfnMessage("PlateArnFailureMessage", "Plate Arn Method Failed");
-    
-    const plateArnFailed = new sfn.Fail(this, 'Plate Arn Failed', {
-      cause: 'Plate Arn Failed',
-      error: 'Plate Arn Failed',
-    });
-    
-    const plateArnFailure = plateArnFailureMessage.next(plateArnFailed);
+    const skippingPlateMessage = this.createSfnMessage("SkippingPlate", "No valid Arn for Plate processing - skipping");
     
     const processPlateBatch = new tasks.BatchSubmitJob (this, "PlateBatchJob", {
       jobDefinition: batch.JobDefinition.fromJobDefinitionArn(this, "PlateBatchJobDefArn", sfn.JsonPath.stringAt('$.embeddingInfo.Payload.body.Item.plateMethodArn')),
@@ -240,6 +233,12 @@ export class ProcessPlateStack extends cdk.Stack {
         }
       }
     });
+    
+    const processWellLambda = this.createSfnMessage("WellLambda", "Placeholder Well Lambda Task");
+
+    const processWellBatch = this.createSfnMessage("WellBatch", "Placeholder Well Batch Task");
+    
+    const skippingWellMessage = this.createSfnMessage("SkippingWell", "No valid Arn for Well processing - skipping");
 
     // Example Arns
     // arn:aws:lambda:us-east-1:580829821648:function:BioimageSearchLabelStack-labelFunction58A4020A-1TEZ4YLWTTXDH
@@ -259,7 +258,12 @@ export class ProcessPlateStack extends cdk.Stack {
       .next(new sfn.Choice(this, "Plate Arn Service")
         .when(sfn.Condition.stringMatches('$.embeddingInfo.Payload.body.Item.plateMethodArn', "arn:aws:lambda:*"), processPlateLambda)
         .when(sfn.Condition.stringMatches('$.embeddingInfo.Payload.body.Item.plateMethodArn', "arn:aws:batch:*"), processPlateBatch)
-        .otherwise(plateArnFailure)
+        .otherwise(skippingPlateMessage)
+        .afterwards())
+      .next(new sfn.Choice(this, "Well Arn Service")
+        .when(sfn.Condition.stringMatches('$.embeddingInfo.Payload.body.Item.wellMethodArn', "arn:aws:lambda:*"), processWellLambda)
+        .when(sfn.Condition.stringMatches('$.embeddingInfo.Payload.body.Item.wellMethodArn', "arn:aws:batch:*"), processWellBatch)
+        .otherwise(skippingPlateMessage)
         .afterwards())
       .next(endpointStep)
 

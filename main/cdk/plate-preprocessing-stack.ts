@@ -35,7 +35,6 @@ export class PlatePreprocessingStack extends cdk.Stack {
               "Ref::embeddingNameArg",
               "Ref::embeddingName"
               ],
-//            jobRole: props.batchInstanceRole
         },
         retryAttempts: 1,
         timeout: cdk.Duration.minutes(30)

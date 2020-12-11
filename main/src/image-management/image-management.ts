@@ -337,6 +337,37 @@ async function getImagesByPlateId(plateId: any) {
   return rows
 }
 
+async function getWellMapByPlateId(plateId: any) {
+  const allImageRows = await getImagesByPlateId(plateId);
+  const wells = new Map<string,any>();
+  for (let ir of allImageRows) {
+    const wellId = ir.Item.wellId
+    if (wells.has(wellId)) {
+      var wellImageArr1 = wells.get(wellId)
+      wellImageArr1.push(ir)
+    } else {
+      var wellImageArr2: any[] = [];
+      wellImageArr2.push(ir)
+      wells.set(wellId, wellImageArr2)
+    }
+  }
+  return wells  
+}
+
+async function getWellsByPlateId(plateId: any) {
+  const wells = await getWellMapByPlateId(plateId);
+  var wellIds: string[] = [];
+  for (const [key, value] of wells) {
+        wellIds.push(key);
+  }
+  return wellIds
+}
+
+async function getImagesByWellId(wellId: any) {
+  const wells = await getWellMapByPlateId(wellId);
+  return wells.get(wellId);
+}
+
 //  inspectionResult = { "imageId" : imageId, "valid" : True, "width" : dims[0], "height" : dims[1], "depth" : dims[2], "channels" : numChannels }
 
 async function applyInspectionResult(inspectionResult: any) {
@@ -601,6 +632,28 @@ export const handler = async (event: any = {}): Promise<any> => {
     if (event.plateId) {
       try {
         const response = await getImagesByPlateId(event.plateId);
+        return { statusCode: 200, body: response };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
+    }
+  }
+
+  else if (event.method === "getWellsByPlateId") {
+    if (event.plateId) {
+      try {
+        const response = await getWellsByPlateId(event.plateId);
+        return { statusCode: 200, body: response };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
+    }
+  }
+
+  else if (event.method === "getImagesByWellId") {
+    if (event.wellId) {
+      try {
+        const response = await getImagesByWellId(event.wellId);
         return { statusCode: 200, body: response };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };

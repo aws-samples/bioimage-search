@@ -18,55 +18,15 @@ export class BatchSetupStack extends cdk.Stack {
 
     this.batchInstanceRole = new iam.Role(this, 'batchInstanceRole', {
         assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
-//        assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
         managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AmazonEC2ContainerServiceforEC2Role")],
-//        assumedBy: new iam.ServicePrincipal('batch.amazonaws.com'),
-//        managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSBatchServiceRole")],
     });
     
-    // {
-    //   "Effect": "Allow",
-    //   "Principal": {
-    //     "Service": "ecs-tasks.amazonaws.com"
-    //   },
-    //   "Action": "sts:AssumeRole"
-    // }
-    
-//     new iam.PolicyStatement({
-//   effect: iam.Effect.ALLOW,
-//   actions: ['s3:SomeAction'],
-//   resources: [bucket.bucketArn],
-//   principals: [role]
-// }))
-
-    // const ecsTasksServicePrincipal = new iam.ServicePrincipal('ecs-tasks.amazonaws.com');
-    
-    // this.batchInstanceRole.grant(ecsTasksServicePrincipal, 'sts:AssumeRole');
-    
-    // ecsTasksServicePrincipal.addToPrincipalPolicy(new iam.PolicyStatement({
-    //   effect: iam.Effect.ALLOW,
-    //   actions: ['sts:AssumeRole'],
-    //   principals: [ this.batchInstanceRole ]
-    // }));
-    
-//    this.batchInstanceRole.addToPrincipalPolicy(new iam.PolicyStatement({
-//      effect: iam.Effect.ALLOW,
-//      actions: ['sts:AssumeRole'],
-//      principals: [ ecsTasksServicePrincipal ]
-//    }))
-
-    // const ec2InstanceRole = new iam.Role(this, 'ec2InstanceRole', {
-    //     assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
-    //     managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AmazonEC2ContainerServiceforEC2Role")],
-    // });
-
     this.batchVpc = new ec2.Vpc(this, 'Batch-VPC');
     
-   const batchInstanceProfile = new iam.CfnInstanceProfile(this, "Batch-Instance-Profile", {
+    const batchInstanceProfile = new iam.CfnInstanceProfile(this, "Batch-Instance-Profile", {
       instanceProfileName: "batchInstanceProfile",
       roles: [
-          this.batchInstanceRole.roleName,
-//          ec2InstanceRole.roleName
+          this.batchInstanceRole.roleName
       ]
     });
     
