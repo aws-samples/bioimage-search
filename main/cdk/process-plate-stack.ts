@@ -199,7 +199,7 @@ export class ProcessPlateStack extends cdk.Stack {
     
     const embeddingInfo = new tasks.LambdaInvoke(this, "Embedding Info", {
       lambdaFunction: props.trainingConfigurationLambda,
-      resultPath: sfn.JsonPath.stringAt('$.embeddingInfo'),
+      resultPath: '$.embeddingInfo',
       inputPath: '$.embeddingInfoRequest',
     });
 
@@ -231,13 +231,28 @@ export class ProcessPlateStack extends cdk.Stack {
           embeddingNameArg: '--embeddingName',
           embeddingName: sfn.JsonPath.stringAt('$.embeddingName')
         }
-      }
+      },
+      resultPath: '$.plateBatchOutput'
     });
     
-    const processWellLambda = this.createSfnMessage("WellLambda", "Placeholder Well Lambda Task");
-
-    const processWellBatch = this.createSfnMessage("WellBatch", "Placeholder Well Batch Task");
+    const listWellsInput = new sfn.Pass(this, "ListWellsInput", {
+      parameters: {
+        method: "getWellsByPlateId",
+        plateId: sfn.JsonPath.stringAt('$.plateId'),
+      },
+      resultPath: '$.listWellsInput'
+    });
     
+    const listWellsFunction = new tasks.LambdaInvoke(this, "ListWellsFunction", {
+      lambdaFunction: props.imageManagementLambda,
+      resultPath: '$.wellList',
+      inputPath: '$.listWellsInput',
+    });
+    
+    const listWells = listWellsInput.next(listWellsFunction);
+    
+    const processWellLambda = this.createSfnMessage("WellLambda", "Placeholder Well Lambda Task");
+    const processWellBatch = this.createSfnMessage("WellBatch", "Placeholder Well Batch Task");
     const skippingWellMessage = this.createSfnMessage("SkippingWell", "No valid Arn for Well processing - skipping");
 
     // Example Arns
@@ -260,6 +275,7 @@ export class ProcessPlateStack extends cdk.Stack {
         .when(sfn.Condition.stringMatches('$.embeddingInfo.Payload.body.Item.plateMethodArn', "arn:aws:batch:*"), processPlateBatch)
         .otherwise(skippingPlateMessage)
         .afterwards())
+      .next(listWells)
       .next(new sfn.Choice(this, "Well Arn Service")
         .when(sfn.Condition.stringMatches('$.embeddingInfo.Payload.body.Item.wellMethodArn', "arn:aws:lambda:*"), processWellLambda)
         .when(sfn.Condition.stringMatches('$.embeddingInfo.Payload.body.Item.wellMethodArn', "arn:aws:batch:*"), processWellBatch)
