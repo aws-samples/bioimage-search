@@ -263,7 +263,7 @@ export class ProcessPlateStack extends cdk.Stack {
       .next(new sfn.Choice(this, "Well Arn Service")
         .when(sfn.Condition.stringMatches('$.embeddingInfo.Payload.body.Item.wellMethodArn', "arn:aws:lambda:*"), processWellLambda)
         .when(sfn.Condition.stringMatches('$.embeddingInfo.Payload.body.Item.wellMethodArn', "arn:aws:batch:*"), processWellBatch)
-        .otherwise(skippingPlateMessage)
+        .otherwise(skippingWellMessage)
         .afterwards())
       .next(endpointStep)
 

@@ -98,6 +98,10 @@ imageManagementClient = bioims.client('image-management')
 
 #print(r)
 
-r = imageManagementClient.getPlateMessageId('dzqwTuqgLxmz2vmjGeyZHD')
+#r = imageManagementClient.getPlateMessageId('dzqwTuqgLxmz2vmjGeyZHD')
+
+#r = imageManagementClient.getWellsByPlateId('dzqwTuqgLxmz2vmjGeyZHD')
+
+r = imageManagementClient.getImagesByPlateAndWellId('dzqwTuqgLxmz2vmjGeyZHD', 'dDLbuxURgCHodhW8338S3j')
 
 print(r)

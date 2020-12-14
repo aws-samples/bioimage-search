@@ -780,8 +780,8 @@ class ImageManagementClient(BioimageSearchClient):
         jbody = getResponseBodyAsJson(response)
         return jbody
 
-    def getImagesByWellId(self, wellId):
-        request = '{{ "method": "getImagesByWellId", "wellId": "{}" }}'.format(wellId)
+    def getImagesByPlateAndWellId(self, plateId, wellId):
+        request = '{{ "method": "getImagesByPlateAndWellId", "plateId": "{}", "wellId": "{}" }}'.format(plateId, wellId)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(

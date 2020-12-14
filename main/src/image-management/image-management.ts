@@ -363,9 +363,10 @@ async function getWellsByPlateId(plateId: any) {
   return wellIds
 }
 
-async function getImagesByWellId(wellId: any) {
-  const wells = await getWellMapByPlateId(wellId);
-  return wells.get(wellId);
+async function getImagesByPlateAndWellId(plateId: any, wellId: any) {
+  const wells = await getWellMapByPlateId(plateId);
+  const wellInfo =wells.get(wellId);
+  return wellInfo;
 }
 
 //  inspectionResult = { "imageId" : imageId, "valid" : True, "width" : dims[0], "height" : dims[1], "depth" : dims[2], "channels" : numChannels }
@@ -650,10 +651,10 @@ export const handler = async (event: any = {}): Promise<any> => {
     }
   }
 
-  else if (event.method === "getImagesByWellId") {
-    if (event.wellId) {
+  else if (event.method === "getImagesByPlateAndWellId") {
+    if (event.plateId && event.wellId) {
       try {
-        const response = await getImagesByWellId(event.wellId);
+        const response = await getImagesByPlateAndWellId(event.plateId, event.wellId);
         return { statusCode: 200, body: response };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };
