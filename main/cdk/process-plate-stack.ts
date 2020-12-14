@@ -40,7 +40,7 @@ export class ProcessPlateStack extends cdk.Stack {
     const messageInput = new sfn.Pass(this, inputName, {
       parameters: {
         method: "addMessage",
-        messageId: sfn.JsonPath.stringAt("$.plateMessageId.Payload.body"),
+        messageId: sfn.JsonPath.stringAt("$.plateMessageId"),
         message: messageContent
       },
       resultPath: inputPath
@@ -161,6 +161,14 @@ export class ProcessPlateStack extends cdk.Stack {
       inputPath: '$.plateMessageInput',
       resultPath: '$.plateMessageId'
     });
+    
+    const plateMessagePass = new sfn.Pass(this, "PlateMessagePass", {
+      parameters: {
+        plateId: sfn.JsonPath.stringAt("$.plateId"),
+        embeddingName: sfn.JsonPath.stringAt("$.embeddingName"),
+        plateMessageId: sfn.JsonPath.stringAt("$.plateMessageId.Payload.body")
+      }
+    });
 
     const startMessage = this.createSfnMessage("StartMessage", "Process Plate Start");
 
@@ -258,9 +266,28 @@ export class ProcessPlateStack extends cdk.Stack {
     // Example Arns
     // arn:aws:lambda:us-east-1:580829821648:function:BioimageSearchLabelStack-labelFunction58A4020A-1TEZ4YLWTTXDH
     // arn:aws:batch:us-east-1:580829821648:job-definition/platepreprocessingjobde-614a2d2923fd2c7:1
+    
+    const wellProcessor = new sfn.Choice(this, "Well Arn Service")
+        .when(sfn.Condition.stringMatches('$.wellMethodArn', "arn:aws:lambda:*"), processWellLambda)
+        .when(sfn.Condition.stringMatches('$.wellMethodArn', "arn:aws:batch:*"), processWellBatch)
+        .otherwise(skippingWellMessage);
+        
+    const wellMap = new sfn.Map(this, "Well Map", {
+      maxConcurrency: 0,
+      parameters: {
+        wellMethodArn: sfn.JsonPath.stringAt('$.embeddingInfo.Payload.body.Item.wellMethodArn'),
+        'wellId.$' : "$$.Map.Item.Value",
+        plateMessageId: sfn.JsonPath.stringAt("$.plateMessageId")
+      },
+      itemsPath: '$.wellList.Payload.body',
+      resultPath: '$.wellMapResult',
+    });
+    wellMap.iterator(wellProcessor);
+    
 
     const processPlateStepFunctionDef = plateMessageInput
       .next(getPlateMessage)
+      .next(plateMessagePass)
       .next(startMessage)
       .next(plateValidatorInputPP)
       .next(plateValidatorPP)
@@ -276,11 +303,7 @@ export class ProcessPlateStack extends cdk.Stack {
         .otherwise(skippingPlateMessage)
         .afterwards())
       .next(listWells)
-      .next(new sfn.Choice(this, "Well Arn Service")
-        .when(sfn.Condition.stringMatches('$.embeddingInfo.Payload.body.Item.wellMethodArn', "arn:aws:lambda:*"), processWellLambda)
-        .when(sfn.Condition.stringMatches('$.embeddingInfo.Payload.body.Item.wellMethodArn', "arn:aws:batch:*"), processWellBatch)
-        .otherwise(skippingWellMessage)
-        .afterwards())
+      .next(wellMap)
       .next(endpointStep)
 
     const logGroup = new logs.LogGroup(this, "ProcessPlateLogGroup");
