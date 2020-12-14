@@ -73,7 +73,7 @@ export const handler = async (event: any = {}): Promise<any> => {
           event.inputKey
         );
         const response = await startUploadSourcePlate(plateId);
-        return { statusCode: 200, body: JSON.stringify(response) };
+        return { statusCode: 200, body: response };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };
       }
@@ -87,7 +87,7 @@ export const handler = async (event: any = {}): Promise<any> => {
     if (event.plateId && event.embeddingName) {
       try {
         const response = await startProcessPlate(event.plateId, event.embeddingName);
-        return { statusCode: 200, body: JSON.stringify(response) };
+        return { statusCode: 200, body: response };
       } catch (error) {
         return { statusCode: 500, body: JSON.stringify(error) };
       }

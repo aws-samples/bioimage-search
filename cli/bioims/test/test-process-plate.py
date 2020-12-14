@@ -15,7 +15,7 @@ r1 = processPlateClient.uploadSourcePlate(INPUT_BUCKET, INPUT_KEY_1)
 
 print(r1)
 
-r2 = processPlateClient.uploadSourcePlate(INPUT_BUCKET, INPUT_KEY_2)
+#r2 = processPlateClient.uploadSourcePlate(INPUT_BUCKET, INPUT_KEY_2)
 
-print(r2)
+#print(r2)
 

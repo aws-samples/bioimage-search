@@ -258,7 +258,7 @@ async function populateSourcePlate(inputBucket: any, inputKey: any) {
     const sourceBucket = image["sourceBucket"];
     const sourceKey = image["sourceKey"];
     var wellId: string = "";
-    if (wellSourceId in wellDict) {
+    if (wellDict.has(wellSourceId)) {
       wellId = wellDict.get(wellSourceId)!;
     } else {
       wellId = su.generate();

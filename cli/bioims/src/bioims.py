@@ -176,6 +176,7 @@ def getResponseBodyAsJson(response):
     stream = response['Payload']
     bStrResponse = stream.read()
     strResponse = bStrResponse.decode("utf-8")
+    #print(strResponse)
     if strResponse:
         try:
             jresponse = json.loads(strResponse)
@@ -876,8 +877,7 @@ class ProcessPlateClient(BioimageSearchClient):
             Payload=payload
             )
         jbody = getResponseBodyAsJson(response)
-        jvalue = json.loads(jbody)
-        return jvalue
+        return jbody
         
     def uploadSourcePlate(self, inputBucket, inputKey):
         request = '{{ "method": "uploadSourcePlate", "inputBucket": "{}", "inputKey": "{}" }}'.format(inputBucket, inputKey)
@@ -889,9 +889,8 @@ class ProcessPlateClient(BioimageSearchClient):
             Payload=payload
             )
         jbody = getResponseBodyAsJson(response)
-        jvalue = json.loads(jbody)
-        return jvalue
-        
+        return jbody
+
 #############################################
 #
 # TRAIN
