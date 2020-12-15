@@ -25,7 +25,7 @@ const ANNOTATION_ATTRIBUTE = "annotation";
 /*
   Methods:
   
-  createArtifact(contextId, trainId, artifact, s3bucket, description, annotation)
+  createArtifact(artifact)
   
   getArtifacts(contextId, trainId)
   
@@ -41,7 +41,6 @@ async function createArtifact(artifact1: any) {
   if(artifact1.annotation) {
     annotationList.push(artifact1.annotation)
   }
-  const s3bucket = artifact1.s3bucket || "";
   const description = artifact1.description || "";
   const artifact2 = {
     [PARTITION_KEY] : `${artifact1.contextId}#${artifact1.trainId}`,

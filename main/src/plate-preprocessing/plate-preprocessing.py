@@ -131,6 +131,7 @@ def computePlateArtifacts(channelName, imageArr, bucket, plateId, embeddingName)
         with open(fn, 'rb') as fdata:
             print("s3c.upload_fileobj: bucket={} flatFieldKey={}".format(bucket, flatFieldKey))
             s3c.upload_fileobj(fdata, bucket, flatFieldKey)
+            
     else:
         max1=np.max(g1)
         min1=np.min(g1)
@@ -139,7 +140,16 @@ def computePlateArtifacts(channelName, imageArr, bucket, plateId, embeddingName)
         img.save(fn)
         with open(fn, 'rb') as fdata:
             s3c.upload_fileobj(fdata, bucket, flatFieldKey)
-        
+
+    artifactClient = bioims.client('artifact')
+    artifactKey = "s3key#" + flatFieldKey
+    artifact = {
+        "contextId" : args.plateId,
+        "trainId" : "origin",
+        "artifact" : artifactKey
+    }
+    artifactClient.createArtifact(artifact)
+            
     fnPath = Path(fn)
     fnPath.unlink()
     tPath = Path(tmpDir)
