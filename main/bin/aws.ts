@@ -77,7 +77,8 @@ const processPlateStack = new ProcessPlateStack(app, 'BioimageSearchProcessPlate
     trainingConfigurationLambda: trainingConfigurationStack.trainingConfigurationLambda,
     batchSpotQueue: batchSetupStack.batchSpotQueue,
     batchOnDemandQueue: batchSetupStack.batchOnDemandQueue,
-    dataBucket: baseStack.dataBucket
+    dataBucket: baseStack.dataBucket,
+    defaultArtifactLambda: imageArtifactStack.defaultArtifactLambda
 })
 
 const trainStack = new TrainStack(app, 'BioimageSearchTrainStack', {

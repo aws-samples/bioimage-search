@@ -22,6 +22,7 @@ export interface ProcessPlateStackProps extends cdk.StackProps {
   batchSpotQueue: batch.JobQueue;
   batchOnDemandQueue: batch.JobQueue;
   dataBucket: s3.Bucket;
+  defaultArtifactLambda: lambda.Function;
 }
 
 export class ProcessPlateStack extends cdk.Stack {
@@ -115,16 +116,46 @@ export class ProcessPlateStack extends cdk.Stack {
       resultPath: '$.validatorInput',
     });
     
+    const validationFailure1 = new sfn.Fail(this, 'Validation Failed 1', {
+      cause: 'Validation Failed',
+      error: 'Validation did not return VALIDATED',
+    });
+    
+    const validationSuccess1 = new sfn.Succeed(this, "Validation Succeeded 1", {
+      comment: "Validation Suceeded"
+    });
+    
     const plateValidator = new tasks.LambdaInvoke(this, "Plate Validator", {
       lambdaFunction: props.imageManagementLambda,
       inputPath: '$.validatorInput',
+      resultPath: '$.validatorOutput'
     });
     
+    const artifactFunction = new tasks.LambdaInvoke(this, "Image Artifacts", {
+      lambdaFunction: props.defaultArtifactLambda,
+      outputPath: '$.Payload'
+    });
+    
+    const artifactMap = new sfn.Map(this, "Artifact Map", {
+      maxConcurrency: 0,
+      itemsPath: '$.imageList.Payload.body',
+      resultPath: '$.artifactMapResult',
+    });
+    artifactMap.iterator(artifactFunction);
+    
+    const artifactSequence = artifactMap.next(validationSuccess1)
+
+    const artifactChoice = new sfn.Choice(this, "ArtifactChoice")
+        .when(sfn.Condition.stringMatches('$.validatorOutput.Payload.body', "VALIDATED"), artifactSequence)
+        .when(sfn.Condition.stringMatches('$.validatorOutput.Payload.body', "READY"), validationSuccess1)
+        .otherwise(validationFailure1);
+
     const uploadSourcePlateStepFunctionDef = plateValidatorInput
       .next(plateFormat1)
       .next(plateToImages1)
       .next(inspectorMap)
       .next(plateValidator)
+      .next(artifactChoice)
 
     const uploadSourcePlateGroup = new logs.LogGroup(this, "UploadSourcePlateLogGroup");
 
