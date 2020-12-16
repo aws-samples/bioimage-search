@@ -48,7 +48,9 @@ const messageStack = new MessageStack(app, 'BioimageSearchMessageStack', {
     dynamoTableNames: dynamoTableNames
 })
 
-const imageArtifactStack = new ImageArtifactStack(app, 'BioimageSearchImageArtifactStack');
+const imageArtifactStack = new ImageArtifactStack(app, 'BioimageSearchImageArtifactStack', {
+    dataBucket: baseStack.dataBucket
+})
 
 const platePreprocessingStack = new PlatePreprocessingStack(app, 'BioimageSearchPlatePreprocessingStack', {
     batchInstanceRole: batchSetupStack.batchInstanceRole
@@ -79,7 +81,8 @@ const processPlateStack = new ProcessPlateStack(app, 'BioimageSearchProcessPlate
     batchSpotQueue: batchSetupStack.batchSpotQueue,
     batchOnDemandQueue: batchSetupStack.batchOnDemandQueue,
     dataBucket: baseStack.dataBucket,
-    defaultArtifactLambda: imageArtifactStack.defaultArtifactLambda
+    defaultArtifactLambda: imageArtifactStack.defaultArtifactLambda,
+    artifactLambda: artifactStack.artifactLambda
 })
 
 const trainStack = new TrainStack(app, 'BioimageSearchTrainStack', {

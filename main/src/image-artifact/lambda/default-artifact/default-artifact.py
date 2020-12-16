@@ -14,37 +14,52 @@ import bioims
 
 def handler(event, context):
     s3c = boto3.client('s3')
-
-    if event['Item']:
-        item = event['Item']
-        imageId = item['imageId']
-    else:
-        imageId = event['imageId']
+    
+    imageId = event['imageId']
+    describeStacks = event['describeStacks']['Payload']['body']
+    contextId = describeStacks['contextId']
+    trainId = describeStacks['trainId']
+    key = describeStacks['key']
     
     print("imageId={}".format(imageId))
+    print("contextId={}".format(contextId))
+    print("trainId={}".format(trainId))
+    print("key={}".format(key))
     
-    strBytes = imageId.encode('utf-8')
+    dataBucket = os.environ['DATA_BUCKET']
+   
+    print("dataBucket={}".format(dataBucket))
+
+    # if event['Item']:
+    #     item = event['Item']
+    #     imageId = item['imageId']
+    # else:
+    #     imageId = event['imageId']
     
-    imageIdAsInt = int.from_bytes(strBytes, byteorder='big', signed=False)
+    # print("imageId={}".format(imageId))
     
-    print("imageIdAsInt=", imageIdAsInt)
+    # strBytes = imageId.encode('utf-8')
     
-    random.seed(imageIdAsInt)
+    # imageIdAsInt = int.from_bytes(strBytes, byteorder='big', signed=False)
     
-    # This is to deal with CLoudFormation API throttling for DescribeStack
-    waitSeconds = random.uniform(0.0, 60.0)
+    # print("imageIdAsInt=", imageIdAsInt)
     
-    print("waitSeconds=", waitSeconds)
+    # random.seed(imageIdAsInt)
     
-    time.sleep(waitSeconds)    
+    # # This is to deal with CLoudFormation API throttling for DescribeStack
+    # waitSeconds = random.uniform(0.0, 60.0)
     
-    print("finished waiting")
+    # print("waitSeconds=", waitSeconds)
     
-    imageManagementClient = bioims.client('image-management')
+    # time.sleep(waitSeconds)    
     
-    r = imageManagementClient.getImageInfo(imageId, "origin")
+    # print("finished waiting")
     
-    print(r)
+    # imageManagementClient = bioims.client('image-management')
+    
+    # r = imageManagementClient.getImageInfo(imageId, "origin")
+    
+    # print(r)
     
     return
 

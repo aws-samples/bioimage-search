@@ -23,6 +23,7 @@ export interface ProcessPlateStackProps extends cdk.StackProps {
   batchOnDemandQueue: batch.JobQueue;
   dataBucket: s3.Bucket;
   defaultArtifactLambda: lambda.Function;
+  artifactLambda: lambda.Function;
 }
 
 export class ProcessPlateStack extends cdk.Stack {
@@ -53,7 +54,6 @@ export class ProcessPlateStack extends cdk.Stack {
     });
     return messageInput.next(message);
   }
-
 
   constructor(app: cdk.App, id: string, props: ProcessPlateStackProps) {
     super(app, id, props);
@@ -131,19 +131,48 @@ export class ProcessPlateStack extends cdk.Stack {
       resultPath: '$.validatorOutput'
     });
     
+    const describeStacksInput = new sfn.Pass(this, "DescribeStacksInput", {
+      parameters: {
+        method: "createDescribeStacksArtifact",
+        contextId: sfn.JsonPath.stringAt("$.plateId"),
+        trainId: "origin"
+      },
+      resultPath: '$.describeStacksInput'
+    });
+    
+    const describeStacksInjector = new tasks.LambdaInvoke(this, "DescribeStacksInjector", {
+      lambdaFunction: props.artifactLambda,
+      inputPath: '$.describeStacksInput',
+      resultPath: '$.describeStacks'
+    });
+    
     const artifactFunction = new tasks.LambdaInvoke(this, "Image Artifacts", {
       lambdaFunction: props.defaultArtifactLambda,
       outputPath: '$.Payload'
     });
     
+      // maxConcurrency: 0,
+      // parameters: {
+      //   wellMethodArn: sfn.JsonPath.stringAt('$.embeddingInfo.Payload.body.Item.wellMethodArn'),
+      //   'wellId.$' : "$$.Map.Item.Value",
+      //   plateMessageId: sfn.JsonPath.stringAt("$.plateMessageId")
+      // },
+      // itemsPath: '$.wellList.Payload.body',
+      // resultPath: '$.wellMapResult',
+
+    
     const artifactMap = new sfn.Map(this, "Artifact Map", {
       maxConcurrency: 0,
+      parameters: {
+        'imageId.$' : "$$.Map.Item.Value.Item.imageId",
+        describeStacks: sfn.JsonPath.stringAt("$.describeStacks")
+      },
       itemsPath: '$.imageList.Payload.body',
       resultPath: '$.artifactMapResult',
     });
     artifactMap.iterator(artifactFunction);
     
-    const artifactSequence = artifactMap.next(validationSuccess1)
+    const artifactSequence = describeStacksInput.next(describeStacksInjector).next(artifactMap).next(validationSuccess1)
 
     const artifactChoice = new sfn.Choice(this, "ArtifactChoice")
         .when(sfn.Condition.stringMatches('$.validatorOutput.Payload.body', "VALIDATED"), artifactSequence)

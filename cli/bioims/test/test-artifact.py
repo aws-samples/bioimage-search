@@ -15,6 +15,7 @@ params = {
 }
 
 artifactClient = bioims.client('artifact', params)
+#artifactClient = bioims.client('artifact')
 
 # print(artifactClient.getLambdaArn())
 
