@@ -4,8 +4,16 @@ import base64
 import shortuuid
 
 class BioimageSearchResources:
-    def __init__(self):
+    def __init__(self, params=None):
         self._stacksDescription = ""
+        
+        print(params)
+        
+        if params and params["bucket"] and params["key"]:
+            #print("Loading bucket={} key={}".format(params["bucket"], params["key"]))
+            s3 = boto3.client('s3')
+            obj = s3.get_object(Bucket=params["bucket"], Key=params["key"])
+            self._stacksDescription = json.loads(obj['Body'].read().decode('utf-8'))            
 
         # self._configurationLambdaArn = ""
         # self._labelLambdaArn = ""
@@ -17,6 +25,7 @@ class BioimageSearchResources:
         # self._imagePreprocessingJobDefnName = ""
 
     def refresh(self):
+        #print("refreshing describe_stacks with CF call")
         cf = boto3.client('cloudformation')
         self._stacksDescription = cf.describe_stacks()
         
@@ -126,35 +135,36 @@ class BioimageSearchResources:
 
 ####### CLIENTS
 
-def client(serviceName):
+def client(serviceName, params=None):
     if serviceName == 'configuration':
-        return ConfigurationClient()
+        return ConfigurationClient(params)
     elif serviceName == 'label':
-        return LabelClient()
+        return LabelClient(params)
     elif serviceName == 'message':
-        return MessageClient()
+        return MessageClient(params)
     elif serviceName == 'image-artifact':
-        return ImageArtifactClient()
+        return ImageArtifactClient(params)
     elif serviceName == 'plate-preprocessing':
-        return PlatePreprocessingClient()
+        return PlatePreprocessingClient(params)
     elif serviceName == 'training-configuration':
-        return TrainingConfigurationClient()
+        return TrainingConfigurationClient(params)
     elif serviceName == 'artifact':
-        return ArtifactClient()
+        return ArtifactClient(params)
     elif serviceName == 'image-management':
-        return ImageManagementClient()
+        return ImageManagementClient(params)
     elif serviceName == 'process-plate':
-        return ProcessPlateClient()
+        return ProcessPlateClient(params)
     elif serviceName == 'train':
-        return TrainClient()
+        return TrainClient(params)
     else:
         print('service type {} not recognized'.format(serviceName))
         return False
 
 class BioimageSearchClient:
-    def __init__(self):
-        self._resources=BioimageSearchResources()
-        self._resources.refresh()
+    def __init__(self, params=None):
+        self._resources=BioimageSearchResources(params)
+        if params==None:
+            self._resources.refresh()
         
     def getBatchOnDemandQueueName(self):
         return self._resources.getBatchOnDemandQueueName()
@@ -209,8 +219,8 @@ def getResponseBodyAsJson(response):
 #############################################
 
 class ConfigurationClient(BioimageSearchClient):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, params=None):
+        super().__init__(params)
 
     def getLambdaArn(self):
         return self._resources.getConfigurationLambdaArn()
@@ -316,8 +326,8 @@ class ConfigurationClient(BioimageSearchClient):
 
 
 class LabelClient(BioimageSearchClient):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, params=None):
+        super().__init__(params)
 
     def getLambdaArn(self):
         return self._resources.getLabelLambdaArn()
@@ -431,8 +441,8 @@ class LabelClient(BioimageSearchClient):
 #############################################
     
 class MessageClient(BioimageSearchClient):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, params=None):
+        super().__init__(params)
 
     def getLambdaArn(self):
         return self._resources.getMessageLambdaArn()
@@ -506,8 +516,8 @@ class MessageClient(BioimageSearchClient):
 #############################################
     
 class ImageArtifactClient(BioimageSearchClient):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, params=None):
+        super().__init__(params)
 
     def getLambdaArn(self):
         return self._resources.getDefaultArtifactLambdaArn()
@@ -534,8 +544,8 @@ class ImageArtifactClient(BioimageSearchClient):
 #############################################
     
 class PlatePreprocessingClient(BioimageSearchClient):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, params=None):
+        super().__init__(params)
 
     def getBatchJobDefinitionArn(self):
         return self._resources.getPlatePreprocessingJobDefnArn()
@@ -567,8 +577,8 @@ class PlatePreprocessingClient(BioimageSearchClient):
 #############################################
 
 class TrainingConfigurationClient(BioimageSearchClient):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, params=None):
+        super().__init__(params)
 
     def getLambdaArn(self):
         return self._resources.getTrainingConfigurationLambdaArn()
@@ -676,8 +686,8 @@ class TrainingConfigurationClient(BioimageSearchClient):
 #############################################
     
 class ArtifactClient(BioimageSearchClient):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, params=None):
+        super().__init__(params)
 
     def getLambdaArn(self):
         return self._resources.getArtifactLambdaArn()
@@ -749,8 +759,8 @@ class ArtifactClient(BioimageSearchClient):
 #############################################
     
 class ImageManagementClient(BioimageSearchClient):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, params=None):
+        super().__init__(params)
 
     def getLambdaArn(self):
         return self._resources.getImageManagementLambdaArn()
@@ -884,8 +894,8 @@ class ImageManagementClient(BioimageSearchClient):
 #############################################
     
 class ProcessPlateClient(BioimageSearchClient):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, params=None):
+        super().__init__(params)
 
     def getLambdaArn(self):
         return self._resources.getProcessPlateLambdaArn()
@@ -921,8 +931,8 @@ class ProcessPlateClient(BioimageSearchClient):
 #############################################
     
 class TrainClient(BioimageSearchClient):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, params=None):
+        super().__init__(params)
 
     def getLambdaArn(self):
         return self._resources.getTrainLambdaArn()

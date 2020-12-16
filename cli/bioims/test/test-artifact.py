@@ -6,7 +6,15 @@ import boto3
 sys.path.insert(0, "../src")
 import bioims
 
-artifactClient = bioims.client('artifact')
+DATA_BUCKET = "bioimagesearchbasestack-bioimagesearchdatabucketa-16h77xh6oyxmm"
+DESCRIBE_STACKS_KEY = "artifact/plate/123456/describe-stacks/stacks-tXcFUi7BR6ksHLPQuvQXuj.json"
+
+params = {
+    "bucket" : DATA_BUCKET,
+    "key" : DESCRIBE_STACKS_KEY
+}
+
+artifactClient = bioims.client('artifact', params)
 
 # print(artifactClient.getLambdaArn())
 
