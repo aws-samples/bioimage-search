@@ -1,8 +1,13 @@
 const AWS = require("aws-sdk");
 const db = new AWS.DynamoDB.DocumentClient();
 const dy = require("bioimage-dynamo")
+const su = require("short-uuid");
+const s3 = new AWS.S3();
+const cf = new AWS.CloudFormation();
+
 const TABLE_NAME = process.env.TABLE_NAME || "";
 const PARTITION_KEY = process.env.PARTITION_KEY || "";
+const BUCKET = process.env.BUCKET || "";
 const SORT_KEY = process.env.SORT_KEY || "";
 const LATEST = "LATEST";
 const DDB_MAX_BATCH = 25;
@@ -105,6 +110,34 @@ async function deleteArtifacts(contextId: any, trainId: any) {
   return Promise.all(p);
 }
 
+async function createDescribeStacksArtifact(contextId: any, trainId: any) {
+  let artifactId = su.generate()
+  let key =`artifact/plate/123456/describe-stacks/stacks-${artifactId}.json`
+  
+  console.log("Check0")
+  var s3Params = {
+    Bucket: BUCKET, 
+    MaxKeys: 10
+ };
+  const s3ls = await s3.listObjects(s3Params).promise();
+  console.log(s3ls)
+  console.log("Check1")
+  
+  var cfParams = {}
+  const dsResult = await cf.describeStacks(cfParams).promise();
+  console.log(dsResult)
+  console.log("Check2")
+
+  let r = {
+    contextId: contextId,
+    trainId: trainId,
+    key: key,
+    s3ls: s3ls,
+    ds: dsResult
+  }
+  return r
+}
+
 /////////////////
 
 export const handler = async (event: any = {}): Promise<any> => {
@@ -159,6 +192,19 @@ export const handler = async (event: any = {}): Promise<any> => {
       try {
       const response = await deleteArtifacts(event.contextId, event.trainId);
       return { statusCode: 200, body: JSON.stringify(response) };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
+    } else {
+      return { statusCode: 400, body: `Error: contextId, trainId required` };
+    }
+  }
+  
+  if (event.method === "createDescribeStacksArtifact") {
+    if (event.contextId && event.trainId) {
+      try {
+      const response = await createDescribeStacksArtifact(event.contextId, event.trainId);
+      return { statusCode: 200, body: response };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };
       }

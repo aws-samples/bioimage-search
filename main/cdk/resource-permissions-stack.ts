@@ -13,7 +13,7 @@ export interface ResourcePermissionsStackProps extends cdk.StackProps {
   messageLambda: lambda.Function;
   defaultArtifactLambda: lambda.Function;
   trainingConfigurationLambda: lambda.Function;
-  artifactLambdaArn: string;
+  artifactLambda: lambda.Function;
   imageManagementLambda: lambda.Function;
   imageInspectorLambda: lambda.Function;
   processPlateLambda: lambda.Function;
@@ -130,7 +130,7 @@ export class ResourcePermissionsStack extends cdk.Stack {
                   props.messageLambda.functionArn,
                   props.defaultArtifactLambda.functionArn,
                   props.trainingConfigurationLambda.functionArn,
-                  props.artifactLambdaArn,
+                  props.artifactLambda.functionArn,
                   props.imageManagementLambda.functionArn,
                   props.imageInspectorLambda.functionArn,
                   props.processPlateLambda.functionArn,
@@ -158,22 +158,41 @@ export class ResourcePermissionsStack extends cdk.Stack {
     props.processPlateLambda!.role!.attachInlinePolicy(this.externalResourcesPolicy);
     props.trainLambda!.role!.attachInlinePolicy(this.externalResourcesPolicy);
     
-    const imageInspectorPolicy = new iam.Policy(this, "imageInspectorPolicy");
+    // const artifactPolicyStatement = new iam.PolicyStatement({
+    //   actions: ["s3:*"],
+    //   effect: iam.Effect.ALLOW,
+    //   resources: ["*"],
+    // });
     
-    const invokeImageManagementPolicyStatement = new iam.PolicyStatement({
+    const artifactPolicy = new iam.Policy(this, "artifactPolicy");
+    artifactPolicy.addStatements(dataBucketPolicyStatement);
+    artifactPolicy.addStatements(cloudFormationPolicyStatement);
+    props.artifactLambda!.role!.attachInlinePolicy(artifactPolicy);
+
+    const defaultArtifactPolicyStatement = new iam.PolicyStatement({
       actions: ["lambda:InvokeFunction"],
       effect: iam.Effect.ALLOW,
       resources: [props.imageManagementLambda.functionArn]
     });
-    
-    imageInspectorPolicy.addStatements(invokeImageManagementPolicyStatement);
+    const defaultArtifactPolicy = new iam.Policy(this, "defaultArtifactPolicy");
+    defaultArtifactPolicy.addStatements(defaultArtifactPolicyStatement);
+    defaultArtifactPolicy.addStatements(cloudFormationPolicyStatement);
+    props.defaultArtifactLambda!.role!.attachInlinePolicy(defaultArtifactPolicy);
+
+    const imageInspectorPolicyStatement = new iam.PolicyStatement({
+      actions: ["lambda:InvokeFunction"],
+      effect: iam.Effect.ALLOW,
+      resources: [props.imageManagementLambda.functionArn]
+    });
+    const imageInspectorPolicy = new iam.Policy(this, "imageInspectorPolicy");
+    imageInspectorPolicy.addStatements(imageInspectorPolicyStatement);
     props.imageInspectorLambda!.role!.attachInlinePolicy(imageInspectorPolicy);
     
     const imageManagementPolicyStatement = new iam.PolicyStatement({
       actions: ["lambda:InvokeFunction"],
       effect: iam.Effect.ALLOW,
       resources: [props.messageLambda.functionArn,
-                  props.artifactLambdaArn
+                  props.artifactLambda.functionArn
                 ]
     });
     const imageManagementPolicy = new iam.Policy(this, "imageManagementPolicy");
@@ -187,11 +206,9 @@ export class ResourcePermissionsStack extends cdk.Stack {
                   props.imageManagementLambda.functionArn
                 ]
     })
-
     const processPlatePolicy = new iam.Policy(this, "processPlatePolicy");
     processPlatePolicy.addStatements(invokeStepFunctionsPolicyStatement);
     processPlatePolicy.addStatements(processPlatePolicyStatement);
-
     props.processPlateLambda!.role!.attachInlinePolicy(processPlatePolicy);
     
     const trainPolicyStatement = new iam.PolicyStatement({
@@ -202,11 +219,9 @@ export class ResourcePermissionsStack extends cdk.Stack {
                   props.trainingConfigurationLambda.functionArn
                 ]
     })
-
     const trainPolicy = new iam.Policy(this, "trainPolicy");
     trainPolicy.addStatements(invokeStepFunctionsPolicyStatement);
     trainPolicy.addStatements(trainPolicyStatement);
-
     props.trainLambda!.role!.attachInlinePolicy(trainPolicy);
     
     //////////////////////////////////////////////////////////////////////////////

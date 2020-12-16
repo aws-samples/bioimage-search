@@ -2,15 +2,17 @@ import dynamodb = require("@aws-cdk/aws-dynamodb");
 import lambda = require("@aws-cdk/aws-lambda");
 import iam = require("@aws-cdk/aws-iam");
 import cdk = require("@aws-cdk/core");
+import s3 = require("@aws-cdk/aws-s3");
 
 export interface ArtifactStackProps extends cdk.StackProps {
   dynamoTableNames: any;
+  dataBucket: s3.Bucket;
 }
 
 const TABLE_NAME = "BioimsArtifact";
 
 export class ArtifactStack extends cdk.Stack {
-  public artifactLambdaArn: string;
+  public artifactLambda: lambda.Function;
   
   constructor(app: cdk.App, id: string, props: ArtifactStackProps) {
     super(app, id, props);
@@ -45,7 +47,7 @@ export class ArtifactStack extends cdk.Stack {
       );
     }
 
-    const artifactLambda = new lambda.Function(this, "artifactFunction", {
+    this.artifactLambda = new lambda.Function(this, "artifactFunction", {
       code: lambda.Code.fromAsset("src/artifact/build"),
       handler: "artifact.handler",
       runtime: lambda.Runtime.NODEJS_12_X,
@@ -53,11 +55,11 @@ export class ArtifactStack extends cdk.Stack {
         TABLE_NAME: artifactTable.tableName,
         PARTITION_KEY: "contextId",
         SORT_KEY: "artifact",
+        BUCKET: props.dataBucket.bucketName
       },
     });
 
-    artifactTable.grantReadWriteData(artifactLambda);
-    this.artifactLambdaArn = artifactLambda.functionArn;
+    artifactTable.grantReadWriteData(this.artifactLambda);
   }
   
 }

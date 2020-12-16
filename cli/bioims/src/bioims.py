@@ -706,7 +706,6 @@ class ArtifactClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        print(response)
         return getResponseBodyAsJson(response)
 
     def deleteArtifacts(self, contextId, trainId):
@@ -731,6 +730,18 @@ class ArtifactClient(BioimageSearchClient):
             )
         return getResponseBodyAsJson(response)
         
+    def createDescribeStacksArtifact(self, contextId, trainId):
+        request = '{{ "method": "createDescribeStacksArtifact", "contextId": "{}", "trainId": "{}" }}'.format(contextId, trainId)
+        print(request)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self.getLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        return getResponseBodyAsJson(response)
+
 #############################################
 #
 # IMAGE MANAGEMENT
@@ -757,6 +768,18 @@ class ImageManagementClient(BioimageSearchClient):
         jvalue = json.loads(jbody)
         return jvalue
         
+    def getImageInfo(self, imageId, trainId):
+        request = '{{ "method": "getImageInfo", "imageId": "{}", "trainId": "{}" }}'.format(imageId, trainId)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self.getLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        jbody = getResponseBodyAsJson(response)
+        return jbody
+
     def getImagesByPlateId(self, plateId):
         request = '{{ "method": "getImagesByPlateId", "plateId": "{}" }}'.format(plateId)
         payload = bytes(request, encoding='utf-8')

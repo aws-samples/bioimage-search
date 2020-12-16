@@ -78,6 +78,17 @@ const SR_READY = "READY"
 
 /////////////////////////////////////////////////
 
+async function getImageInfo(imageId: any, trainId: any) {
+    const params = {
+    TableName: TABLE_NAME,
+    Key: {
+      [PARTITION_KEY_IMGID]: imageId,
+      [SORT_KEY_TRNID]: trainId,
+    },
+  };
+  return db.get(params).promise();
+}
+
 async function createPlateMessageId(plateId: any) {
   const plateMessageId = await createMessage(`Message START for plateId ${plateId}`);
 
@@ -608,6 +619,22 @@ export const handler = async (event: any = {}): Promise<any> => {
   if (!event.method) {
     console.log("Error: method parameter required - returning status code 400");
     return { statusCode: 400, body: `Error: method parameter required` };
+  }
+  
+  if (event.method == "getImageInfo") {
+    if (event.imageId && event.trainId) {
+      try {
+        const response = await getImageInfo(event.imageId, event.trainId);
+        return { statusCode: 200, body: response };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
+    } else {
+      return {
+        statusCode: 400,
+        body: `Error: imageId required`,
+      }
+    }
   }
   
   if (event.method === "populateSourcePlate") {

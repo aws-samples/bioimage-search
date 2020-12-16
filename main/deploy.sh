@@ -15,6 +15,7 @@ cd src/message; npm install; cd ../..
 cd src/image-management; npm install; cd ../..
 cd src/process-plate; npm install; cd ../..
 cd src/train; npm install; cd ../..
+cd src/artifact; npm install; cd ../..
 
 cd src/image-artifact/lambda/default-artifact; ./build.sh; cd ../../../..
 cd src/plate-preprocessing; ./build.sh; cd ../..

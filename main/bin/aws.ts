@@ -61,13 +61,14 @@ const trainingConfigurationStack = new TrainingConfigurationStack(app, 'Bioimage
 })
 
 const artifactStack = new ArtifactStack(app, 'BioimageSearchArtifactStack', {
-    dynamoTableNames: dynamoTableNames
+    dynamoTableNames: dynamoTableNames,
+    dataBucket: baseStack.dataBucket
 })
 
 const imageManagementStack = new ImageManagementStack(app, 'BioimageSearchImageManagementStack', {
     trainingConfigurationLambda: trainingConfigurationStack.trainingConfigurationLambda,
     messageLambda: messageStack.messageLambda,
-    artifactLambdaArn: artifactStack.artifactLambdaArn,
+    artifactLambda: artifactStack.artifactLambda,
     dynamoTableNames: dynamoTableNames
 })
 
@@ -96,7 +97,7 @@ const resourcePermissionsStack = new ResourcePermissionsStack(app, 'BioimageSear
     messageLambda: messageStack.messageLambda,
     defaultArtifactLambda: imageArtifactStack.defaultArtifactLambda,
     trainingConfigurationLambda: trainingConfigurationStack.trainingConfigurationLambda,
-    artifactLambdaArn: artifactStack.artifactLambdaArn,
+    artifactLambda: artifactStack.artifactLambda,
     imageManagementLambda: imageManagementStack.imageManagementLambda,
     imageInspectorLambda: processPlateStack.imageInspectorLambda,
     processPlateLambda: processPlateStack.processPlateLambda,

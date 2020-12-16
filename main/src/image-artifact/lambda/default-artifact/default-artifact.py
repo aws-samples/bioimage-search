@@ -6,8 +6,11 @@ from PIL import Image
 import numpy as np
 from skimage.exposure import histogram
 import sys
+import random
+import time
 
 import bioimageimage as bi
+import bioims
 
 def handler(event, context):
     s3c = boto3.client('s3')
@@ -19,6 +22,29 @@ def handler(event, context):
         imageId = event['imageId']
     
     print("imageId={}".format(imageId))
+    
+    strBytes = imageId.encode('utf-8')
+    
+    imageIdAsInt = int.from_bytes(strBytes, byteorder='big', signed=False)
+    
+    print("imageIdAsInt=", imageIdAsInt)
+    
+    random.seed(imageIdAsInt)
+    
+    # This is to deal with CLoudFormation API throttling for DescribeStack
+    waitSeconds = random.uniform(0.0, 60.0)
+    
+    print("waitSeconds=", waitSeconds)
+    
+    time.sleep(waitSeconds)    
+    
+    print("finished waiting")
+    
+    imageManagementClient = bioims.client('image-management')
+    
+    r = imageManagementClient.getImageInfo(imageId, "origin")
+    
+    print(r)
     
     return
 
