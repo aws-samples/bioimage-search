@@ -114,26 +114,31 @@ async function createDescribeStacksArtifact(contextId: any, trainId: any) {
   let artifactId = su.generate()
   let key =`artifact/plate/123456/describe-stacks/stacks-${artifactId}.json`
   
-  console.log("Check0")
-  var s3Params = {
-    Bucket: BUCKET, 
-    MaxKeys: 10
- };
-  const s3ls = await s3.listObjects(s3Params).promise();
-  console.log(s3ls)
-  console.log("Check1")
-  
   var cfParams = {}
   const dsResult = await cf.describeStacks(cfParams).promise();
-  console.log(dsResult)
-  console.log("Check2")
+
+  let dsResultStr = JSON.stringify(dsResult);
+  var buffer = Buffer.from(dsResultStr);
+  
+  var s3PutParams = {
+    Bucket: BUCKET,
+    Key: key,
+    Body: buffer
+  }
+  await s3.putObject(s3PutParams).promise();
+
+  let artifactKey = `s3key#${key}`;
+  let a = {
+    contextId: contextId,
+    trainId: trainId,
+    artifact: artifactKey
+  }
+  await createArtifact(a);
 
   let r = {
     contextId: contextId,
     trainId: trainId,
-    key: key,
-    s3ls: s3ls,
-    ds: dsResult
+    key: key
   }
   return r
 }
