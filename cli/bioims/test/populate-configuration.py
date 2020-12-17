@@ -8,5 +8,6 @@ import bioims
 
 configurationClient = bioims.client('configuration')
 
-configurationClient.setParameter("default-image-artifact-medium-size-pixels", "1000")
-configurationClient.setParameter("default-image-artifact-thumbnail-size-pixels", "100")
+configurationClient.setParameter("default-image-artifact-sizes", "100,1000")
+configurationClient.setParameter("default-image-artifact-keys", "thumbnail-2d.png,medium-2d.png")
+

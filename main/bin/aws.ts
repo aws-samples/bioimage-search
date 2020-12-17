@@ -49,7 +49,8 @@ const messageStack = new MessageStack(app, 'BioimageSearchMessageStack', {
 })
 
 const imageArtifactStack = new ImageArtifactStack(app, 'BioimageSearchImageArtifactStack', {
-    dataBucket: baseStack.dataBucket
+    dataBucket: baseStack.dataBucket,
+    configurationLambdaArn: configurationStack.configurationLambdaArn
 })
 
 const platePreprocessingStack = new PlatePreprocessingStack(app, 'BioimageSearchPlatePreprocessingStack', {

@@ -5,13 +5,14 @@ import s3 = require("@aws-cdk/aws-s3");
 
 export interface ImageArtifactStackProps extends cdk.StackProps {
   dataBucket: s3.Bucket;
+  configurationLambdaArn: string;
 }
 
 export class ImageArtifactStack extends cdk.Stack {
   public defaultArtifactLambda: lambda.Function;
   
   constructor(app: cdk.App, id: string, props: ImageArtifactStackProps) {
-    super(app, id);
+    super(app, id, props);
 
     this.defaultArtifactLambda = new lambda.Function(
       this,
@@ -23,7 +24,8 @@ export class ImageArtifactStack extends cdk.Stack {
         memorySize: 3008,
         timeout: cdk.Duration.seconds(300),
         environment: {
-          DATA_BUCKET: props.dataBucket.bucketName
+          DATA_BUCKET: props.dataBucket.bucketName,
+          CONFIGURATION_LAMBDA_ARN: props.configurationLambdaArn
         }
       }
     );

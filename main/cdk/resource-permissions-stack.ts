@@ -172,7 +172,8 @@ export class ResourcePermissionsStack extends cdk.Stack {
     const defaultArtifactPolicyStatement = new iam.PolicyStatement({
       actions: ["lambda:InvokeFunction"],
       effect: iam.Effect.ALLOW,
-      resources: [props.imageManagementLambda.functionArn]
+      resources: [props.imageManagementLambda.functionArn,
+                  props.configurationLambdaArn]
     });
     const defaultArtifactPolicy = new iam.Policy(this, "defaultArtifactPolicy");
     defaultArtifactPolicy.addStatements(defaultArtifactPolicyStatement);
