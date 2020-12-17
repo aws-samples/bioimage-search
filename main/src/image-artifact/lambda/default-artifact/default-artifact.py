@@ -20,14 +20,12 @@ def handler(event, context):
     contextId = describeStacks['contextId']
     trainId = describeStacks['trainId']
     key = describeStacks['key']
-    
+    dataBucket = os.environ['DATA_BUCKET']
+   
     print("imageId={}".format(imageId))
     print("contextId={}".format(contextId))
     print("trainId={}".format(trainId))
     print("key={}".format(key))
-    
-    dataBucket = os.environ['DATA_BUCKET']
-   
     print("dataBucket={}".format(dataBucket))
 
     # if event['Item']:
@@ -55,19 +53,60 @@ def handler(event, context):
     
     # print("finished waiting")
     
-    # imageManagementClient = bioims.client('image-management')
-    
-    # r = imageManagementClient.getImageInfo(imageId, "origin")
-    
-    # print(r)
-    
-    return
+######################################    
 
+    describeStacksParams = {
+        "bucket" : dataBucket,
+        "key" : key
+    }
+    
+    imageManagementClient = bioims.client('image-management', describeStacksParams)
+    
+    imageInfo = imageManagementClient.getImageInfo(imageId, "origin")
+    
+    # {'Item': 
+    #     {   'trainCategory': 'moa', 
+    #         'imageId': 'ecG7rUcJL2asM4AvoEmom9', 
+    #         'plateId': 'bWb5wnbxsPPUyTVhfjV8Wh', 
+    #         'trainId': 'origin', 
+    #         'depth': '1', 
+    #         'plateSourceId': 'Week1_22401', 
+    #         'bucket': 'bioimagesearchbbbc021stack-bbbc021bucket544c3e64-10ecnwo51127', 
+    #         'experiment': 'BBBC021_v1', 
+    #         'channelKeys': [
+    #             {'name': 'dapi', 
+    #             'keysuffix': 'Week1_22401/Week1_150607_G11_s4_w1FD01EB31-90F9-4856-AD6B-B5160E2C5BA3.tif'}, 
+    #             {'name': 'tubulin', 
+    #             'keysuffix': 'Week1_22401/Week1_150607_G11_s4_w2E853D1E6-2637-488D-829C-D6AB6AD8A2E2.tif'}, 
+    #             {'name': 'actin', 'keysuffix': 'Week1_22401/Week1_150607_G11_s4_w4768D7DAA-05D3-48FA-9223-954979D8C802.tif'}
+    #             ], 
+    #         'wellId': 'amTSiU11M5knT9DKvgtmm5', 
+    #         'imageSourceId': 'Week1_150607_G11_s4_w1FD01EB31-90F9-4856-AD6B-B5160E2C5BA3', 
+    #         'messageId': '0e366bc9-ab55-4eeb-9d79-9f661e3ce712', 
+    #         'searchReady': 'VALIDATED', 
+    #         'height': '1024', 
+    #         'width': '1280', 
+    #         'wellSourceId': 'G11', 
+    #         'channels': '3', 
+    #         'trainLabel': 'DMSO', 
+    #         'key': '', 
+    #         'createTimestamp': '1608160666210'
+    #     }
+    # }
 
-#    input_bucket = event['input_bucket']
-#    input_keys = event['input_keys']
-#    artifact_keys = event['artifact_keys']
-#    artifact_sizes = event['artifact_sizes']
+######################################    
+
+    input_bucket = imageInfo['Item']['bucket']
+    
+    input_keys = []
+    keyPrefix = imageInfo['Item']['key']
+    channelKeys = imageInfo['Item']['channelKeys']
+    for channel in channelKeys:
+        fullKey = keyPrefix + channel['keysuffix']
+        input_keys.append(fullKey)
+    
+    artifact_keys = event['artifact_keys']
+    artifact_sizes = event['artifact_sizes']
     
     # input_data = []
 

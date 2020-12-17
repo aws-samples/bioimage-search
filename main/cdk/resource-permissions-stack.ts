@@ -177,6 +177,7 @@ export class ResourcePermissionsStack extends cdk.Stack {
     const defaultArtifactPolicy = new iam.Policy(this, "defaultArtifactPolicy");
     defaultArtifactPolicy.addStatements(defaultArtifactPolicyStatement);
     defaultArtifactPolicy.addStatements(cloudFormationPolicyStatement);
+    defaultArtifactPolicy.addStatements(dataBucketPolicyStatement);
     props.defaultArtifactLambda!.role!.attachInlinePolicy(defaultArtifactPolicy);
 
     const imageInspectorPolicyStatement = new iam.PolicyStatement({

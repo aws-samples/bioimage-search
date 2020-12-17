@@ -7,8 +7,6 @@ class BioimageSearchResources:
     def __init__(self, params=None):
         self._stacksDescription = ""
         
-        print(params)
-        
         if params and params["bucket"] and params["key"]:
             #print("Loading bucket={} key={}".format(params["bucket"], params["key"]))
             s3 = boto3.client('s3')
