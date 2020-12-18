@@ -271,13 +271,6 @@ export class ProcessPlateStack extends cdk.Stack {
       inputPath: '$.embeddingInfoRequest',
     });
 
-    const endpointStep = new sfn.Pass(this, "Endpoint Step", {
-      parameters: {
-        test: "success"
-      },
-      resultPath: '$.endpointStep'
-    });
-    
     const processPlateLambda = this.createSfnMessage("PlateLambda", "Placeholder Plate Lambda Task");
     
     const skippingPlateMessage = this.createSfnMessage("SkippingPlate", "No valid Arn for Plate processing - skipping");
@@ -344,7 +337,76 @@ export class ProcessPlateStack extends cdk.Stack {
     });
     wellMap.iterator(wellProcessor);
     
+    const listImagesInput = new sfn.Pass(this, "ListImagesInput", {
+      parameters: {
+        method: "getImagesByPlateId",
+        plateId: sfn.JsonPath.stringAt('$.plateId'),
+      },
+      resultPath: '$.listImagesInput'
+    });
+    
+    const listImagesFunction = new tasks.LambdaInvoke(this, "ListImagesFunction", {
+      lambdaFunction: props.imageManagementLambda,
+      resultPath: '$.imageList',
+      inputPath: '$.listImagesInput',
+    });
+    
+    const listImages = listImagesInput.next(listImagesFunction);
+    
+    const imageArnFailureMessage = this.createSfnMessage("ImageArnFailureMessage", "Invalid Image Arn");
+    
+    const imageArnFail = new sfn.Fail(this, 'Image Arn Selection Failed', {
+      cause: 'Invalid Image Arn',
+      error: 'Invalid Image Arn',
+    });
+    
+    const imageArnFailure = imageArnFailureMessage.next(imageArnFail);
+    
+    const processImageLambda = this.createSfnMessage("ImageLambda", "Placeholder Image Lambda Task");
+    
+    const processImageBatch = new tasks.BatchSubmitJob (this, "ImageBatchJob", {
+      jobDefinition: batch.JobDefinition.fromJobDefinitionArn(this, "ImageBatchJobDefArn", sfn.JsonPath.stringAt('$.embeddingInfo.Payload.body.Item.imageMethodArn')),
+      jobName: sfn.JsonPath.stringAt('$.imageId'),
+//      jobQueue: props.batchSpotQueue,
+      jobQueue: props.batchOnDemandQueue,
+      payload: {
+        type: sfn.InputType.OBJECT,
+        value: {
+          regionArg: '--region',
+          region: process.env.CDK_DEFAULT_REGION,
+          bucketArg: '--bucket',
+          bucket: props.dataBucket.bucketName,
+          plateIdArg: '--imageId',
+          plateId: sfn.JsonPath.stringAt('$.imageId'),
+          embeddingNameArg: '--embeddingName',
+          embeddingName: sfn.JsonPath.stringAt('$.embeddingName')
+        }
+      },
+      resultPath: '$.imageBatchOutput'
+    });
 
+    const imageProcessor = new sfn.Choice(this, "Image Arn Service")
+      .when(sfn.Condition.stringMatches('$.imageMethodArn', "arn:aws:lambda:*"), processImageLambda)
+      .when(sfn.Condition.stringMatches('$.imageMethodArn', "arn:aws:batch:*"), processImageBatch)
+      .otherwise(imageArnFailure);
+        
+    const imageMap = new sfn.Map(this, "Well Map", {
+      maxConcurrency: 0,
+      parameters: {
+        wellMethodArn: sfn.JsonPath.stringAt('$.embeddingInfo.Payload.body.Item.wellMethodArn'),
+        'wellId.$' : "$$.Map.Item.Value",
+        plateMessageId: sfn.JsonPath.stringAt("$.plateMessageId")
+      },
+      itemsPath: '$.wellList.Payload.body',
+      resultPath: '$.wellMapResult',
+    });
+    wellMap.iterator(wellProcessor);
+
+    
+    const processPlateSuccess = new sfn.Succeed(this, "Process Plate Success", {
+      comment: "Process Plate Suceeded"
+    });
+    
     const processPlateStepFunctionDef = plateMessageInput
       .next(getPlateMessage)
       .next(plateMessagePass)
@@ -364,7 +426,9 @@ export class ProcessPlateStack extends cdk.Stack {
         .afterwards())
       .next(listWells)
       .next(wellMap)
-      .next(endpointStep)
+      .next(listImages)
+      .next(imageMap)
+      .next(processPlateSuccess)
 
     const logGroup = new logs.LogGroup(this, "ProcessPlateLogGroup");
 

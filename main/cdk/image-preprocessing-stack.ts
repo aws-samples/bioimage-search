@@ -19,14 +19,14 @@ export class ImagePreprocessingStack extends cdk.Stack {
             readOnly: false,
             privileged: true,
             command: [
-              "Ref::p1",
-              "Ref::p2",
-              "Ref::p3",
-              "Ref::p4",
-              "Ref::p5",
-              "Ref::p6",
-              "Ref::p7",
-              "Ref::p8"
+              "Ref::regionArg",
+              "Ref::region",
+              "Ref::bucketArg",
+              "Ref::bucket",
+              "Ref::imageIdArg",
+              "Ref::imageId",
+              "Ref::embeddingNameArg",
+              "Ref::embeddingName"
               ],
         },
         retryAttempts: 3,

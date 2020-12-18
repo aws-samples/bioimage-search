@@ -6,6 +6,9 @@ import json
 import bbbc021common as bb
 
 """
+
+*** NOTE: This script has been deprecated - the image-preprocessing.py script is expected to understand the channel namespace. ***
+
 For consistency, this script assumes the following S3 object layout for the BBBC-021 dataset:
 
 BBBC-021 raw imagery:

@@ -100,14 +100,18 @@ imageManagementClient = bioims.client('image-management')
 
 #r = imageManagementClient.getPlateMessageId('dzqwTuqgLxmz2vmjGeyZHD')
 
-print("getWellsByPlateId():")
+# print("getWellsByPlateId():")
 
-r = imageManagementClient.getWellsByPlateId('vjv3j3DusLBmRehT46fbg3')
+# r = imageManagementClient.getWellsByPlateId('vjv3j3DusLBmRehT46fbg3')
 
-print(r)
+# print(r)
 
-print("getImagesByPlateAndWellId():")
+# print("getImagesByPlateAndWellId():")
 
-r = imageManagementClient.getImagesByPlateAndWellId('vjv3j3DusLBmRehT46fbg3', 'qqc4XGQCBtTL5jJBQxYvR7')
+# r = imageManagementClient.getImagesByPlateAndWellId('vjv3j3DusLBmRehT46fbg3', 'qqc4XGQCBtTL5jJBQxYvR7')
+
+# print(r)
+
+r = imageManagementClient.getImageInfo('115kKdtCLvJ9HodXCQDrU6', 'origin')
 
 print(r)
