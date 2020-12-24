@@ -135,15 +135,38 @@ s3c = boto3.client('s3')
 imageManagementClient = bioims.client('image-management')
 imageInfo = imageManagementClient.getImageInfo(args.imageId, "origin")
 
+isLabeled = False
+if 'trainLabel' in imageInfo:
+    isLabeled = True
+
 configurationClient = bioims.client('configuration')
 roisize = int(configurationClient.getParameter(CONFIG_ROI_SIZE))
 minvoxels = int(configurationClient.getParameter(CONFIG_MIN_VOXELS))
 segmentationChannelName = 'dapi'
 
+trainKey   = "artifact/train/" + args.embeddingName + "/plate/" + imageInfo['plateid'] + "/image-" + args.imageId + "-train.npy"
+labelKey   = "artifact/train/" + args.embeddingName + "/plate/" + imageInfo['plateid'] + "/image-" + args.imageId + "-label.npy"
+noLabelKey = "artifact/train/" + args.embeddingName + "/plate/" + imageInfo['plateid'] + "/image-" + args.imageId + "-label.NONE"
+roiKey     = "artifact/train/" + args.embeddingName + "/plate/" + imageInfo['plateid'] + "/image-" + args.imageId + "-roi.json"
+
+width = int(imageInfo['width'])
+height = int(imageInfo['height'])
+depth = int(imageInfo['depth'])
+
+labelIndex = -1
+
+if isLabeled:
+    labelClient = bioims.client('label')
+    labelDict = {}
+    labelList = labelClient.listLabels()
+    for lc in labelList:
+        labelDict[lc[0]]=lc[1]
+    labelIndex = int(labelDict[imageInfo['trainLabel']])
+
 def getFlatFieldKeyForChannel(channelName):
     flatFieldKey = "artifact/plate/" + imageInfo['plateId'] + "/" + args.embeddingName + "/channel-" + channelName + "-flatfield.npy"
     return flatFieldKey
-
+    
 def findCentersFromLabels(labels):
     centers=[]
     maxLabel=labels.max()
@@ -192,10 +215,11 @@ segment_index = 0
 i=0
     
 # For each channel, do an initial linear normalizations, and find the segmentation channel index
+inputBucket = imageInfo['bucket']
 flatFieldData = []
 for inputChannel in inputChannels:
     channelFullKey = imageInfo['key'] + inputChannel['keysuffix']
-    normedImage = bi.computeNormedImage(args.bucket, channelFullKey)
+    normedImage = bi.computeNormedImage(inputBucket, channelFullKey)
     pix_shape.append(normedImage.shape)
     input_arr.append(normedImage)
     if inputChannel['name']==segmentationChannelName:
@@ -290,29 +314,28 @@ for center in centers:
     count+=1
         
 # Write the ROI image data
-roiKey = image['outputKeyPrefix'] + '.npy'
-bi.writeNumpyToS3(roiData[:count], image['outputBucket'], roiKey)
+#roiKey = image['outputKeyPrefix'] + '.npy'
+bi.writeNumpyToS3(roiData[:count], args.bucket, trainKey)
     
 # Construct and write the ROI json file
 roiCoordInfo = {}
-roiCoordInfo['sourceImageBucket'] = inputChannelBucket
-sourceChannelKeys = {}
-for chan in inputChannels:
-    sourceChannelKeys[chan['name']] = chan['imageKey']
-roiCoordInfo['sourceChannelKeys'] = sourceChannelKeys
+
 roiSize = {}
 zSize=roisize
-if (input_data.shape[1]<roisize):
-    zSize=input_data.shape[1]
+if (depth<roisize):
+    zSize=depth
+    
 ySize=roisize
-if (input_data.shape[2]<roisize):
-    ySize=input_data.shape[2]
+if (height<roisize):
+    ySize=height
+    
 xSize=roisize
-if (input_data.shape[3]<roisize):
-    xSize=input_data.shape[3]
+if (width<roisize):
+    xSize=width
 roiSize['z']=zSize
 roiSize['y']=ySize
 roiSize['x']=xSize
+
 roiCoordInfo['roisize'] = roiSize
 roiArr = []
 for rc in roiCoordinates:
@@ -321,8 +344,18 @@ for rc in roiCoordinates:
     roi['y'] = rc[1][0]
     roi['x'] = rc[2][0]
     roiArr.append(roi)
+    
 roiCoordInfo['roi'] = roiArr
 roiCoordInfoJson = json.dumps(roiCoordInfo)
-roiCoordKey = image['outputKeyPrefix'] + '.json'
-s3c.put_object(Body=roiCoordInfoJson, Bucket=image['outputBucket'], Key=roiCoordKey)
+s3c.put_object(Body=roiCoordInfoJson, Bucket=args.bucket, Key=roiKey)
+
+# Label output
+if isLabeled:
+    labelNpy = np.zeros(count)
+    for l in range(count):
+        labelNpy[l] = labelIndex
+    bi.writeNumpyToS3(labelNpy, args.bucket, labelKey)
+else:
+    noLabelMessage = "No label data"
+    s3c.put_object(Body=noLabelMessage, Bucket=args.bucket, Key=noLabelKey)
     

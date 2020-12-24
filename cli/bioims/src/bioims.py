@@ -373,8 +373,9 @@ class LabelClient(BioimageSearchClient):
             Payload=payload
             )
         jbody = getResponseBodyAsJson(response)
-        jvalue = json.loads(jbody)
-        return jvalue['index']
+        #jvalue = json.loads(jbody)
+        #return jvalue['index']
+        return jbody
 
     def updateLabel(self, category, label):
         request = '{{ "method": "updateLabel", "category": "{}", "label": "{}" }}'.format(category, label)
@@ -426,10 +427,9 @@ class LabelClient(BioimageSearchClient):
             Payload=payload
             )
         jbody = getResponseBodyAsJson(response)
-        jvalue = json.loads(jbody)
         a = []
-        for j in jvalue:
-            a.append(j['label'])
+        for j in jbody:
+            a.append( ( j['label'] , j['index1'] ) )
         return a
 
 #############################################
