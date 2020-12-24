@@ -376,8 +376,8 @@ export class ProcessPlateStack extends cdk.Stack {
           region: process.env.CDK_DEFAULT_REGION,
           bucketArg: '--bucket',
           bucket: props.dataBucket.bucketName,
-          plateIdArg: '--imageId',
-          plateId: sfn.JsonPath.stringAt('$.imageId'),
+          imageIdArg: '--imageId',
+          imageId: sfn.JsonPath.stringAt('$.imageId'),
           embeddingNameArg: '--embeddingName',
           embeddingName: sfn.JsonPath.stringAt('$.embeddingName')
         }
@@ -390,17 +390,17 @@ export class ProcessPlateStack extends cdk.Stack {
       .when(sfn.Condition.stringMatches('$.imageMethodArn', "arn:aws:batch:*"), processImageBatch)
       .otherwise(imageArnFailure);
         
-    const imageMap = new sfn.Map(this, "Well Map", {
+    const imageMap = new sfn.Map(this, "Image Map", {
       maxConcurrency: 0,
       parameters: {
-        wellMethodArn: sfn.JsonPath.stringAt('$.embeddingInfo.Payload.body.Item.wellMethodArn'),
-        'wellId.$' : "$$.Map.Item.Value",
+        imageMethodArn: sfn.JsonPath.stringAt('$.embeddingInfo.Payload.body.Item.imageMethodArn'),
+        'imageId.$' : "$$.Map.Item.Value",
         plateMessageId: sfn.JsonPath.stringAt("$.plateMessageId")
       },
-      itemsPath: '$.wellList.Payload.body',
-      resultPath: '$.wellMapResult',
+      itemsPath: '$.imageList.Payload.body',
+      resultPath: '$.imageMapResult',
     });
-    wellMap.iterator(wellProcessor);
+    imageMap.iterator(imageProcessor);
 
     
     const processPlateSuccess = new sfn.Succeed(this, "Process Plate Success", {
