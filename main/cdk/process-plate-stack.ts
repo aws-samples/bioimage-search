@@ -320,10 +320,18 @@ export class ProcessPlateStack extends cdk.Stack {
     // arn:aws:lambda:us-east-1:580829821648:function:BioimageSearchLabelStack-labelFunction58A4020A-1TEZ4YLWTTXDH
     // arn:aws:batch:us-east-1:580829821648:job-definition/platepreprocessingjobde-614a2d2923fd2c7:1
     
-    const wellProcessor = new sfn.Choice(this, "Well Arn Service")
+    const wellPass = new sfn.Pass(this, "WellPass", {
+      parameters: {
+        wellId: sfn.JsonPath.stringAt('$.wellId')
+      }
+    });
+    
+    const wellChoice = new sfn.Choice(this, "Well Arn Service")
         .when(sfn.Condition.stringMatches('$.wellMethodArn', "arn:aws:lambda:*"), processWellLambda)
         .when(sfn.Condition.stringMatches('$.wellMethodArn', "arn:aws:batch:*"), processWellBatch)
-        .otherwise(skippingWellMessage);
+        .otherwise(skippingWellMessage)
+        
+    const wellProcessor = wellChoice.afterwards().next(wellPass)
         
     const wellMap = new sfn.Map(this, "Well Map", {
       maxConcurrency: 0,
@@ -365,7 +373,7 @@ export class ProcessPlateStack extends cdk.Stack {
     const processImageLambda = this.createSfnMessage("ImageLambda", "Placeholder Image Lambda Task");
     
     const processImageBatch = new tasks.BatchSubmitJob (this, "ImageBatchJob", {
-      jobDefinition: batch.JobDefinition.fromJobDefinitionArn(this, "ImageBatchJobDefArn", sfn.JsonPath.stringAt('$.embeddingInfo.Payload.body.Item.imageMethodArn')),
+      jobDefinition: batch.JobDefinition.fromJobDefinitionArn(this, "ImageBatchJobDefArn", sfn.JsonPath.stringAt('$.imageMethodArn')),
       jobName: sfn.JsonPath.stringAt('$.imageId'),
 //      jobQueue: props.batchSpotQueue,
       jobQueue: props.batchOnDemandQueue,
@@ -394,8 +402,9 @@ export class ProcessPlateStack extends cdk.Stack {
       maxConcurrency: 0,
       parameters: {
         imageMethodArn: sfn.JsonPath.stringAt('$.embeddingInfo.Payload.body.Item.imageMethodArn'),
-        'imageId.$' : "$$.Map.Item.Value",
-        plateMessageId: sfn.JsonPath.stringAt("$.plateMessageId")
+        'imageId.$' : "$$.Map.Item.Value.Item.imageId",
+        plateMessageId: sfn.JsonPath.stringAt("$.plateMessageId"),
+        embeddingName: sfn.JsonPath.stringAt('$.embeddingName')
       },
       itemsPath: '$.imageList.Payload.body',
       resultPath: '$.imageMapResult',

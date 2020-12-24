@@ -114,15 +114,15 @@ print("Done args")
 #         }
 #     }
 
-CONFIG_ROI_SIZE = "image-preprocesssing-roi-size"
-CONFIG_MIN_VOXELS = "image-preprocesssing-min-voxels"
+CONFIG_ROI_SIZE = "image-preprocessing-roi-size"
+CONFIG_MIN_VOXELS = "image-preprocessing-min-voxels"
 
 parser = argparse.ArgumentParser()
 
 parser.add_argument('--region', type=str, help='AWS region')
 parser.add_argument('--bucket', type=str, help='artifact bucket')
-parser.add_argument('--imageId', type=int, help='imageId to process')
-parser.add_argument('--embeddingName', type=int, help='Embedding name')
+parser.add_argument('--imageId', type=str, help='imageId to process')
+parser.add_argument('--embeddingName', type=str, help='Embedding name')
 
 args = parser.parse_args()
 

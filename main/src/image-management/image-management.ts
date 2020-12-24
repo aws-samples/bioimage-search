@@ -458,13 +458,19 @@ async function getPlateImageStatus(plateId: any) {
     }
   }
   
-  return {
+  let plateStatus = {
     [SR_UNDEFINED] : undefinedCount,
     [SR_PREVALIDATION] : prevalidationCount,
     [SR_VALIDATED] : validatedCount,
     [SR_ERROR] : errorCount,
     [SR_READY] : readyCount
   }
+  
+  console.log("plateStatus=")
+  console.log(plateStatus)
+  console.log("==")
+
+  return plateStatus;
 }
 
 async function updatePlateStatus(plateId: any,

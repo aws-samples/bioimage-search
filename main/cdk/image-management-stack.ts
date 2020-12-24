@@ -48,6 +48,7 @@ export class ImageManagementStack extends cdk.Stack {
           type: dynamodb.AttributeType.STRING,
         },
         tableName: "BioimsImageManagement",
+        billingMode: BillingMode.PAY_PER_REQUEST
       });
       
       imageManagementTable.addGlobalSecondaryIndex({

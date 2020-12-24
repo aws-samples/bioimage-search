@@ -29,7 +29,7 @@ export class ImagePreprocessingStack extends cdk.Stack {
               "Ref::embeddingName"
               ],
         },
-        retryAttempts: 3,
+        retryAttempts: 1,
         timeout: cdk.Duration.minutes(180)
     })
 

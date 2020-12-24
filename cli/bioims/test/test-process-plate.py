@@ -12,15 +12,15 @@ INPUT_KEY_3 = 'sourcePlateInfo_Week1_22401.json'
 
 processPlateClient = bioims.client('process-plate')
 
-# r1 = processPlateClient.uploadSourcePlate(INPUT_BUCKET, INPUT_KEY_1)
+r1 = processPlateClient.uploadSourcePlate(INPUT_BUCKET, INPUT_KEY_1)
 
-# print(r1)
+print(r1)
 
 # r2 = processPlateClient.uploadSourcePlate(INPUT_BUCKET, INPUT_KEY_2)
 
 # print(r2)
 
-r3 = processPlateClient.uploadSourcePlate(INPUT_BUCKET, INPUT_KEY_3)
+# r3 = processPlateClient.uploadSourcePlate(INPUT_BUCKET, INPUT_KEY_3)
 
-print(r3)
+# print(r3)
 
