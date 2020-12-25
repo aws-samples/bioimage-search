@@ -112,7 +112,7 @@ async function deleteArtifacts(contextId: any, trainId: any) {
 
 async function createDescribeStacksArtifact(contextId: any, trainId: any) {
   let artifactId = su.generate()
-  let key =`artifact/plate/123456/describe-stacks/stacks-${artifactId}.json`
+  let key =`artifact/describe-stacks/${contextId}/stacks-${artifactId}.json`
   
   var cfParams = {}
   const dsResult = await cf.describeStacks(cfParams).promise();

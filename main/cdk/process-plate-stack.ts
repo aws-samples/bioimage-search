@@ -131,7 +131,7 @@ export class ProcessPlateStack extends cdk.Stack {
       resultPath: '$.validatorOutput'
     });
     
-    const describeStacksInput = new sfn.Pass(this, "DescribeStacksInput", {
+    const describeStacksInput1 = new sfn.Pass(this, "DescribeStacksInput1", {
       parameters: {
         method: "createDescribeStacksArtifact",
         contextId: sfn.JsonPath.stringAt("$.plateId"),
@@ -140,7 +140,7 @@ export class ProcessPlateStack extends cdk.Stack {
       resultPath: '$.describeStacksInput'
     });
     
-    const describeStacksInjector = new tasks.LambdaInvoke(this, "DescribeStacksInjector", {
+    const describeStacksInjector1 = new tasks.LambdaInvoke(this, "DescribeStacksInjector1", {
       lambdaFunction: props.artifactLambda,
       inputPath: '$.describeStacksInput',
       resultPath: '$.describeStacks'
@@ -172,7 +172,7 @@ export class ProcessPlateStack extends cdk.Stack {
     });
     artifactMap.iterator(artifactFunction);
     
-    const artifactSequence = describeStacksInput.next(describeStacksInjector).next(artifactMap).next(validationSuccess1)
+    const artifactSequence = describeStacksInput1.next(describeStacksInjector1).next(artifactMap).next(validationSuccess1)
 
     const artifactChoice = new sfn.Choice(this, "ArtifactChoice")
         .when(sfn.Condition.stringMatches('$.validatorOutput.Payload.body', "VALIDATED"), artifactSequence)
@@ -207,11 +207,25 @@ export class ProcessPlateStack extends cdk.Stack {
     //
     ///////////////////////////////////////////
     
-
+    const describeStacksInput2 = new sfn.Pass(this, "DescribeStacksInput2", {
+      parameters: {
+        method: "createDescribeStacksArtifact",
+        contextId: sfn.JsonPath.stringAt("$.plateId"),
+        trainId: "origin"
+      },
+      resultPath: '$.describeStacksInput'
+    });
+    
+    const describeStacksInjector2 = new tasks.LambdaInvoke(this, "DescribeStacksInjector2", {
+      lambdaFunction: props.artifactLambda,
+      inputPath: '$.describeStacksInput',
+      resultPath: '$.describeStacks'
+    });
+    
     const plateMessageInput = new sfn.Pass(this, "Plate Message Input", {
       parameters: {
         method: "getPlateMessageId",
-        plateId: sfn.JsonPath.stringAt("$.plateId")
+        plateId: sfn.JsonPath.stringAt("$.plateId"),
       },
       resultPath: '$.plateMessageInput',
     });
@@ -387,16 +401,26 @@ export class ProcessPlateStack extends cdk.Stack {
           imageIdArg: '--imageId',
           imageId: sfn.JsonPath.stringAt('$.imageId'),
           embeddingNameArg: '--embeddingName',
-          embeddingName: sfn.JsonPath.stringAt('$.embeddingName')
+          embeddingName: sfn.JsonPath.stringAt('$.embeddingName'),
+          describeStacksArg: '--describeStacks',
+          describeStacks: sfn.JsonPath.stringAt('$.describeStacks.Payload.body.key')
         }
       },
-      resultPath: '$.imageBatchOutput'
+      resultPath: '$.imageBatchOutput',
     });
 
-    const imageProcessor = new sfn.Choice(this, "Image Arn Service")
+    const imageChoice = new sfn.Choice(this, "Image Arn Service")
       .when(sfn.Condition.stringMatches('$.imageMethodArn', "arn:aws:lambda:*"), processImageLambda)
       .when(sfn.Condition.stringMatches('$.imageMethodArn', "arn:aws:batch:*"), processImageBatch)
       .otherwise(imageArnFailure);
+      
+    const imagePass = new sfn.Pass(this, "ImagePass", {
+      parameters: {
+        imageId: sfn.JsonPath.stringAt('$.imageId')
+      }
+    });
+    
+    const imageProcessor = imageChoice.afterwards().next(imagePass);
         
     const imageMap = new sfn.Map(this, "Image Map", {
       maxConcurrency: 0,
@@ -404,7 +428,8 @@ export class ProcessPlateStack extends cdk.Stack {
         imageMethodArn: sfn.JsonPath.stringAt('$.embeddingInfo.Payload.body.Item.imageMethodArn'),
         'imageId.$' : "$$.Map.Item.Value.Item.imageId",
         plateMessageId: sfn.JsonPath.stringAt("$.plateMessageId"),
-        embeddingName: sfn.JsonPath.stringAt('$.embeddingName')
+        embeddingName: sfn.JsonPath.stringAt('$.embeddingName'),
+        describeStacks: sfn.JsonPath.stringAt("$.describeStacks")
       },
       itemsPath: '$.imageList.Payload.body',
       resultPath: '$.imageMapResult',
@@ -428,6 +453,8 @@ export class ProcessPlateStack extends cdk.Stack {
         .afterwards())
       .next(embeddingInfoRequest)
       .next(embeddingInfo)
+      .next(describeStacksInput2)
+      .next(describeStacksInjector2)
       .next(new sfn.Choice(this, "Plate Arn Service")
         .when(sfn.Condition.stringMatches('$.embeddingInfo.Payload.body.Item.plateMethodArn', "arn:aws:lambda:*"), processPlateLambda)
         .when(sfn.Condition.stringMatches('$.embeddingInfo.Payload.body.Item.plateMethodArn', "arn:aws:batch:*"), processPlateBatch)

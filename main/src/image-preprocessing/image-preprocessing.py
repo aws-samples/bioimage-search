@@ -123,31 +123,49 @@ parser.add_argument('--region', type=str, help='AWS region')
 parser.add_argument('--bucket', type=str, help='artifact bucket')
 parser.add_argument('--imageId', type=str, help='imageId to process')
 parser.add_argument('--embeddingName', type=str, help='Embedding name')
+parser.add_argument('--describeStacks', type=str, help='Describe Stacks JSON', default='')
 
 args = parser.parse_args()
 
 print("region={} bucket={} imageId={} embeddingName={}".format(args.region, args.bucket, args.imageId, args.embeddingName))
 
+hasDescribeStacks=False
+if len(args.describeStacks) > 0:
+    hasDescribeStacks=True
+    print("describeStacks={}".format(args.describeStacks))
+
 os.environ['AWS_DEFAULT_REGION'] = args.region
 
 s3c = boto3.client('s3')
 
-imageManagementClient = bioims.client('image-management')
-imageInfo = imageManagementClient.getImageInfo(args.imageId, "origin")
+if hasDescribeStacks:
+    params = {
+        "bucket" : args.bucket,
+        "key" : args.describeStacks
+    }
+    imageManagementClient = bioims.client('image-management', params)
+    configurationClient = bioims.client('configuration', params)
+    labelClient = bioims.client('label', params)
+else:
+    imageManagementClient = bioims.client('image-management')
+    configurationClient = bioims.client('configuration')
+    labelClient = bioims.client('label')
+
+imageInfo1 = imageManagementClient.getImageInfo(args.imageId, "origin")
+imageInfo = imageInfo1['Item']
 
 isLabeled = False
 if 'trainLabel' in imageInfo:
     isLabeled = True
 
-configurationClient = bioims.client('configuration')
 roisize = int(configurationClient.getParameter(CONFIG_ROI_SIZE))
 minvoxels = int(configurationClient.getParameter(CONFIG_MIN_VOXELS))
 segmentationChannelName = 'dapi'
 
-trainKey   = "artifact/train/" + args.embeddingName + "/plate/" + imageInfo['plateid'] + "/image-" + args.imageId + "-train.npy"
-labelKey   = "artifact/train/" + args.embeddingName + "/plate/" + imageInfo['plateid'] + "/image-" + args.imageId + "-label.npy"
-noLabelKey = "artifact/train/" + args.embeddingName + "/plate/" + imageInfo['plateid'] + "/image-" + args.imageId + "-label.NONE"
-roiKey     = "artifact/train/" + args.embeddingName + "/plate/" + imageInfo['plateid'] + "/image-" + args.imageId + "-roi.json"
+trainKey   = "artifact/train/" + args.embeddingName + "/plate/" + imageInfo['plateId'] + "/image-" + args.imageId + "-train.npy"
+labelKey   = "artifact/train/" + args.embeddingName + "/plate/" + imageInfo['plateId'] + "/image-" + args.imageId + "-label.npy"
+noLabelKey = "artifact/train/" + args.embeddingName + "/plate/" + imageInfo['plateId'] + "/image-" + args.imageId + "-label.NONE"
+roiKey     = "artifact/train/" + args.embeddingName + "/plate/" + imageInfo['plateId'] + "/image-" + args.imageId + "-roi.json"
 
 width = int(imageInfo['width'])
 height = int(imageInfo['height'])
@@ -156,9 +174,8 @@ depth = int(imageInfo['depth'])
 labelIndex = -1
 
 if isLabeled:
-    labelClient = bioims.client('label')
     labelDict = {}
-    labelList = labelClient.listLabels()
+    labelList = labelClient.listLabels(imageInfo['trainCategory'])
     for lc in labelList:
         labelDict[lc[0]]=lc[1]
     labelIndex = int(labelDict[imageInfo['trainLabel']])
@@ -183,7 +200,7 @@ def findCentersFromLabels(labels):
     for lp in range(maxLabel+1):
         # Skip background
         if (lp!=0):
-            if (labelCounts[lp]>=args.minvoxels):
+            if (labelCounts[lp]>=minvoxels):
                 ca = []
                 ca.append(lp)
                 ca.append(labelCounts[lp])
@@ -205,7 +222,7 @@ def computeCellCenters(pixels):
     centers=findCentersFromLabels(ed2Labels)
     return centers
         
-inputChannels = imageInfo['Item']['channelKeys']
+inputChannels = imageInfo['channelKeys']
 
 # Initialize vars
 normedImages = {}

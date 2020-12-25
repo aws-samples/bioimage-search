@@ -26,7 +26,9 @@ export class ImagePreprocessingStack extends cdk.Stack {
               "Ref::imageIdArg",
               "Ref::imageId",
               "Ref::embeddingNameArg",
-              "Ref::embeddingName"
+              "Ref::embeddingName",
+              "Ref::describeStacksArg",
+              "Ref::describeStacks"
               ],
         },
         retryAttempts: 1,

@@ -112,6 +112,6 @@ imageManagementClient = bioims.client('image-management')
 
 # print(r)
 
-r = imageManagementClient.getImageInfo('115kKdtCLvJ9HodXCQDrU6', 'origin')
+r = imageManagementClient.getImageInfo('1iiQ7691gr8nKQJr2p5RnU', 'origin')
 
 print(r)
