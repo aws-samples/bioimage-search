@@ -78,18 +78,13 @@ for image in imlist:
             imageArr.append(fullpath)
             channelImages[name]=imageArr
             
-def s3ObjectExists(bucket, key):
-    try:
-        s3c.Object(bucket, key).load()
-        return True
-    except:
-        False
-
 def computePlateArtifacts(channelName, imageArr, bucket, plateId, embeddingName):
     flatFieldKey = "artifact/plate/" + plateId + "/" + embeddingName + "/channel-" + channelName + "-flatfield.npy"
-    if s3ObjectExists(bucket, flatFieldKey):
+    if bi.s3ObjectExists(bucket, flatFieldKey):
         print("FlatfieldKey already exists, skipping bucket={} key={}".format(bucket, flatFieldKey))
         return
+    else:
+        print("FlatfieldKey does not exist, computing bucket={} key={}".format(bucket, flatFieldKey))
 
     plateImgArr=[]
 

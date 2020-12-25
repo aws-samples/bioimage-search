@@ -1,6 +1,7 @@
 import numpy as np
 import math 
 import boto3
+from botocore.errorfactory import ClientError
 #import s3fs
 from pathlib import Path
 import shortuuid as su
@@ -235,7 +236,6 @@ def computeNormedImage(imageBucket, imageKey):
     return normImageData(input_data)
     
 def calcMip(image_data, color_arr):
-    
     height = image_data.shape[-2]
     width = image_data.shape[-1]
     mip = np.zeros(shape=(height, width, 3), dtype=np.uint8)
@@ -267,3 +267,11 @@ def loadJsonObjectFromS3(key, bucket):
     fileObject = s3c.get_object(Bucket=bucket, Key=key)
     text = fileObject['Body'].read().decode('utf-8')
     return json.loads(text)
+
+def s3ObjectExists(bucket, key):
+    try:
+        s3c.head_object(Bucket=bucket, Key=key)
+        return True
+    except ClientError:
+        return False
+        

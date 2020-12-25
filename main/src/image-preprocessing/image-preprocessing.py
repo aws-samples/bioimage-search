@@ -167,6 +167,12 @@ labelKey   = "artifact/train/" + args.embeddingName + "/plate/" + imageInfo['pla
 noLabelKey = "artifact/train/" + args.embeddingName + "/plate/" + imageInfo['plateId'] + "/image-" + args.imageId + "-label.NONE"
 roiKey     = "artifact/train/" + args.embeddingName + "/plate/" + imageInfo['plateId'] + "/image-" + args.imageId + "-roi.json"
 
+if (bi.s3ObjectExists(args.bucket, trainKey) and 
+    bi.s3ObjectExists(args.bucket, roiKey) and 
+    (bi.s3ObjectExists(args.bucket, labelKey) or bi.s3ObjectExists(args.bucket, noLabelKey))):
+        print("All files exist - skipping")
+        sys.exit(0)
+
 width = int(imageInfo['width'])
 height = int(imageInfo['height'])
 depth = int(imageInfo['depth'])
