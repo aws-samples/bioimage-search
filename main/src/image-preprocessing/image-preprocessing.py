@@ -162,10 +162,15 @@ roisize = int(configurationClient.getParameter(CONFIG_ROI_SIZE))
 minvoxels = int(configurationClient.getParameter(CONFIG_MIN_VOXELS))
 segmentationChannelName = 'dapi'
 
-trainKey   = "artifact/train/" + args.embeddingName + "/plate/" + imageInfo['plateId'] + "/image-" + args.imageId + "-train.npy"
-labelKey   = "artifact/train/" + args.embeddingName + "/plate/" + imageInfo['plateId'] + "/image-" + args.imageId + "-label.npy"
-noLabelKey = "artifact/train/" + args.embeddingName + "/plate/" + imageInfo['plateId'] + "/image-" + args.imageId + "-label.NONE"
-roiKey     = "artifact/train/" + args.embeddingName + "/plate/" + imageInfo['plateId'] + "/image-" + args.imageId + "-roi.json"
+# trainKey   = "artifact/train/" + args.embeddingName + "/plate/" + imageInfo['plateId'] + "/image-" + args.imageId + "-train.npy"
+# labelKey   = "artifact/train/" + args.embeddingName + "/plate/" + imageInfo['plateId'] + "/image-" + args.imageId + "-label.npy"
+# noLabelKey = "artifact/train/" + args.embeddingName + "/plate/" + imageInfo['plateId'] + "/image-" + args.imageId + "-label.NONE"
+# roiKey     = "artifact/train/" + args.embeddingName + "/plate/" + imageInfo['plateId'] + "/image-" + args.imageId + "-roi.json"
+
+trainKey   = bi.getTrainKey(args.embeddingName, imageInfo['plateId'], args.imageId)
+labelKey   = bi.getLabelKey(args.embeddingName, imageInfo['plateId'], args.imageId)
+noLabelKey = bi.getNoLabelKey(args.embeddingName, imageInfo['plateId'], args.imageId)
+roiKey     = bi.getRoiKey(args.embeddingName, imageInfo['plateId'], args.imageId)
 
 if (bi.s3ObjectExists(args.bucket, trainKey) and 
     bi.s3ObjectExists(args.bucket, roiKey) and 

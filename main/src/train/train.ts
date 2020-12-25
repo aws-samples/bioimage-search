@@ -98,11 +98,8 @@ export const handler = async (event: any = {}): Promise<any> => {
           "filterBucket" : filterBucket,
           "filterKey" : filterKey
         }
-        console.log("Check0")
         const trainingResponse = await createTraining(training);
-        console.log("Check1")
         const response = await startTraining(trainId);
-        console.log("Check2")
         return { statusCode: 200, body: JSON.stringify(response) };
       } catch (error) {
         console.log("Error=");
