@@ -348,6 +348,34 @@ async function getImagesByPlateId(plateId: any) {
   return rows
 }
 
+async function getImageIdsByPlateId(plateId: any) {
+  const keyConditionExpression =
+    [PLATE_ID_ATTRIBUTE] + " = :" + [PLATE_ID_ATTRIBUTE];
+  const expressionAttributeValues =
+    '":' + [PLATE_ID_ATTRIBUTE] + '" : "' + plateId + '"';
+  const params = {
+    TableName: TABLE_NAME,
+    IndexName: PLATE_INDEX,
+    KeyConditionExpression: keyConditionExpression,
+    ExpressionAttributeValues: JSON.parse(
+      "{" + expressionAttributeValues + "}"
+    ),
+  };
+  const imageRowInfo: any[] = await dy.getAllQueryData(db, params);
+  let rows: any[] = [];
+  const p: any[] = [];
+  for (let ir of imageRowInfo) {
+    p.push(
+      getImageRow(
+        ir[PARTITION_KEY_IMGID],
+        ir[SORT_KEY_TRNID]
+      ).then((result: any) => rows.push(result['Item'][PARTITION_KEY_IMGID]))
+    );
+  }
+  await Promise.all(p);
+  return rows
+}
+
 async function getWellMapByPlateId(plateId: any) {
   const allImageRows = await getImagesByPlateId(plateId);
   const wells = new Map<string,any>();
@@ -666,6 +694,17 @@ export const handler = async (event: any = {}): Promise<any> => {
     if (event.plateId) {
       try {
         const response = await getImagesByPlateId(event.plateId);
+        return { statusCode: 200, body: response };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
+    }
+  }
+
+  else if (event.method === "getImageIdsByPlateId") {
+    if (event.plateId) {
+      try {
+        const response = await getImageIdsByPlateId(event.plateId);
         return { statusCode: 200, body: response };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };

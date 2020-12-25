@@ -361,7 +361,7 @@ export class ProcessPlateStack extends cdk.Stack {
     
     const listImagesInput = new sfn.Pass(this, "ListImagesInput", {
       parameters: {
-        method: "getImagesByPlateId",
+        method: "getImageIdsByPlateId",
         plateId: sfn.JsonPath.stringAt('$.plateId'),
       },
       resultPath: '$.listImagesInput'
@@ -426,7 +426,7 @@ export class ProcessPlateStack extends cdk.Stack {
       maxConcurrency: 0,
       parameters: {
         imageMethodArn: sfn.JsonPath.stringAt('$.embeddingInfo.Payload.body.Item.imageMethodArn'),
-        'imageId.$' : "$$.Map.Item.Value.Item.imageId",
+        'imageId.$' : "$$.Map.Item.Value",
         plateMessageId: sfn.JsonPath.stringAt("$.plateMessageId"),
         embeddingName: sfn.JsonPath.stringAt('$.embeddingName'),
         describeStacks: sfn.JsonPath.stringAt("$.describeStacks")
