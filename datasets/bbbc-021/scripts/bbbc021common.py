@@ -2,27 +2,17 @@ import sys
 import boto3
 import pandas as pd
 
-class Bbbc021PlateInfo:
-    def __init__(self, bbbc021bucket, plateName):
-        imageMetadataKey='BBBC021_v1_image.csv'
-        moaKey='BBBC021_v1_moa.csv'
+class Bbbc021PlateInfoByDF:
+    def __init__(self, image_df, moa_df, plateName):
         self._s3c = boto3.client('s3')
-        image_df = self.getCsvDfFromS3(bbbc021bucket, imageMetadataKey)
-        moa_df = self.getCsvDfFromS3(bbbc021bucket, moaKey)
-        
         moa_label_number_map = {}
         moa_unique_arr = moa_df['moa'].unique()
         moa_unique_arr.sort()
         for i, l in enumerate(moa_unique_arr):
             moa_label_number_map[l] = i
 
-        compound_moa_map = {}
-        for i in moa_df.index:
-            r = moa_df.iloc[i]
-            compound = r['compound']
-            moa = r['moa']
-            compound_moa_map[compound] = moa
-            
+        compound_moa_map = self.getCompoundMoaMapFromDf(moa_df)
+
         self._dapiFiles=[]
         self._tubulinFileDict={}
         self._actinFileDict={}
@@ -48,13 +38,33 @@ class Bbbc021PlateInfo:
             self._concentrationFileDict[dapiFilePath]=r['Image_Metadata_Concentration']
             if c in compound_moa_map:
                 self._moaFileDict[dapiFilePath]=compound_moa_map[c]
-            
-    def getCsvDfFromS3(self, bucket, key):
-        csvObject = self._s3c.get_object(Bucket=bucket, Key=key)
+    
+    @staticmethod        
+    def getCsvDfFromS3(bucket, key):
+        s3c = boto3.client('s3')
+        csvObject = s3c.get_object(Bucket=bucket, Key=key)
         file_stream = csvObject['Body']
         df = pd.read_csv(file_stream)
         return df
         
+    @staticmethod
+    def getCompoundMoaMapFromDf(moa_df):
+        compound_moa_map = {}
+        for i in moa_df.index:
+            r = moa_df.iloc[i]
+            compound = r['compound']
+            moa = r['moa']
+            compound_moa_map[compound] = moa
+        return compound_moa_map
+        
+    @staticmethod
+    def getDataFrames(bucket):
+        imageMetadataKey='BBBC021_v1_image.csv'
+        moaKey='BBBC021_v1_moa.csv'
+        image_df = Bbbc021PlateInfoByDF.getCsvDfFromS3(bucket, imageMetadataKey)
+        moa_df = Bbbc021PlateInfoByDF.getCsvDfFromS3(bucket, moaKey)
+        return (image_df, moa_df)
+
     def getDapiFileList(self):
         return self._dapiFiles
         
@@ -77,3 +87,9 @@ class Bbbc021PlateInfo:
         if dapiFile in self._moaFileDict:
             return self._moaFileDict[dapiFile]
         return None
+        
+class Bbbc021PlateInfo(Bbbc021PlateInfoByDF):
+    def __init__(self, bbbc021bucket, plateName):
+        image_df, moa_df = self.getDataFrames(bbbc021bucket)
+        super().__init__(image_df, moa_df, plateName)
+
