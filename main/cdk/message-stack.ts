@@ -2,6 +2,13 @@ import dynamodb = require("@aws-cdk/aws-dynamodb");
 import lambda = require("@aws-cdk/aws-lambda");
 import iam = require("@aws-cdk/aws-iam");
 import cdk = require("@aws-cdk/core");
+import {
+  AttributeType,
+  BillingMode,
+  StreamViewType,
+  ProjectionType,
+  Table,
+} from "@aws-cdk/aws-dynamodb";
 
 export interface MessageStackProps extends cdk.StackProps {
   dynamoTableNames: any;
@@ -36,6 +43,7 @@ export class MessageStack extends cdk.Stack {
           type: dynamodb.AttributeType.STRING,
         },
         tableName: TABLE_NAME,
+        billingMode: BillingMode.PAY_PER_REQUEST
       });
     } else {
       console.log("Using already existing table " + TABLE_NAME);

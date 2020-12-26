@@ -112,41 +112,9 @@ async function createPlateMessageId(plateId: any) {
   };
   console.log(params)
   return await db.update(params).promise();
-
-  // const artifact = {
-  //   "contextId" : plateId,
-  //   "trainId" : ORIGIN,
-  //   "artifact" : `messageId#${plateMessageId}`
-  // }
-  // var params = {
-  //   FunctionName: ARTIFACT_LAMBDA_ARN,
-  //   InvocationType: "RequestResponse",
-  //   Payload: JSON.stringify({ method: "createArtifact", artifact: artifact }),
-  // };
-  // await lambda.invoke(params).promise();
-
-  return plateMessageId
 }
 
 async function getPlateMessageId(plateId: any) {
-
-  // var params = {
-  //   FunctionName: ARTIFACT_LAMBDA_ARN,
-  //   InvocationType: "RequestResponse",
-  //   Payload: JSON.stringify({ method: "getArtifacts", contextId: plateId, trainId: ORIGIN })
-  // };
-  // const response = await lambda.invoke(params).promise();
-  // const rows = la.getResponseBody(response)
-  // for (let r of rows) {
-  //   const a = r.artifact
-  //   if (a.startsWith('messageId#')) {
-  //     const ac = a.split('#')
-  //     const messageId= ac[1]
-  //     return messageId
-  //   }
-  // }
-  // const errMsg = `No messageId found for plate ${plateId}`;
-  // throw new Error(errMsg)
 
   const partitionKey = 'plate#' + plateId;
   const params = {
@@ -204,28 +172,13 @@ async function validateTrainId(trainId: any) {
 // the SourcePlateInfo data. It then hands off processing to the 'ProcessPlate' StepFunction.
 
 async function populateSourcePlate(inputBucket: any, inputKey: any) {
-  const data = await s3
-    .getObject({ Bucket: inputBucket, Key: inputKey })
-    .promise();
+  const  data = await s3.getObject({ Bucket: inputBucket, Key: inputKey }).promise();
   if (!data) {
     throw new Error("sourcePlateInfo object null");
   }
   const sourcePlateInfoStr = data.Body.toString("utf-8");
   const sourcePlateInfo = JSON.parse(sourcePlateInfoStr);
 
-  // NOTE: trainId no longer permitted - all uploads are 'origin'
-  //
-  // if (!("trainId" in sourcePlateInfo)) {
-  //   throw new Error("trainId required");
-  // }
-  // const trainId = sourcePlateInfo["trainId"];
-  // if (trainId != ORIGIN) {
-  //   const trainInfo = validateTrainId(trainId);
-  //   if (!("plateSourceId" in sourcePlateInfo)) {
-  //     throw new Error("plateSourceId required");
-  //   }
-  // }
-  
   const plateSourceId = sourcePlateInfo["plateSourceId"];
   if (!("images" in sourcePlateInfo)) {
     throw new Error("images required");
@@ -244,7 +197,7 @@ async function populateSourcePlate(inputBucket: any, inputKey: any) {
   const plateMessageId = await createPlateMessageId(plateId)
   console.log("plateMessageId=")
   console.log(plateMessageId)
-
+  
   const images: any[] = sourcePlateInfo["images"];
   const wellDict: Map<string, string> = new Map();
   const fields: any[] = [
@@ -255,6 +208,7 @@ async function populateSourcePlate(inputBucket: any, inputKey: any) {
   ];
   const timestamp = Date.now().toString();
   const p: any[] = [];
+
   for (const image of images) {
     const imageId = su.generate();
     for (const field of fields) {
@@ -264,6 +218,7 @@ async function populateSourcePlate(inputBucket: any, inputKey: any) {
         );
       }
     }
+
     const wellSourceId = image["wellSourceId"];
     const imageSourceId = image["imageSourceId"];
     const sourceBucket = image["sourceBucket"];
@@ -275,7 +230,9 @@ async function populateSourcePlate(inputBucket: any, inputKey: any) {
       wellId = su.generate();
       wellDict.set(wellSourceId, wellId);
     }
+
     const messageId = await createMessage(`Creation of imageId=${imageId}`);
+    
     const imageEntry = {
       [PARTITION_KEY_IMGID]: imageId,
       [SORT_KEY_TRNID]: ORIGIN,
@@ -299,12 +256,15 @@ async function populateSourcePlate(inputBucket: any, inputKey: any) {
         [EXPERIMENT_ATTRIBUTE]: image["experiment"],
       }),
     };
+    
     const params = {
       TableName: TABLE_NAME,
       Item: imageEntry,
     };
+    
     p.push(db.put(params).promise());
   }
+
   await Promise.all(p);
   return { plateId: plateId };
 }
@@ -672,15 +632,24 @@ export const handler = async (event: any = {}): Promise<any> => {
   }
   
   if (event.method === "populateSourcePlate") {
+    console.log("Check-1: populateSourcePlate****")
     if (event.inputBucket && event.inputKey) {
       try {
+        console.log("Check0")
         const response = await populateSourcePlate(
           event.inputBucket,
           event.inputKey
         );
+        console.log("Check1 resposne=")
+        console.log(response)
+        console.log("==")
         return { statusCode: 200, body: JSON.stringify(response) };
       } catch (dbError) {
-        return { statusCode: 500, body: JSON.stringify(dbError) };
+        console.log("Check2")
+        console.log(dbError)
+        console.log("==")
+//        return { statusCode: 502, body: JSON.stringify(dbError) };
+        return { statusCode: 500, body: dbError };
       }
     } else {
       return {

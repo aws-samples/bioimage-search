@@ -51,6 +51,7 @@ export class TrainingConfigurationStack extends cdk.Stack {
             type: dynamodb.AttributeType.STRING,
           },
           tableName: TABLE_NAME,
+          billingMode: BillingMode.PAY_PER_REQUEST
         }
       );
       

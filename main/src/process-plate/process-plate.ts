@@ -49,8 +49,6 @@ async function populateSourcePlate(inputBucket: any, inputKey: any) {
       inputKey: inputKey,
     }),
   };
-  console.log("populateSourcePlate params=");
-  console.log(params);
   const data = await lambda.invoke(params).promise();
   const response = la.getResponseBody(data);
   return response["plateId"];
@@ -80,7 +78,7 @@ export const handler = async (event: any = {}): Promise<any> => {
     } else {
       return {
         statusCode: 400,
-        body: `Error: embedding required`,
+        body: `Error: inputBucket and inputKey required`,
       };
     }
   } else if (event.method === "processPlate") {
@@ -94,7 +92,7 @@ export const handler = async (event: any = {}): Promise<any> => {
     } else {
       return {
         statusCode: 400,
-        body: `Error: embedding required`,
+        body: `Error: plateId and embeddingName required`,
       };
     }
   } else {

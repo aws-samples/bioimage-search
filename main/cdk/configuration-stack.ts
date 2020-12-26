@@ -36,6 +36,7 @@ export class ConfigurationStack extends cdk.Stack {
           type: dynamodb.AttributeType.STRING,
         },
         tableName: TABLE_NAME,
+        billingMode: dynamodb.BillingMode.PAY_PER_REQUEST
       });
     } else {
       console.log("Using already existing table "+TABLE_NAME)
