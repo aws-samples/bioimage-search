@@ -6,7 +6,7 @@ const PARTITION_KEY = process.env.PARTITION_KEY || "";
 const SORT_KEY = process.env.SORT_KEY || "";
 const INDEX_ATTRIBUTE = "index1";
 const DESCRIPTION_ATTRIBUTE = "description";
-const ORIGIN = "ORIGIN";
+const ORIGIN = "origin";
 const DDB_MAX_BATCH = 25;
 
 /*
@@ -115,6 +115,21 @@ async function getCategoryRows(category: any) {
   return await dy.getAllQueryData(db, params);
 }
 
+async function getCategoryUniqueRows(category: any) {
+  const uniquePartition = "unique#" + category
+  const keyConditionExpression = [PARTITION_KEY] + " = :" + [PARTITION_KEY];
+  const expressionAttributeValues =
+    '":' + [PARTITION_KEY] + '" : "' + uniquePartition + '"';
+  const params = {
+    TableName: TABLE_NAME,
+    KeyConditionExpression: keyConditionExpression,
+    ExpressionAttributeValues: JSON.parse(
+      "{" + expressionAttributeValues + "}"
+    ),
+  };
+  return await dy.getAllQueryData(db, params);
+}
+
 async function getAllCategories() {
   const filterExpression = [SORT_KEY] + " = :" + [SORT_KEY];
   const expressionAttributeValues = '":' + [SORT_KEY] + '" : "' + ORIGIN + '"';
@@ -130,6 +145,7 @@ async function getAllCategories() {
 }
 
 async function deleteCategory(category: any) {
+  // Data
   let rows: any = await getCategoryRows(category);
   let p: any[] = [];
   let i = 0;
@@ -141,7 +157,21 @@ async function deleteCategory(category: any) {
     p.push(dy.deleteRows(db, PARTITION_KEY, SORT_KEY, TABLE_NAME, rows.slice(i, j)));
     i += j - i;
   }
-  return Promise.all(p);
+  await Promise.all(p);
+
+  // Uniqueness constraints  
+  let urows: any = await getCategoryUniqueRows(category);
+  let up: any[] = [];
+  i = 0;
+  while (i < urows.length) {
+    let j = i + DDB_MAX_BATCH;
+    if (j > urows.length) {
+      j = urows.length;
+    }
+    up.push(dy.deleteRows(db, PARTITION_KEY, SORT_KEY, TABLE_NAME, urows.slice(i, j)));
+    i += j - i;
+  }
+  return Promise.all(up);
 }
 
 async function createLabel(category: any, label: any) {
@@ -154,17 +184,38 @@ async function createLabel(category: any, label: any) {
       return { statusCode: 200, body: JSON.stringify(indexResponse) };
     }
   }
-  const nextIndex = rows.length - 1;
+  let nextIndex = rows.length - 1;
+  // Eventual consistency with category creation
+  if (nextIndex < 0) {
+    nextIndex=0;
+  }
+  
+  const uniqPartition = "unique#" + category
+  const uniqLabel = "unique#" + nextIndex
+  const uniqItem = {
+    [PARTITION_KEY]: uniqPartition,
+    [SORT_KEY]: uniqLabel,
+    [INDEX_ATTRIBUTE]: nextIndex,
+  }
+  
   const item = {
     [PARTITION_KEY]: category,
     [SORT_KEY]: label,
     [INDEX_ATTRIBUTE]: nextIndex,
   };
+  
+  const uniqParams = {
+    TableName: TABLE_NAME,
+    Item: uniqItem
+  }
   const params = {
     TableName: TABLE_NAME,
     Item: item,
   };
+  
+  await db.put(uniqParams).promise();
   await db.put(params).promise();
+  
   const rv = { index: nextIndex };
   return rv;
 }
