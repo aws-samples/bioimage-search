@@ -139,10 +139,19 @@ async function createMessage(message: any) {
     InvocationType: "RequestResponse",
     Payload: JSON.stringify({ method: "createMessage", message: message }),
   };
-  const data = await lambda.invoke(params).promise();
-  const createMessageResponse = la.getResponseBody(data);
-  const messageId = createMessageResponse["messageId"];
-  return messageId;
+  // Lambda throttling is seen occasionally here:
+  let retries=5
+  while (retries>0) {
+    try {
+      const data = await lambda.invoke(params).promise();
+      const createMessageResponse = la.getResponseBody(data);
+      const messageId = createMessageResponse["messageId"];
+      return messageId;
+    } catch(error) {
+      retries-=1
+    }
+  }
+  throw new Error("Exceeded max retries for createMessage")
 }
 
 async function getTrainInfo(trainId: any) {
@@ -232,7 +241,7 @@ async function populateSourcePlate(inputBucket: any, inputKey: any) {
     }
 
     const messageId = await createMessage(`Creation of imageId=${imageId}`);
-    
+
     const imageEntry = {
       [PARTITION_KEY_IMGID]: imageId,
       [SORT_KEY_TRNID]: ORIGIN,
@@ -262,10 +271,10 @@ async function populateSourcePlate(inputBucket: any, inputKey: any) {
       Item: imageEntry,
     };
     
-    p.push(db.put(params).promise());
+    await db.put(params).promise();
+//    p.push(db.put(params).promise());
   }
-
-  await Promise.all(p);
+//  await Promise.all(p);
   return { plateId: plateId };
 }
 

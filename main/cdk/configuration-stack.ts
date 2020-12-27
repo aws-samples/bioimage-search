@@ -54,6 +54,8 @@ export class ConfigurationStack extends cdk.Stack {
         code: new lambda.AssetCode("src/configuration/build"),
         handler: "configuration.handler",
         runtime: lambda.Runtime.NODEJS_12_X,
+        memorySize: 256,
+        timeout: cdk.Duration.minutes(1),
         environment: {
           TABLE_NAME: configurationTable.tableName,
           PARTITION_KEY: "key1",

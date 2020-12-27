@@ -54,6 +54,8 @@ export class MessageStack extends cdk.Stack {
       code: lambda.Code.fromAsset("src/message/build"),
       handler: "message.handler",
       runtime: lambda.Runtime.NODEJS_12_X,
+      memorySize: 256,
+      timeout: cdk.Duration.minutes(2),
       environment: {
         TABLE_NAME: messageTable.tableName,
         PARTITION_KEY: "messageId",

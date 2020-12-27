@@ -491,7 +491,7 @@ export class ProcessPlateStack extends cdk.Stack {
         handler: "process-plate.handler",
         runtime: lambda.Runtime.NODEJS_12_X,
         memorySize: 512,
-        timeout: cdk.Duration.minutes(3),
+        timeout: cdk.Duration.minutes(15),
         environment: {
           MESSAGE_LAMBDA_ARN: props.messageLambda.functionArn,
           IMAGE_MANAGEMENT_LAMBDA_ARN: props.imageManagementLambda.functionArn,

@@ -22,7 +22,7 @@ export class ImageArtifactStack extends cdk.Stack {
         handler: "default-artifact.handler",
         runtime: lambda.Runtime.PYTHON_3_8,
         memorySize: 3008,
-        timeout: cdk.Duration.seconds(300),
+        timeout: cdk.Duration.minutes(15),
         environment: {
           DATA_BUCKET: props.dataBucket.bucketName,
           CONFIGURATION_LAMBDA_ARN: props.configurationLambdaArn
