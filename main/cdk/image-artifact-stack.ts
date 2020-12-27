@@ -6,6 +6,7 @@ import s3 = require("@aws-cdk/aws-s3");
 export interface ImageArtifactStackProps extends cdk.StackProps {
   dataBucket: s3.Bucket;
   configurationLambdaArn: string;
+  artifactLambdaArn: string;
 }
 
 export class ImageArtifactStack extends cdk.Stack {
@@ -25,7 +26,8 @@ export class ImageArtifactStack extends cdk.Stack {
         timeout: cdk.Duration.minutes(15),
         environment: {
           DATA_BUCKET: props.dataBucket.bucketName,
-          CONFIGURATION_LAMBDA_ARN: props.configurationLambdaArn
+          CONFIGURATION_LAMBDA_ARN: props.configurationLambdaArn,
+          ARTIFACT_LAMBDA_ARN: props.artifactLambdaArn
         }
       }
     );

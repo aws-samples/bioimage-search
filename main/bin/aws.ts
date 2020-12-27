@@ -48,9 +48,15 @@ const messageStack = new MessageStack(app, 'BioimageSearchMessageStack', {
     dynamoTableNames: dynamoTableNames
 })
 
+const artifactStack = new ArtifactStack(app, 'BioimageSearchArtifactStack', {
+    dynamoTableNames: dynamoTableNames,
+    dataBucket: baseStack.dataBucket
+})
+
 const imageArtifactStack = new ImageArtifactStack(app, 'BioimageSearchImageArtifactStack', {
     dataBucket: baseStack.dataBucket,
-    configurationLambdaArn: configurationStack.configurationLambdaArn
+    configurationLambdaArn: configurationStack.configurationLambdaArn,
+    artifactLambdaArn: artifactStack.artifactLambda.functionArn
 })
 
 const platePreprocessingStack = new PlatePreprocessingStack(app, 'BioimageSearchPlatePreprocessingStack', {
@@ -61,11 +67,6 @@ const imagePreprocessingStack = new ImagePreprocessingStack(app, 'BioimageSearch
 
 const trainingConfigurationStack = new TrainingConfigurationStack(app, 'BioimageSearchTrainingConfigurationStack', {
     dynamoTableNames: dynamoTableNames
-})
-
-const artifactStack = new ArtifactStack(app, 'BioimageSearchArtifactStack', {
-    dynamoTableNames: dynamoTableNames,
-    dataBucket: baseStack.dataBucket
 })
 
 const imageManagementStack = new ImageManagementStack(app, 'BioimageSearchImageManagementStack', {

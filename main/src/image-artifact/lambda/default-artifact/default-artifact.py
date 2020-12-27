@@ -17,6 +17,7 @@ CONFIG_KEYS_PARAM = "default-image-artifact-keys"
 
 dataBucket = os.environ['DATA_BUCKET']
 configurationLambdaArn = os.environ['CONFIGURATION_LAMBDA_ARN']
+artifactLambdaArn = os.environ['ARTIFACT_LAMBDA_ARN']
 
 def handler(event, context):
     s3c = boto3.client('s3')
@@ -69,6 +70,8 @@ def handler(event, context):
     imageInfo = imageManagementClient.getImageInfo(imageId, "origin")
     
     configurationClient = bioims.client('configuration', describeStacksParams)
+    
+    artifactClient = bioims.client('artifact', describeStacksParams)
 
     sizesStr = configurationClient.getParameter(CONFIG_SIZES_PARAM)
     artifact_sizes = sizesStr.split(',')
@@ -206,6 +209,13 @@ def handler(event, context):
         artifact_img.save(artifact_buffer, format=image_type)
         artifact_buffer.seek(0)
         s3c.upload_fileobj(artifact_buffer, dataBucket, artifactFullKey)
+        artifactTableKey = "s3key#" + artifactFullKey
+        artifact = {
+            "contextId" : imageId,
+            "trainId" : "origin",
+            "artifact" : artifactTableKey
+        }
+        artifactClient.createArtifact(artifact)
 
     return imageId; 
     
