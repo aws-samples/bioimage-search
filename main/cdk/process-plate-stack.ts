@@ -193,7 +193,7 @@ export class ProcessPlateStack extends cdk.Stack {
       "Upload Source Plate StateMachine",
       {
         definition: uploadSourcePlateStepFunctionDef,
-        timeout: cdk.Duration.minutes(5),
+        timeout: cdk.Duration.minutes(60),
         logs: {
           destination: uploadSourcePlateGroup,
           level: sfn.LogLevel.ALL,
