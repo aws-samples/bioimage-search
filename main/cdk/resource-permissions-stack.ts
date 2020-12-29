@@ -21,6 +21,7 @@ export interface ResourcePermissionsStackProps extends cdk.StackProps {
   uploadSourcePlateStateMachine: sfn.StateMachine;
   trainLambda: lambda.Function;
   trainStateMachine: sfn.StateMachine;
+  trainBuildLambda: lambda.Function;
 }
 
 export class ResourcePermissionsStack extends cdk.Stack {
@@ -134,7 +135,8 @@ export class ResourcePermissionsStack extends cdk.Stack {
                   props.imageManagementLambda.functionArn,
                   props.imageInspectorLambda.functionArn,
                   props.processPlateLambda.functionArn,
-                  props.trainLambda.functionArn
+                  props.trainLambda.functionArn,
+                  props.trainBuildLambda.functionArn
                 ]
     });
     
@@ -157,6 +159,7 @@ export class ResourcePermissionsStack extends cdk.Stack {
     props.imageInspectorLambda!.role!.attachInlinePolicy(this.externalResourcesPolicy);
     props.processPlateLambda!.role!.attachInlinePolicy(this.externalResourcesPolicy);
     props.trainLambda!.role!.attachInlinePolicy(this.externalResourcesPolicy);
+    props.trainBuildLambda!.role!.attachInlinePolicy(this.externalResourcesPolicy);
     
     // const artifactPolicyStatement = new iam.PolicyStatement({
     //   actions: ["s3:*"],
@@ -226,6 +229,22 @@ export class ResourcePermissionsStack extends cdk.Stack {
     trainPolicy.addStatements(invokeStepFunctionsPolicyStatement);
     trainPolicy.addStatements(trainPolicyStatement);
     props.trainLambda!.role!.attachInlinePolicy(trainPolicy);
+    
+    const trainBuildPolicyStatement = new iam.PolicyStatement({
+      actions: ["lambda:InvokeFunction"],
+      effect: iam.Effect.ALLOW,
+      resources: [props.messageLambda.functionArn,
+                  props.imageManagementLambda.functionArn,
+                  props.trainingConfigurationLambda.functionArn,
+                  props.artifactLambda.functionArn
+                ]
+    })
+    const trainBuildPolicy = new iam.Policy(this, "trainBuildPolicy");
+    trainBuildPolicy.addStatements(invokeStepFunctionsPolicyStatement);
+    trainBuildPolicy.addStatements(trainBuildPolicyStatement);
+    trainBuildPolicy.addStatements(dataBucketPolicyStatement);
+    props.trainBuildLambda!.role!.attachInlinePolicy(trainBuildPolicy);
+
     
     //////////////////////////////////////////////////////////////////////////////
     // Batch

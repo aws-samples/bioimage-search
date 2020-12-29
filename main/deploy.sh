@@ -28,6 +28,7 @@ cd src/artifact; ./build.sh; cd ../..
 cd src/image-management; ./build.sh; cd ../..
 cd src/image-inspector; ./build.sh; cd ../..
 cd src/process-plate; ./build.sh; cd ../..
+cd src/training-build; ./build.sh; cd ../..
 cd src/train; ./build.sh; cd ../..
 
 cdk bootstrap

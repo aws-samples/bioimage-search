@@ -91,7 +91,9 @@ const trainStack = new TrainStack(app, 'BioimageSearchTrainStack', {
     messageLambda: messageStack.messageLambda,
     imageManagementLambda: imageManagementStack.imageManagementLambda,
     trainingConfigurationLambda: trainingConfigurationStack.trainingConfigurationLambda,
-    processPlateLambda: processPlateStack.processPlateLambda
+    processPlateLambda: processPlateStack.processPlateLambda,
+    artifactLambda: artifactStack.artifactLambda,
+    dataBucket: baseStack.dataBucket
 })
 
 const resourcePermissionsStack = new ResourcePermissionsStack(app, 'BioimageSearchResourcePermissionsStack', {
@@ -109,7 +111,8 @@ const resourcePermissionsStack = new ResourcePermissionsStack(app, 'BioimageSear
     processPlateStateMachine: processPlateStack.processPlateStateMachine,
     uploadSourcePlateStateMachine: processPlateStack.uploadSourcePlateStateMachine,
     trainLambda: trainStack.trainLambda,
-    trainStateMachine: trainStack.trainStateMachine
+    trainStateMachine: trainStack.trainStateMachine,
+    trainBuildLambda: trainStack.trainBuildLambda
 })
 
 })();

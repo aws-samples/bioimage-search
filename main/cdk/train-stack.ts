@@ -9,6 +9,7 @@ import {
 import lambda = require("@aws-cdk/aws-lambda");
 import iam = require("@aws-cdk/aws-iam");
 import cdk = require("@aws-cdk/core");
+import s3 = require("@aws-cdk/aws-s3");
 import * as sfn from "@aws-cdk/aws-stepfunctions";
 import * as tasks from "@aws-cdk/aws-stepfunctions-tasks";
 import * as logs from "@aws-cdk/aws-logs";
@@ -18,14 +19,36 @@ export interface TrainStackProps extends cdk.StackProps {
   imageManagementLambda: lambda.Function;
   trainingConfigurationLambda: lambda.Function;
   processPlateLambda: lambda.Function;
+  artifactLambda: lambda.Function;
+  dataBucket: s3.Bucket;
 }
 
 export class TrainStack extends cdk.Stack {
   public trainLambda: lambda.Function;
+  public trainBuildLambda: lambda.Function;
   public trainStateMachine: sfn.StateMachine;
 
   constructor(app: cdk.App, id: string, props: TrainStackProps) {
     super(app, id, props);
+    
+    this.trainBuildLambda = new lambda.Function(
+      this,
+      "trainBuildFunction",
+      {
+        code: lambda.Code.fromAsset("src/training-build/build"),
+        handler: "training-build.handler",
+        runtime: lambda.Runtime.PYTHON_3_8,
+        memorySize: 512,
+        timeout: cdk.Duration.minutes(15),
+        environment: {
+          MESSAGE_LAMBDA_ARN: props.messageLambda.functionArn,
+          IMAGE_MANAGEMENT_LAMBDA_ARN: props.imageManagementLambda.functionArn,
+          TRAIN_CONFIGURATION_LAMBDA_ARN: props.trainingConfigurationLambda.functionArn,
+          ARTIFACT_LAMBDA_ARN: props.artifactLambda.functionArn,
+          BUCKET: props.dataBucket.bucketName
+        },
+      }
+    );
 
     ///////////////////////////////////////////
     //
@@ -53,7 +76,7 @@ export class TrainStack extends cdk.Stack {
         embeddingName: sfn.JsonPath.stringAt('$.trainInfo.Payload.body.embeddingName')
       },
       resultPath: '$.embeddingInfoRequest'
-    })
+    });
     
     const embeddingInfo = new tasks.LambdaInvoke(this, "Embedding Info", {
       lambdaFunction: props.trainingConfigurationLambda,
@@ -70,7 +93,7 @@ export class TrainStack extends cdk.Stack {
         channels: sfn.JsonPath.stringAt('$.embeddingInfo.Payload.body.Item.inputChannels')
       },
       resultPath: '$.plateSurveyRequest'
-    })
+    });
     
     const plateList = new tasks.LambdaInvoke(this, "Plate List", {
       lambdaFunction: props.imageManagementLambda,
@@ -94,6 +117,17 @@ export class TrainStack extends cdk.Stack {
       }
     });
     plateProcessMap.iterator(plateProcessor);
+    
+    const trainBuildInput = new sfn.Pass(this, "Train Build Input", {
+      parameters: {
+        trainId: sfn.JsonPath.stringAt("$.trainId")
+      }
+    });
+    
+    const trainBuild = new tasks.LambdaInvoke(this, "Train Build", {
+      lambdaFunction: this.trainBuildLambda,
+      outputPath: '$.trainBuildOutput'
+    });
 
     const trainStepFunctionDef = trainInfoRequest
       .next(trainInfo)
@@ -102,6 +136,8 @@ export class TrainStack extends cdk.Stack {
       .next(plateSurveyRequest)
       .next(plateList)
       .next(plateProcessMap)
+      .next(trainBuildInput)
+      .next(trainBuild)
 
     const trainLogGroup = new logs.LogGroup(this, "TrainLogGroup");
 

@@ -11,7 +11,10 @@ class BioimageSearchResources:
             #print("Loading bucket={} key={}".format(params["bucket"], params["key"]))
             s3 = boto3.client('s3')
             obj = s3.get_object(Bucket=params["bucket"], Key=params["key"])
-            self._stacksDescription = json.loads(obj['Body'].read().decode('utf-8'))            
+            self._stacksDescription = json.loads(obj['Body'].read().decode('utf-8'))
+            
+        elif params and params["stacksDescription"]:
+            self._stacksDescription = params["stacksDescription"]
 
         # self._configurationLambdaArn = ""
         # self._labelLambdaArn = ""
@@ -26,6 +29,9 @@ class BioimageSearchResources:
         #print("refreshing describe_stacks with CF call")
         cf = boto3.client('cloudformation')
         self._stacksDescription = cf.describe_stacks()
+        
+    def getStacksDescription(self):
+        return self._stacksDescription;
         
 ##### STACKS        
 

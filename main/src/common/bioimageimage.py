@@ -274,15 +274,3 @@ def s3ObjectExists(bucket, key):
         return True
     except ClientError:
         return False
-
-def getTrainKey(embeddingName, plateId, imageId):
-    return "artifact/train/" + embeddingName + "/plate/" + plateId + "/image-" + imageId + "-train.npy"
-    
-def getLabelKey(embeddingName, plateId, imageId):
-    return "artifact/train/" + embeddingName + "/plate/" + plateId + "/image-" + imageId + "-label.npy"
-    
-def getNoLabelKey(embeddingName, plateId, imageId):
-    return "artifact/train/" + embeddingName + "/plate/" + plateId + "/image-" + imageId + "-label.NONE"
-    
-def getRoiKey(embeddingName, plateId, imageId):
-    return "artifact/train/" + embeddingName + "/plate/" + plateId + "/image-" + imageId + "-roi.json"

@@ -12,6 +12,7 @@ RUN apt-get update && \
     pip3 install shortuuid
 
 COPY ./build/bioimageimage.py /
+COPY ./build/bioimagepath.py /
 COPY ./build/bioims.py /
 COPY image-preprocessing.py /
 

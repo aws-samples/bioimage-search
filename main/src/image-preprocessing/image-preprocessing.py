@@ -19,6 +19,7 @@ from skimage.morphology import label
 from skimage.exposure import histogram
 
 import bioimageimage as bi
+import bioimagepath as bp
 import bioims
 
 print("Args=")
@@ -167,10 +168,10 @@ segmentationChannelName = 'dapi'
 # noLabelKey = "artifact/train/" + args.embeddingName + "/plate/" + imageInfo['plateId'] + "/image-" + args.imageId + "-label.NONE"
 # roiKey     = "artifact/train/" + args.embeddingName + "/plate/" + imageInfo['plateId'] + "/image-" + args.imageId + "-roi.json"
 
-trainKey   = bi.getTrainKey(args.embeddingName, imageInfo['plateId'], args.imageId)
-labelKey   = bi.getLabelKey(args.embeddingName, imageInfo['plateId'], args.imageId)
-noLabelKey = bi.getNoLabelKey(args.embeddingName, imageInfo['plateId'], args.imageId)
-roiKey     = bi.getRoiKey(args.embeddingName, imageInfo['plateId'], args.imageId)
+trainKey   = bp.getTrainKey(args.embeddingName, imageInfo['plateId'], args.imageId)
+labelKey   = bp.getLabelKey(args.embeddingName, imageInfo['plateId'], args.imageId)
+noLabelKey = bp.getNoLabelKey(args.embeddingName, imageInfo['plateId'], args.imageId)
+roiKey     = bp.getRoiKey(args.embeddingName, imageInfo['plateId'], args.imageId)
 
 if (bi.s3ObjectExists(args.bucket, trainKey) and 
     bi.s3ObjectExists(args.bucket, roiKey) and 
@@ -192,9 +193,8 @@ if isLabeled:
     labelIndex = int(labelDict[imageInfo['trainLabel']])
 
 def getFlatFieldKeyForChannel(channelName):
-    flatFieldKey = "artifact/plate/" + imageInfo['plateId'] + "/" + args.embeddingName + "/channel-" + channelName + "-flatfield.npy"
-    return flatFieldKey
-    
+    return bp.getFlatFieldKeyForChannel(imageInfo['plateId'], args.embeddingName, channelName)
+
 def findCentersFromLabels(labels):
     centers=[]
     maxLabel=labels.max()
