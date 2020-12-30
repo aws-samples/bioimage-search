@@ -8,6 +8,7 @@ const MESSAGE_LAMBDA_ARN = process.env.MESSAGE_LAMBDA_ARN || "";
 const IMAGE_MANAGEMENT_LAMBDA_ARN = process.env.IMAGE_MANAGEMENT_LAMBDA_ARN || "";
 const TRAIN_CONFIGURATION_LAMBDA_ARN = process.env.TRAIN_CONFIGURATION_LAMBDA_ARN || "";
 const TRAIN_SFN_ARN = process.env.TRAIN_SFN_ARN || "";
+const TRAIN_BUILD_LAMBDA_ARN = process.env.TRAIN_BUILD_LAMBDA || ""
 
 async function startTraining(trainId: any) {
   const executionName = "Train-" + trainId + "-" + su.generate();
@@ -69,6 +70,16 @@ async function createTraining(training: any) {
   return la.getResponseBody(data);
 }
 
+async function startTrainingBuild(trainId: any) {
+  var params = {
+    FunctionName: TRAIN_BUILD_LAMBDA_ARN,
+    InvocationType: "Event",
+    Payload: JSON.stringify({ trainId: trainId}),
+  };
+  const data = await lambda.invoke(params).promise();
+  return la.getResponseBody(data);
+}
+
 /////////////////////////////////////////////////
 
 export const handler = async (event: any = {}): Promise<any> => {
@@ -112,7 +123,25 @@ export const handler = async (event: any = {}): Promise<any> => {
         body: `Error: embeddingName required`,
       };
     }
-  } else {
+  }
+  else if (event.method === "startTrainingBuild") {
+    if (event.trainId) {
+      try {
+        const response = await startTrainingBuild(event.trainId)
+        return { statusCode: 200, body: response };
+      } catch (error) {
+        console.log("Error=");
+        console.log(error)
+        return { statusCode: 500, body: JSON.stringify(error) };
+      }
+    } else {
+      return {
+        statusCode: 400,
+        body: `Error: trainId required`,
+      };
+    }
+  }
+  else {
     return {
       statusCode: 400,
       body: `Do not recognize method type ${event.method}`,

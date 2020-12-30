@@ -116,6 +116,10 @@ imageManagementClient = bioims.client('image-management')
 
 # print(r)
 
-r = imageManagementClient.getImageIdsByPlateId('qPdm6Vt6G6V4XUA6iH3EUH')
+# r = imageManagementClient.getImageIdsByPlateId('qPdm6Vt6G6V4XUA6iH3EUH')
+
+# print(r)
+
+r = imageManagementClient.getImagesByPlateId('gXc3iRxAi4rs5AdwQpYeiZ')
 
 print(r)

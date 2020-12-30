@@ -7,13 +7,13 @@ class BioimageSearchResources:
     def __init__(self, params=None):
         self._stacksDescription = ""
         
-        if params and params["bucket"] and params["key"]:
+        if params and ('bucket' in params) and ('key' in params):
             #print("Loading bucket={} key={}".format(params["bucket"], params["key"]))
             s3 = boto3.client('s3')
             obj = s3.get_object(Bucket=params["bucket"], Key=params["key"])
             self._stacksDescription = json.loads(obj['Body'].read().decode('utf-8'))
             
-        elif params and params["stacksDescription"]:
+        elif params and ('stacksDescription' in params):
             self._stacksDescription = params["stacksDescription"]
 
         # self._configurationLambdaArn = ""
@@ -121,7 +121,9 @@ class BioimageSearchResources:
         
     def getTrainLambdaArn(self):
         return self.getStackOutputByPrefix(self.getTrainStack(), 'ExportsOutputFnGetAtttrainFunction')
-        #return self.getStackOutputByPrefix(self.getTrainStack(), 'trainLambda')
+
+    def getTrainingBuildLambdaArn(self):
+        return self.getStackOutputByPrefix(self.getTrainStack(), 'ExportsOutputFnGetAtttrainBuildFunction')
 
 ##### BATCH QUEUE
 
@@ -176,7 +178,9 @@ class BioimageSearchClient:
     def getBatchSpotQueueName(self):
         return self._resources.getBatchSpotQueueName()
         
-        
+    def getStacksDescription(self):
+        return self._resources.getStacksDescription()
+
         
 #############################################
 #
@@ -619,8 +623,7 @@ class TrainingConfigurationClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        jbody = getResponseBodyAsJson(response)
-        return jbody['Item']
+        return getResponseBodyAsJson(response)
 
     def deleteTraining(self, train_id):
         request = '{{ "method": "deleteTraining", "trainId": "{}" }}'.format(train_id)
@@ -712,7 +715,6 @@ class ArtifactClient(BioimageSearchClient):
     def createArtifact(self, artifact):
         artifactStr = json.dumps(artifact)
         request = '{{ "method": "createArtifact", "artifact": {} }}'.format(artifactStr)
-        print(request)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
@@ -746,7 +748,6 @@ class ArtifactClient(BioimageSearchClient):
         
     def createDescribeStacksArtifact(self, contextId, trainId):
         request = '{{ "method": "createDescribeStacksArtifact", "contextId": "{}", "trainId": "{}" }}'.format(contextId, trainId)
-        print(request)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
@@ -965,13 +966,25 @@ class TrainClient(BioimageSearchClient):
 
     def getLambdaArn(self):
         return self._resources.getTrainLambdaArn()
-
+    
     def train(self, embeddingName, filterBucket='', filterKey=''):
         request = '{{ "method": "train", "embeddingName": "{}", "filterBucket": "{}", "filterKey": "{}" }}'.format(embeddingName, filterBucket, filterKey)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
             FunctionName=self.getLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        jbody = getResponseBodyAsJson(response)
+        return jbody
+
+    def startTrainingBuild(self, trainId):
+        request = '{{ "method": "startTrainingBuild", "trainId": "{}" }}'.format(trainId)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self._resources.getTrainingBuildLambdaArn(),
             InvocationType='RequestResponse',
             Payload=payload
             )

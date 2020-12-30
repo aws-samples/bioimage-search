@@ -244,6 +244,7 @@ export class ResourcePermissionsStack extends cdk.Stack {
     trainBuildPolicy.addStatements(invokeStepFunctionsPolicyStatement);
     trainBuildPolicy.addStatements(trainBuildPolicyStatement);
     trainBuildPolicy.addStatements(dataBucketPolicyStatement);
+    trainBuildPolicy.addStatements(cloudFormationPolicyStatement);
     props.trainBuildLambda!.role!.attachInlinePolicy(trainBuildPolicy);
 
     

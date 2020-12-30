@@ -200,6 +200,7 @@ export class TrainStack extends cdk.Stack {
           IMAGE_MANAGEMENT_LAMBDA_ARN: props.imageManagementLambda.functionArn,
           TRAIN_CONFIGURATION_LAMBDA_ARN: props.trainingConfigurationLambda.functionArn,
           TRAIN_SFN_ARN: this.trainStateMachine.stateMachineArn,
+          TRAIN_BUILD_LAMBDA_ARN: this.trainBuildLambda.functionArn
         },
       }
     );

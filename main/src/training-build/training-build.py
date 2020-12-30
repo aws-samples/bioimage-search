@@ -32,7 +32,7 @@ stacksDescription = imageClient.getStacksDescription()
 params = {
     "stacksDescription": stacksDescription
 }
-trainConfigurationClient = bioims.client('train-configuration', params)
+trainConfigurationClient = bioims.client('training-configuration', params)
 artifactClient = bioims.client('artifact', params)
 
 
@@ -59,14 +59,15 @@ def handler(event, context):
     embeddingInfo = trainConfigurationClient.getEmbeddingInfo(embeddingName)
     filterDict={}
     if ('filterBucket' in trainInfo) and ('filterKey' in trainInfo):
-        filterBucket = trainInfo['filterBucket']
-        filterKey = trainInfo['filterKey']
-        fileObject = s3c.get_object(Bucket=filterBucket, Key=filterKey)
-        text = fileObject['Body'].read().decode('utf-8')
-        lines = text.splitlines()
-        for line in lines:
-            filterDict[line]=True
-    filterCount = len(filterDict.items)
+        if (len(trainInfo['filterBucket'])>0) and (len(trainInfo['filterKey'])>0):
+            filterBucket = trainInfo['filterBucket']
+            filterKey = trainInfo['filterKey']
+            fileObject = s3c.get_object(Bucket=filterBucket, Key=filterKey)
+            text = fileObject['Body'].read().decode('utf-8')
+            lines = text.splitlines()
+            for line in lines:
+                filterDict[line]=True
+    filterCount = len(filterDict)
     print("Filter contains {} entries".format(filterCount))
     plateList = imageClient.listCompatiblePlates(embeddingInfo['inputWidth'], embeddingInfo['inputHeight'], embeddingInfo['inputDepth'], embeddingInfo['inputChannels'])
     filterCount=0
@@ -74,8 +75,12 @@ def handler(event, context):
     labelCount=0
     trainPrefixList=[]
     for i, pi in enumerate(plateList):
-        print("Processing plate {} {} of {}".format(pi, i, len(plateList)))
-        imageList = imageClient.getImagesByPlateId(pi)
+        plateId = pi['plateId']
+        print("Processing plate {} {} of {}".format(plateId, i, len(plateList)))
+        imageList = imageClient.getImagesByPlateId(plateId)
+        print(imageList)
+        imageListCount=len(imageList)
+        print("Image list has {} entries".format(imageListCount))
         for imageItem in imageList:
             image = imageItem['Item']
             imageId = image['imageId']
@@ -84,7 +89,7 @@ def handler(event, context):
             else:
                 if ('trainCategory' in image) and ('trainLabel' in image):
                     if (image['trainCategory']=='moa') and (len(image['trainLabel'])>0):
-                        prefixKey = bp.getTrainPrefixKey(embeddingName, pi, imageId)
+                        prefixKey = bp.getTrainPrefixKey(embeddingName, plateId, imageId)
                         trainPrefixList.append(prefixKey)
                         labelCount+=1
                     else:
@@ -96,7 +101,7 @@ def handler(event, context):
     trainPrefixArtifactPath = bp.getTrainImageListArtifactPath(trainId)
     trainPrefixStringList = "\n".join(trainPrefixList) + "\n"
     trainPrefixStringListBytes = bytes(trainPrefixStringList, encoding='utf-8')
-    s3c.upload_fileobj(trainPrefixStringListBytes, BUCKET, trainPrefixArtifactPath)
+    s3c.put_object(Body=trainPrefixStringListBytes, Bucket=BUCKET, Key=trainPrefixArtifactPath)
     akey = "s3key#" + trainPrefixArtifactPath
     artifact = {
         "contextId": trainId,
@@ -104,5 +109,9 @@ def handler(event, context):
         "artifact": akey
     }
     artifactClient.createArtifact(artifact)
-    return trainPrefixArtifactPath
+    response = {
+        "statusCode": 200,
+        "body": "success"
+    }
+    return response
     
