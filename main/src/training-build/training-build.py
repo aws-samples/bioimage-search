@@ -69,7 +69,9 @@ def handler(event, context):
     filterCount = len(filterDict.items)
     print("Filter contains {} entries".format(filterCount))
     plateList = imageClient.listCompatiblePlates(embeddingInfo['inputWidth'], embeddingInfo['inputHeight'], embeddingInfo['inputDepth'], embeddingInfo['inputChannels'])
-    skipCount=0
+    filterCount=0
+    unlabeledCount=0
+    labelCount=0
     trainPrefixList=[]
     for i, pi in enumerate(plateList):
         print("Processing plate {} {} of {}".format(pi, i, len(plateList)))
@@ -78,11 +80,19 @@ def handler(event, context):
             image = imageItem['Item']
             imageId = image['imageId']
             if imageId in filterDict:
-                skipCount+=1
+                filterCount+=1
             else:
-                prefixKey = bp.getTrainPrefixKey(embeddingName, pi, imageId)
-                trainPrefixList.append(prefixKey)
+                if ('trainCategory' in image) and ('trainLabel' in image):
+                    if (image['trainCategory']=='moa') and (len(image['trainLabel'])>0):
+                        prefixKey = bp.getTrainPrefixKey(embeddingName, pi, imageId)
+                        trainPrefixList.append(prefixKey)
+                        labelCount+=1
+                    else:
+                        unlabeledCount+=1
+                else:
+                    unlabeledCount+=1
     print("Train prefix list has {} entries".format(len(trainPrefixList)))
+    print("labelCount={} filterCount={} unlabeldCount={}".format(labelCount, filterCount, unlabeledCount))
     trainPrefixArtifactPath = bp.getTrainImageListArtifactPath(trainId)
     trainPrefixStringList = "\n".join(trainPrefixList) + "\n"
     trainPrefixStringListBytes = bytes(trainPrefixStringList, encoding='utf-8')
