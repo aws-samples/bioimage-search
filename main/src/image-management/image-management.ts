@@ -799,13 +799,27 @@ export const handler = async (event: any = {}): Promise<any> => {
         event.depth &&
         event.channels) {
       try {
-        const response = await listCompatiblePlates(
-        event.width,
-        event.height,
-        event.depth,
-        event.channels);
+
+        // DEBUG
+        // const response = await listCompatiblePlates(
+        // event.width,
+        // event.height,
+        // event.depth,
+        // event.channels);
+        
+        let plateList: any[] = [];
+        const item1 = {
+          "plateId" : 'gXc3iRxAi4rs5AdwQpYeiZ'
+        }
+        plateList.push(item1);
+        let response = plateList
+        
+        // END DEBUG
+
         console.log(response);
+
         return { statusCode: 200, body: response };
+
       } catch (dbError) {
         console.log(dbError);
         return { statusCode: 500, body: JSON.stringify(dbError) };

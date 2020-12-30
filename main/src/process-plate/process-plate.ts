@@ -54,6 +54,14 @@ async function populateSourcePlate(inputBucket: any, inputKey: any) {
   return response["plateId"];
 }
 
+async function describeExecution(executionArn: any) {
+  const params = {
+    "executionArn" : executionArn
+  }
+  const response = await sfn.describeExecution(params).promise();
+  return response
+}
+
 /////////////////////////////////////////////////
 
 export const handler = async (event: any = {}): Promise<any> => {
@@ -85,6 +93,20 @@ export const handler = async (event: any = {}): Promise<any> => {
     if (event.plateId && event.embeddingName) {
       try {
         const response = await startProcessPlate(event.plateId, event.embeddingName);
+        return { statusCode: 200, body: response };
+      } catch (error) {
+        return { statusCode: 500, body: JSON.stringify(error) };
+      }
+    } else {
+      return {
+        statusCode: 400,
+        body: `Error: plateId and embeddingName required`,
+      };
+    }
+  } else if (event.method === "describeExecution") {
+    if (event.executionArn) {
+      try {
+        const response = await describeExecution(event.executionArn);
         return { statusCode: 200, body: response };
       } catch (error) {
         return { statusCode: 500, body: JSON.stringify(error) };

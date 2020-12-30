@@ -103,8 +103,38 @@ export class TrainStack extends cdk.Stack {
     
     const plateProcessor = new tasks.LambdaInvoke(this, "Process Plate", {
       lambdaFunction: props.processPlateLambda,
-      outputPath: '$.Payload'
+      outputPath: '$.Payload.body'
     });
+    
+    const plateWait = new sfn.Wait(this, "Plate Wait", {
+      time: sfn.WaitTime.duration(cdk.Duration.seconds(5))
+    });
+    
+    const plateStatusInput = new sfn.Pass(this, "Plate Status Input", {
+      parameters: {
+        method: "describeExecution",
+        executionArn: sfn.JsonPath.stringAt('$.executionArn')
+      }
+    });
+    
+    const plateStatus = new tasks.LambdaInvoke(this, "Plate Status", {
+      lambdaFunction: props.processPlateLambda,
+      outputPath: '$.Payload.body'      
+    });
+    
+    const plateNotRunning = new sfn.Pass(this, "Plate Not Running", {
+      parameters: {
+        status: sfn.JsonPath.stringAt('$.status')
+      }
+    });
+    
+    const plateSequence = plateProcessor
+      .next(plateWait)
+      .next(plateStatusInput)
+      .next(plateStatus)
+      .next(new sfn.Choice(this, 'Plate Sfn Complete?')
+        .when(sfn.Condition.stringEquals('$.status', 'RUNNING'), plateWait)
+        .otherwise(plateNotRunning));
 
     const plateProcessMap = new sfn.Map(this, "Plate Process Map", {
       maxConcurrency: 0,
@@ -116,7 +146,7 @@ export class TrainStack extends cdk.Stack {
         'plateId.$' : "$$.Map.Item.Value.plateId"
       }
     });
-    plateProcessMap.iterator(plateProcessor);
+    plateProcessMap.iterator(plateSequence);
     
     const trainBuildInput = new sfn.Pass(this, "Train Build Input", {
       parameters: {

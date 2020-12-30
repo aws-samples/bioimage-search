@@ -141,12 +141,13 @@ export class ResourcePermissionsStack extends cdk.Stack {
     });
     
     const invokeStepFunctionsPolicyStatement = new iam.PolicyStatement({
-      actions: ["states:StartExecution"],
+      actions: ["states:*"],
       effect: iam.Effect.ALLOW,
-      resources: [props.processPlateStateMachine.stateMachineArn,
-                  props.uploadSourcePlateStateMachine.stateMachineArn,
-                  props.trainStateMachine.stateMachineArn
-      ]
+      resources: ["*"],      
+      // resources: [props.processPlateStateMachine.stateMachineArn,
+      //             props.uploadSourcePlateStateMachine.stateMachineArn,
+      //             props.trainStateMachine.stateMachineArn
+      //]
     });
 
     this.bioimageSearchManagedPolicy.addStatements(

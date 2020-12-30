@@ -940,6 +940,19 @@ class ProcessPlateClient(BioimageSearchClient):
         jbody = getResponseBodyAsJson(response)
         return jbody
 
+    def describeExecution(self, executionArn):
+        request = '{{ "method": "describeExecution", "executionArn": "{}" }}'.format(executionArn)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self.getLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        jbody = getResponseBodyAsJson(response)
+        return jbody
+        
+
 #############################################
 #
 # TRAIN
