@@ -66,7 +66,7 @@ export class TrainStack extends cdk.Stack {
 
     const trainInfo = new tasks.LambdaInvoke(this, "Train Info", {
       lambdaFunction: props.trainingConfigurationLambda,
-      resultPath: sfn.JsonPath.stringAt('$.trainInfo'),
+      resultPath: '$.trainInfo',
       inputPath: '$.trainInfoRequest',
     });
     
@@ -107,7 +107,7 @@ export class TrainStack extends cdk.Stack {
     });
     
     const plateWait = new sfn.Wait(this, "Plate Wait", {
-      time: sfn.WaitTime.duration(cdk.Duration.seconds(5))
+      time: sfn.WaitTime.duration(cdk.Duration.seconds(30))
     });
     
     const plateStatusInput = new sfn.Pass(this, "Plate Status Input", {
@@ -156,7 +156,7 @@ export class TrainStack extends cdk.Stack {
     
     const trainBuild = new tasks.LambdaInvoke(this, "Train Build", {
       lambdaFunction: this.trainBuildLambda,
-      outputPath: '$.trainBuildOutput'
+      resultPath: '$.trainBuildOutput'
     });
 
     const trainStepFunctionDef = trainInfoRequest

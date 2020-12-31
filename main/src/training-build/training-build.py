@@ -78,7 +78,6 @@ def handler(event, context):
         plateId = pi['plateId']
         print("Processing plate {} {} of {}".format(plateId, i, len(plateList)))
         imageList = imageClient.getImagesByPlateId(plateId)
-        print(imageList)
         imageListCount=len(imageList)
         print("Image list has {} entries".format(imageListCount))
         for imageItem in imageList:

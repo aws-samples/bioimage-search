@@ -985,7 +985,7 @@ class TrainClient(BioimageSearchClient):
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
             FunctionName=self._resources.getTrainingBuildLambdaArn(),
-            InvocationType='RequestResponse',
+            InvocationType='Event',
             Payload=payload
             )
         jbody = getResponseBodyAsJson(response)
