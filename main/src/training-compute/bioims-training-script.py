@@ -65,7 +65,9 @@ class Net(nn.Module):
 #     y_train = np.load(os.path.join(base_dir, 'moa_labels.npy'))
 #     return x_train, y_train
     
+# artifact
 def load_training_data(prefixListPath):
+    prefixListPath = "/" + prefixListPath
     f = open(prefixListPath, "r")
     x_train = None
     y_train = None
@@ -73,8 +75,8 @@ def load_training_data(prefixListPath):
     for prefix in f:
         if (fc%100==0):
             print("Loaded {} prefix files".format(fc))
-        trainPath = prefix + "-train.npy"
-        labelPath = prefix + "-label.npy"
+        trainPath = "/" + prefix + "-train.npy"
+        labelPath = "/" + prefix + "-label.npy"
         if x_train is None:
             x_train = np.load(trainPath)
             y_train = np.load(labelPath)
