@@ -258,11 +258,6 @@ export class ResourcePermissionsStack extends cdk.Stack {
                   props.artifactLambda.functionArn
                 ]
     })
-    // const trainSageMakerPolicyStatement = new iam.PolicyStatement({
-    //   actions: ["sagemaker:*"],
-    //   effect: iam.Effect.ALLOW,
-    //   resources: ["*"]
-    // })
     const s3FullAccessPolicyStatement = new iam.PolicyStatement({
       actions: ["s3:*"],
       effect: iam.Effect.ALLOW,
@@ -278,7 +273,6 @@ export class ResourcePermissionsStack extends cdk.Stack {
     })
     const trainComputePolicy = new iam.Policy(this, "trainComputePolicy");
     trainComputePolicy.addStatements(trainComputePolicyStatement);
-    //trainComputePolicy.addStatements(trainSageMakerPolicyStatement);
     trainComputePolicy.addStatements(dataBucketPolicyStatement);
     trainComputePolicy.addStatements(cloudFormationPolicyStatement);
     trainComputePolicy.addStatements(s3FullAccessPolicyStatement);
