@@ -3,6 +3,7 @@ import * as cdk from '@aws-cdk/core';
 import iam = require('@aws-cdk/aws-iam');
 import s3 = require('@aws-cdk/aws-s3');
 import { BaseStack } from '../cdk/base-stack';
+import { LustreStack } from '../cdk/lustre-stack';
 import { BatchSetupStack } from '../cdk/batch-setup-stack';
 import { ConfigurationStack } from '../cdk/configuration-stack';
 import { LabelStack } from '../cdk/label-stack';
@@ -33,6 +34,11 @@ const dynamoTableNames = dynamoTables!.TableNames
 const app = new cdk.App();
 
 const baseStack = new BaseStack(app, 'BioimageSearchBaseStack');
+
+const lustreStack = new LustreStack(app, 'BioimageSearchLustreStack', {
+    bioimsVpc: baseStack.vpc,
+    dataBucket: baseStack.dataBucket
+})
 
 const batchSetupStack = new BatchSetupStack(app, 'BioimageSearchBatchSetupStack');
 
