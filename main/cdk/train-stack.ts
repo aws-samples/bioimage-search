@@ -26,11 +26,31 @@ export interface TrainStackProps extends cdk.StackProps {
 export class TrainStack extends cdk.Stack {
   public trainLambda: lambda.Function;
   public trainBuildLambda: lambda.Function;
+  public trainComputeLambda: lambda.Function;
   public trainStateMachine: sfn.StateMachine;
 
   constructor(app: cdk.App, id: string, props: TrainStackProps) {
     super(app, id, props);
     
+    this.trainComputeLambda = new lambda.Function(
+      this,
+      "trainComputeFunction",
+      {
+        code: lambda.Code.fromAsset("src/training-compute/build"),
+        handler: "training-compute.handler",
+        runtime: lambda.Runtime.PYTHON_3_8,
+        memorySize: 256,
+        timeout: cdk.Duration.minutes(5),
+        environment: {
+          MESSAGE_LAMBDA_ARN: props.messageLambda.functionArn,
+          IMAGE_MANAGEMENT_LAMBDA_ARN: props.imageManagementLambda.functionArn,
+          TRAIN_CONFIGURATION_LAMBDA_ARN: props.trainingConfigurationLambda.functionArn,
+          ARTIFACT_LAMBDA_ARN: props.artifactLambda.functionArn,
+          BUCKET: props.dataBucket.bucketName
+        },
+      }
+    );
+
     this.trainBuildLambda = new lambda.Function(
       this,
       "trainBuildFunction",

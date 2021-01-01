@@ -112,7 +112,8 @@ const resourcePermissionsStack = new ResourcePermissionsStack(app, 'BioimageSear
     uploadSourcePlateStateMachine: processPlateStack.uploadSourcePlateStateMachine,
     trainLambda: trainStack.trainLambda,
     trainStateMachine: trainStack.trainStateMachine,
-    trainBuildLambda: trainStack.trainBuildLambda
+    trainBuildLambda: trainStack.trainBuildLambda,
+    trainComputeLambda: trainStack.trainComputeLambda
 })
 
 })();

@@ -22,6 +22,7 @@ export interface ResourcePermissionsStackProps extends cdk.StackProps {
   trainLambda: lambda.Function;
   trainStateMachine: sfn.StateMachine;
   trainBuildLambda: lambda.Function;
+  trainComputeLambda: lambda.Function;
 }
 
 export class ResourcePermissionsStack extends cdk.Stack {
@@ -136,7 +137,8 @@ export class ResourcePermissionsStack extends cdk.Stack {
                   props.imageInspectorLambda.functionArn,
                   props.processPlateLambda.functionArn,
                   props.trainLambda.functionArn,
-                  props.trainBuildLambda.functionArn
+                  props.trainBuildLambda.functionArn,
+                  props.trainComputeLambda.functionArn
                 ]
     });
     
@@ -246,7 +248,50 @@ export class ResourcePermissionsStack extends cdk.Stack {
     trainBuildPolicy.addStatements(dataBucketPolicyStatement);
     trainBuildPolicy.addStatements(cloudFormationPolicyStatement);
     props.trainBuildLambda!.role!.attachInlinePolicy(trainBuildPolicy);
-
+    
+    const trainComputePolicyStatement = new iam.PolicyStatement({
+      actions: ["lambda:InvokeFunction"],
+      effect: iam.Effect.ALLOW,
+      resources: [props.messageLambda.functionArn,
+                  props.imageManagementLambda.functionArn,
+                  props.trainingConfigurationLambda.functionArn,
+                  props.artifactLambda.functionArn
+                ]
+    })
+    // const trainSageMakerPolicyStatement = new iam.PolicyStatement({
+    //   actions: ["sagemaker:*"],
+    //   effect: iam.Effect.ALLOW,
+    //   resources: ["*"]
+    // })
+    const s3FullAccessPolicyStatement = new iam.PolicyStatement({
+      actions: ["s3:*"],
+      effect: iam.Effect.ALLOW,
+      resources: ["*"]
+    });
+    const iamPolicyStatement = new iam.PolicyStatement({
+      actions: [
+        "iam:get*",
+        "iam:PassRole"
+        ],
+      effect: iam.Effect.ALLOW,
+      resources: ["*"]
+    })
+    const trainComputePolicy = new iam.Policy(this, "trainComputePolicy");
+    trainComputePolicy.addStatements(trainComputePolicyStatement);
+    //trainComputePolicy.addStatements(trainSageMakerPolicyStatement);
+    trainComputePolicy.addStatements(dataBucketPolicyStatement);
+    trainComputePolicy.addStatements(cloudFormationPolicyStatement);
+    trainComputePolicy.addStatements(s3FullAccessPolicyStatement);
+    trainComputePolicy.addStatements(iamPolicyStatement);
+    props.trainComputeLambda!.role!.attachInlinePolicy(trainComputePolicy);
+    props.trainComputeLambda!.role!.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonSageMakerFullAccess"));
+    const trainComputeRole = props.trainComputeLambda!.role! as iam.Role
+    trainComputeRole!.assumeRolePolicy!.addStatements(
+      new iam.PolicyStatement({
+        actions: ["sts:AssumeRole"],
+        principals: [ new iam.ServicePrincipal('sagemaker.amazonaws.com') ],
+        effect: iam.Effect.ALLOW
+    }));
     
     //////////////////////////////////////////////////////////////////////////////
     // Batch

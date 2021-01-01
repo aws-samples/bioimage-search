@@ -64,7 +64,10 @@ trainClient = bioims.client('train')
 #trainId = "ekNybBbTHtwVsGJRgWznfi"
 #r = trainClient.startTrainingBuild(trainId)
 
-filterBucket = 'bioimage-search-input'
-filterKey = 'train-filter/DMSO-filter.txt'
-r = trainClient.train('bbbc021', filterBucket, filterKey)
-print(r)
+# filterBucket = 'bioimage-search-input'
+# filterKey = 'train-filter/DMSO-filter.txt'
+# r = trainClient.train('bbbc021', filterBucket, filterKey)
+# print(r)
+
+trainId = "ekNybBbTHtwVsGJRgWznfi"
+r = trainClient.startTrainingCompute(trainId)

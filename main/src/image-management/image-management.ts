@@ -641,24 +641,16 @@ export const handler = async (event: any = {}): Promise<any> => {
   }
   
   if (event.method === "populateSourcePlate") {
-    console.log("Check-1: populateSourcePlate****")
     if (event.inputBucket && event.inputKey) {
       try {
-        console.log("Check0")
-        const response = await populateSourcePlate(
+           const response = await populateSourcePlate(
           event.inputBucket,
           event.inputKey
         );
-        console.log("Check1 resposne=")
-        console.log(response)
-        console.log("==")
-        return { statusCode: 200, body: JSON.stringify(response) };
+           return { statusCode: 200, body: JSON.stringify(response) };
       } catch (dbError) {
-        console.log("Check2")
-        console.log(dbError)
-        console.log("==")
-//        return { statusCode: 502, body: JSON.stringify(dbError) };
-        return { statusCode: 500, body: dbError };
+           console.log(dbError)
+           return { statusCode: 500, body: dbError };
       }
     } else {
       return {

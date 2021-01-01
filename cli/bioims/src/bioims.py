@@ -125,6 +125,9 @@ class BioimageSearchResources:
     def getTrainingBuildLambdaArn(self):
         return self.getStackOutputByPrefix(self.getTrainStack(), 'ExportsOutputFnGetAtttrainBuildFunction')
 
+    def getTrainingComputeLambdaArn(self):
+        return self.getStackOutputByPrefix(self.getTrainStack(), 'ExportsOutputFnGetAtttrainComputeFunction')
+        
 ##### BATCH QUEUE
 
     def getBatchOnDemandQueueName(self):
@@ -991,3 +994,14 @@ class TrainClient(BioimageSearchClient):
         jbody = getResponseBodyAsJson(response)
         return jbody
         
+    def startTrainingCompute(self, trainId):
+        request = '{{ "method": "startTrainingCompute", "trainId": "{}" }}'.format(trainId)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self._resources.getTrainingComputeLambdaArn(),
+            InvocationType='Event',
+            Payload=payload
+            )
+        jbody = getResponseBodyAsJson(response)
+        return jbody
