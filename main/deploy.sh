@@ -49,3 +49,5 @@ cdk deploy BioimageSearchImageManagementStack --require-approval never
 cdk deploy BioimageSearchProcessPlateStack --require-approval never
 cdk deploy BioimageSearchTrainStack --require-approval never
 cdk deploy BioimageSearchResourcePermissionsStack --require-approval never
+
+cd scripts; ./fsxl-set-import-policy.sh; cd ..
