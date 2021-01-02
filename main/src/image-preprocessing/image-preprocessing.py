@@ -343,7 +343,10 @@ for center in centers:
         
 # Write the ROI image data
 #roiKey = image['outputKeyPrefix'] + '.npy'
-bi.writeNumpyToS3(roiData[:count], args.bucket, trainKey)
+
+roiData *= 65535.0
+roiData16 = roiData.astype(np.uint16)
+bi.writeNumpyToS3(roiData16[:count], args.bucket, trainKey)
     
 # Construct and write the ROI json file
 roiCoordInfo = {}
@@ -377,9 +380,14 @@ roiCoordInfo['roi'] = roiArr
 roiCoordInfoJson = json.dumps(roiCoordInfo)
 s3c.put_object(Body=roiCoordInfoJson, Bucket=args.bucket, Key=roiKey)
 
+# Example typing for train/label data:
+#
+#trainData = np.zeros((bufferSize, CHANNELS, HW, HW), dtype=np.uint16)
+#labelData = np.zeros(bufferSize, dtype=np.int32)
+
 # Label output
 if isLabeled:
-    labelNpy = np.zeros(count)
+    labelNpy = np.zeros(count, dtype=np.int32)
     for l in range(count):
         labelNpy[l] = labelIndex
     bi.writeNumpyToS3(labelNpy, args.bucket, labelKey)

@@ -67,24 +67,45 @@ class Net(nn.Module):
     
 # artifact
 def load_training_data(prefixListPath):
-    prefixListPath = "/" + prefixListPath
+    #sm_channel_prefix = "/opt/ml/input/data/training/"
+    sm_channel_prefix = os.environ['SM_CHANNEL_TRAINING'] + "/"
+    os.chdir(sm_channel_prefix)
+    path = os.getcwd()
+    print("cwd path=")
+    print(path)
+    print("==")
+    files = os.listdir('.')
+    for f in files:
+        print(f)
+    print("==")
+    #prefixListPath = "/" + prefixListPath
+    prefixListPath = sm_channel_prefix + prefixListPath
     f = open(prefixListPath, "r")
-    x_train = None
-    y_train = None
+    #x_train = None
+    #y_train = None
+    x_list = []
+    y_list = []
     fc=0
     for prefix in f:
-        if (fc%100==0):
+        rprefix = prefix.rstrip()
+        if (fc%10==0):
             print("Loaded {} prefix files".format(fc))
-        trainPath = "/" + prefix + "-train.npy"
-        labelPath = "/" + prefix + "-label.npy"
-        if x_train is None:
-            x_train = np.load(trainPath)
-            y_train = np.load(labelPath)
-        else:
-            x_train.concatenate((x_train, np.load(trainPath)), axis=0)
-            y_train.concatenate((y_train, np.load(labelPath)), axis=0)
+        trainPath = sm_channel_prefix + rprefix + "-train.npy"
+        labelPath = sm_channel_prefix + rprefix + "-label.npy"
+        x_list.append(np.load(trainPath))
+        y_list.append(np.load(labelPath))
         fc+=1
+    x_train = np.concatenate(x_list, axis=0)
+    y_train = np.concatenate(y_list, axis=0)
     f.close()
+    x_shape = x_train.shape
+    y_shape = y_train.shape
+    print("x_shape=")
+    print(x_shape)
+    print("==")
+    print("y_shape=")
+    print(y_shape)
+    print("==")
     return x_train, y_train
     
 
@@ -125,11 +146,22 @@ def _train(args):
     
     x_train = x_train.reshape(-1, channels, height_width, height_width)
     
+    xts = x_train.shape
+    print("xts=")
+    print(xts)
+    print("==")
+    
     #x_test = x_test.reshape(-1, 28, 28)
 
     class_idx_to_train_idxs = defaultdict(list)
     for y_train_idx, y in enumerate(y_train):
         class_idx_to_train_idxs[y].append(y_train_idx)
+
+    l1=0        
+    for l2 in class_idx_to_train_idxs:
+        l3 = len(l2)
+        print("Class {} has {} members".format(l1, l3))
+        l1+=1
 
     #class_idx_to_test_idxs = defaultdict(list)
     #for y_test_idx, y in enumerate(y_test):

@@ -24,6 +24,51 @@ Steps:
 
 """
 
+def getFsxInfo():
+    fsx = boto3.client("fsx")
+    ec2 = boto3.client("ec2")
+    fileSystems=fsx.describe_file_systems()
+    fsList = fileSystems['FileSystems']
+    fileSystem=None
+    for fs in fsList:
+        tags = fs['Tags']
+        for tag in tags:
+            key=tag['Key']
+            value=tag['Value']
+            if value.startswith('BioimageSearch'):
+                fileSystem=fs
+                break
+    if fileSystem==None:
+        fsxInfo = {
+            'subnetIds': '',
+            'fsxId': '',
+            'securityGroupIds': '',
+            'directoryPath': ''
+        }
+        return fsxInfo
+    else:
+        fsxId = fileSystem['FileSystemId']
+        subnetIds = fileSystem['SubnetIds']
+        vpcId = fileSystem['VpcId']
+        lustreConfiguration = fileSystem['LustreConfiguration']
+        mountName = lustreConfiguration['MountName']
+        securityGroupInfo = ec2.describe_security_groups()
+        securityGroupId=None
+        securityGroups = securityGroupInfo['SecurityGroups']
+        for sg in securityGroups:
+            description = sg['Description']
+            if description.startswith('BioimageSearchLustreStack'):
+                securityGroupId = sg['GroupId']
+                break
+        fsxInfo = {
+            'fsxId' : fsxId,
+            'subnetIds' : subnetIds,
+            'vpcId' : vpcId,
+            'mountName' : mountName,
+            'securityGroup' : securityGroupId
+        }
+        return fsxInfo
+
 def handler(event, context):
     trainId = event['trainId']
     trainListArtifactKey = bp.getTrainImageListArtifactPath(trainId)
@@ -33,10 +78,15 @@ def handler(event, context):
     training_script = 'bioims-training-script.py'
     py_version = '1.6.0'
     instance_type = 'ml.p2.xlarge'
+    fsxInfo = getFsxInfo()
+    print(fsxInfo)
+    directory_path = '/' + fsxInfo['mountName']
+    sgIds=[]
+    sgIds.append(fsxInfo['securityGroup'])
 
-    file_system_input = FileSystemInput(file_system_id='fs-03ad19da07147c9c8',
+    file_system_input = FileSystemInput(file_system_id=fsxInfo['fsxId'],
                                     file_system_type='FSxLustre',
-                                    directory_path='/s633rbmv',
+                                    directory_path=directory_path,
                                     file_system_access_mode='ro')
 
     estimator = PyTorch(entry_point=training_script,
@@ -46,8 +96,8 @@ def handler(event, context):
                     instance_type=instance_type,
                     py_version='py36',
                     image_name='763104351884.dkr.ecr.us-east-1.amazonaws.com/pytorch-training:1.6.0-gpu-py36-cu101-ubuntu16.04',
-                    subnets=['subnet-008ed533d574fc9df'],
-                    security_group_ids=['sg-0749634e5385db557'],
+                    subnets=fsxInfo['subnetIds'],
+                    security_group_ids=sgIds,
                     hyperparameters={
                         'train_list_file': trainListArtifactKey,
                         'epochs': 15,

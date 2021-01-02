@@ -1,8 +1,9 @@
 import boto3
+import sys
 
-client = boto3.client('fsx')
+fsx = boto3.client('fsx')
 
-fileSystems = client.describe_file_systems()
+fileSystems = fsx.describe_file_systems()
 fsList = fileSystems['FileSystems']
 
 fileSystem=None
@@ -14,7 +15,8 @@ for fs in fsList:
         if value.startswith('BioimageSearch'):
             fileSystem=fs
             break
+        
 if fileSystem==None:
-    print("Could not find FSxL filesystem")
+    print("0")
 else:
     print(fileSystem['FileSystemId'])
