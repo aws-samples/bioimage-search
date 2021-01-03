@@ -69,5 +69,6 @@ trainClient = bioims.client('train')
 # r = trainClient.train('bbbc021', filterBucket, filterKey)
 # print(r)
 
-trainId = "ekNybBbTHtwVsGJRgWznfi"
+#trainId = "ekNybBbTHtwVsGJRgWznfi"
+trainId = "a93CYC7ipUDADnxe8V5ZRK"
 r = trainClient.startTrainingCompute(trainId)

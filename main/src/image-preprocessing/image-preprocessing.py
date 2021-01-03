@@ -344,8 +344,13 @@ for center in centers:
 # Write the ROI image data
 #roiKey = image['outputKeyPrefix'] + '.npy'
 
+roiDataMin=np.min(roiData)
+roiDataMax=np.max(roiData)
 roiData *= 65535.0
 roiData16 = roiData.astype(np.uint16)
+roiData16Min = np.min(roiData16)
+roiData16Max = np.max(roiData16)
+print("min={} max={} min16={} max16={}".format(roiDataMin, roiDataMax, roiData16Min, roiData16Max))
 bi.writeNumpyToS3(roiData16[:count], args.bucket, trainKey)
     
 # Construct and write the ROI json file
