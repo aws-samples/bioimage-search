@@ -157,7 +157,7 @@ export class TrainStack extends cdk.Stack {
         .otherwise(plateNotRunning));
 
     const plateProcessMap = new sfn.Map(this, "Plate Process Map", {
-      maxConcurrency: 0,
+      maxConcurrency: 10,
       itemsPath: '$.plateList.Payload.body',
       resultPath: '$.plateProcessMapResult',
       parameters: {

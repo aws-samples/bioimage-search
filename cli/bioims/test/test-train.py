@@ -58,8 +58,8 @@ trainClient = bioims.client('train')
 #     "comments" : ""
 # }
 
-#r = trainClient.train('bbbc021')
-#print(r)
+r = trainClient.train('bbbc021')
+print(r)
 
 #trainId = "ekNybBbTHtwVsGJRgWznfi"
 #r = trainClient.startTrainingBuild(trainId)
@@ -70,5 +70,5 @@ trainClient = bioims.client('train')
 # print(r)
 
 #trainId = "ekNybBbTHtwVsGJRgWznfi"
-trainId = "a93CYC7ipUDADnxe8V5ZRK"
-r = trainClient.startTrainingCompute(trainId)
+#trainId = "a93CYC7ipUDADnxe8V5ZRK"
+#r = trainClient.startTrainingCompute(trainId)

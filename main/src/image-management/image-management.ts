@@ -792,19 +792,19 @@ export const handler = async (event: any = {}): Promise<any> => {
         event.channels) {
       try {
 
-        // DEBUG
-        // const response = await listCompatiblePlates(
-        // event.width,
-        // event.height,
-        // event.depth,
-        // event.channels);
+        const response = await listCompatiblePlates(
+        event.width,
+        event.height,
+        event.depth,
+        event.channels);
         
-        let plateList: any[] = [];
-        const item1 = {
-          "plateId" : 'gXc3iRxAi4rs5AdwQpYeiZ'
-        }
-        plateList.push(item1);
-        let response = plateList
+        // DEBUG
+        // let plateList: any[] = [];
+        // const item1 = {
+        //   "plateId" : 'gXc3iRxAi4rs5AdwQpYeiZ'
+        // }
+        // plateList.push(item1);
+        // let response = plateList
         
         // END DEBUG
 
