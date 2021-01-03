@@ -157,11 +157,10 @@ def _train(args):
     for y_train_idx, y in enumerate(y_train):
         class_idx_to_train_idxs[y].append(y_train_idx)
 
-    l1=0        
-    for l2 in class_idx_to_train_idxs:
-        l3 = len(l2)
-        print("Class {} has {} members".format(l1, l3))
-        l1+=1
+    for classIndex in class_idx_to_train_idxs:
+        classList = class_idx_to_train_idxs[classIndex]
+        l3 = len(classList)
+        print("Class {} has {} members".format(classIndex, l3))
 
     #class_idx_to_test_idxs = defaultdict(list)
     #for y_test_idx, y in enumerate(y_test):
