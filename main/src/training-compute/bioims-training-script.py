@@ -83,21 +83,53 @@ def load_training_data(prefixListPath):
     f = open(prefixListPath, "r")
     #x_train = None
     #y_train = None
+    trainPathList = []
+    labelPathList = []
     x_list = []
     y_list = []
-    fc=0
+    
     for prefix in f:
         rprefix = prefix.rstrip()
-        if (fc%10==0):
-            print("Loaded {} prefix files".format(fc))
         trainPath = sm_channel_prefix + rprefix + "-train.npy"
         labelPath = sm_channel_prefix + rprefix + "-label.npy"
-        x_list.append(np.load(trainPath))
-        y_list.append(np.load(labelPath))
-        fc+=1
-    x_train = np.concatenate(x_list, axis=0)
-    y_train = np.concatenate(y_list, axis=0)
+        trainPathList.append(trainPath)
+        labelPathList.append(labelPath)
     f.close()
+    
+    pathListLength = len(trainPathList)
+    print("Prefix path list has {} entries".format(pathListLength))
+    
+    for labelPath in labelPathList:
+        y_list.append(np.load(labelPath))
+    y_train = np.concatenate(y_list, axis=0)
+    trainCount=y_train.shape[0]
+    ##########################################################################
+    # Todo: create dynamic sizing model based on input dimensions.
+    # This script assumes input with 4 dimensions. It assumes 2D rather then 3D data, with 3 channels:
+    #    image#, channels, y, x 
+    #  
+    # With channels=3, x and y = 128
+    #
+    # However, input is 3D and will be <#>, 3, 1, 128, 128
+    #
+    ##########################################################################
+    trainDimArr = [ trainCount, 3, 128, 128 ]
+    trainDimTuple = tuple(trainDimArr)
+    x_train = np.zeros(trainDimTuple, dtype=np.uint16)
+    tIndex=0
+    lc=0
+    for trainPath in trainPathList:
+        if lc%10==0:
+            print("Loaded {} of {} train files".format(lc, pathListLength))
+        x_data = np.load(trainPath)
+        xLength = x_data.shape[0]
+        for di in range(xLength):
+            x_train[tIndex][0]=x_data[di][0][0]
+            x_train[tIndex][1]=x_data[di][1][0]
+            x_train[tIndex][2]=x_data[di][2][0]
+            tIndex+=1
+        lc+=1
+
     x_shape = x_train.shape
     y_shape = y_train.shape
     print("x_shape=")
