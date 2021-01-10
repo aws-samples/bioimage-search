@@ -87,7 +87,7 @@ def handler(event, context):
     embeddingInfo = trainingConfigurationClient.getEmbeddingInfo(embeddingName)
     trainScriptBucket = embeddingInfo['modelTrainingScriptBucket']
     trainScriptKey =embeddingInfo['modelTrainingScriptKey']
-    localTrainingScript = 'training-script.py'
+    localTrainingScript = '/tmp/bioims-training-script.py'
     getS3TextObjectWriteToPath(trainScriptBucket, trainScriptKey, localTrainingScript)
     trainListArtifactKey = bp.getTrainImageListArtifactPath(trainId)
     sagemaker_session = sagemaker.Session()
@@ -101,9 +101,6 @@ def handler(event, context):
     sgIds=[]
     sgIds.append(fsxInfo['securityGroup'])
     
-#    shutil.copyfile(training_script_src, training_script_dest)
-#    print("Copied training script from {} to {}".format(training_script_src, training_script_dest))
-
     file_system_input = FileSystemInput(file_system_id=fsxInfo['fsxId'],
                                     file_system_type='FSxLustre',
                                     directory_path=directory_path,
