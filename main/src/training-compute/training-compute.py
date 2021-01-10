@@ -1,7 +1,9 @@
 import boto3
 import os
+import shutil
 import json
 import bioimagepath as bp
+import bioims
 import sagemaker
 from sagemaker.pytorch import PyTorch
 from sagemaker.inputs import FileSystemInput
@@ -68,14 +70,29 @@ def getFsxInfo():
             'securityGroup' : securityGroupId
         }
         return fsxInfo
+        
+def getS3TextObjectWriteToPath(bucket, key, path):
+    s3c = boto3.client("s3")
+    fileObject = s3c.get_object(Bucket=bucket, Key=key)
+    text = fileObject['Body'].read().decode('utf-8')
+    path_file = open(path, "w")
+    path_file.write(text)
+    path_file.close()
 
 def handler(event, context):
     trainId = event['trainId']
+    trainingConfigurationClient = bioims.client('training-configuration')
+    trainInfo = trainingConfigurationClient.getTraining(trainId)
+    embeddingName = trainInfo['embeddingName']
+    embeddingInfo = trainingConfigurationClient.getEmbeddingInfo(embeddingName)
+    trainScriptBucket = embeddingInfo['modelTrainingScriptBucket']
+    trainScriptKey =embeddingInfo['modelTrainingScriptKey']
+    localTrainingScript = 'training-script.py'
+    getS3TextObjectWriteToPath(trainScriptBucket, trainScriptKey, localTrainingScript)
     trainListArtifactKey = bp.getTrainImageListArtifactPath(trainId)
     sagemaker_session = sagemaker.Session()
     sagemaker_bucket = sagemaker_session.default_bucket()
     sagemaker_role = sagemaker.get_execution_role()
-    training_script = 'bioims-training-script.py'
     py_version = '1.6.0'
     instance_type = 'ml.p2.xlarge'
     fsxInfo = getFsxInfo()
@@ -83,13 +100,16 @@ def handler(event, context):
     directory_path = '/' + fsxInfo['mountName']
     sgIds=[]
     sgIds.append(fsxInfo['securityGroup'])
+    
+#    shutil.copyfile(training_script_src, training_script_dest)
+#    print("Copied training script from {} to {}".format(training_script_src, training_script_dest))
 
     file_system_input = FileSystemInput(file_system_id=fsxInfo['fsxId'],
                                     file_system_type='FSxLustre',
                                     directory_path=directory_path,
                                     file_system_access_mode='ro')
 
-    estimator = PyTorch(entry_point=training_script,
+    estimator = PyTorch(entry_point=localTrainingScript,
                     role=sagemaker_role,
                     framework_version=py_version,
                     instance_count=1,
@@ -100,7 +120,8 @@ def handler(event, context):
                     security_group_ids=sgIds,
                     hyperparameters={
                         'train_list_file': trainListArtifactKey,
-                        'epochs': 15,
+#                        'epochs': 15,
+                        'epochs': 1,
                         'backend': 'gloo',
                         'seed': 1,
                         'batch_size': 1

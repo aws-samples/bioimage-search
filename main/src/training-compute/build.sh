@@ -1,8 +1,8 @@
 rm -rf ./build
 mkdir -p build
 cp training-compute.py ./build
-cp bioims-training-script.py ./build
 cp ../common/bioimagepath.py ./build
+cp ../../../cli/bioims/src/bioims.py ./build
 cd build
 python3.8 -m venv venv
 source venv/bin/activate
