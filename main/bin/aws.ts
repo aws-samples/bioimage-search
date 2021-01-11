@@ -17,6 +17,7 @@ import { ArtifactStack } from '../cdk/artifact-stack';
 import { ImageManagementStack } from '../cdk/image-management-stack';
 import { ProcessPlateStack } from '../cdk/process-plate-stack';
 import { TrainStack } from '../cdk/train-stack';
+import { EmbeddingStack } from '../cdk/embedding-stack';
 import * as Dynamodb from 'aws-sdk/clients/dynamodb';
 import { SharedIniFileCredentials } from 'aws-sdk';
 
@@ -99,6 +100,14 @@ const trainStack = new TrainStack(app, 'BioimageSearchTrainStack', {
     trainingConfigurationLambda: trainingConfigurationStack.trainingConfigurationLambda,
     processPlateLambda: processPlateStack.processPlateLambda,
     artifactLambda: artifactStack.artifactLambda,
+    dataBucket: baseStack.dataBucket
+})
+
+const embeddingStack = new EmbeddingStack(app, 'BioimageSearchEmbeddingStack', {
+    artifactLambda: artifactStack.artifactLambda,
+    messageLambda: messageStack.messageLambda,
+    imageManagementLambda: imageManagementStack.imageManagementLambda,
+    trainingConfigurationLambda: trainingConfigurationStack.trainingConfigurationLambda,
     dataBucket: baseStack.dataBucket
 })
 

@@ -31,6 +31,7 @@ cd src/process-plate; ./build.sh; cd ../..
 cd src/training-build; ./build.sh; cd ../..
 cd src/training-compute; ./build.sh; cd ../..
 cd src/train; ./build.sh; cd ../..
+cd src/embedding-compute; ./build.sh; cd ../..
 
 cdk bootstrap
 
@@ -48,6 +49,7 @@ cdk deploy BioimageSearchArtifactStack --require-approval never
 cdk deploy BioimageSearchImageManagementStack --require-approval never
 cdk deploy BioimageSearchProcessPlateStack --require-approval never
 cdk deploy BioimageSearchTrainStack --require-approval never
+cdk deploy BioimageSearchEmbeddingStack --reqiure-approval never
 cdk deploy BioimageSearchResourcePermissionsStack --require-approval never
 
 cd scripts; ./fsxl-set-import-policy.sh; cd ..
