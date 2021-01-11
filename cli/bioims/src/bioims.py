@@ -197,7 +197,6 @@ def getResponseBodyAsJson(response):
     stream = response['Payload']
     bStrResponse = stream.read()
     strResponse = bStrResponse.decode("utf-8")
-    #print(strResponse)
     if strResponse:
         try:
             jresponse = json.loads(strResponse)
@@ -1000,7 +999,7 @@ class TrainClient(BioimageSearchClient):
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
             FunctionName=self._resources.getTrainingComputeLambdaArn(),
-            InvocationType='Event',
+            InvocationType='RequestResponse',
             Payload=payload
             )
         jbody = getResponseBodyAsJson(response)

@@ -17,6 +17,7 @@ const IMAGE_PROCESSING_ARN_ATTRIBUTE = "imageMethodArn";
 const IMAGE_POST_PROCESSING_ARN_ATTRIBUTE = "imagePostMethodArn";
 const MODEL_TRAINING_SCRIPT_BUCKET_ATTRIBUTE = "modelTrainingScriptBucket";
 const MODEL_TRAINING_SCRIPT_KEY_ATTRIBUTE = "modelTrainingScriptKey";
+const TRAINING_INSTANCE_TYPE = "trainingInstanceType";
 const TRAINING_HYPERPARAMETERS_ATTRIBUTE = "trainingHyperparameters";
 const INPUT_HEIGHT_ATTRIBUTE = "inputHeight";
 const INPUT_WIDTH_ATTRIBUTE = "inputWidth";

@@ -1,7 +1,7 @@
 import boto3
 import os
-import shutil
 import json
+import shortuuid as su
 import bioimagepath as bp
 import bioims
 import sagemaker
@@ -81,6 +81,7 @@ def getS3TextObjectWriteToPath(bucket, key, path):
 
 def handler(event, context):
     trainId = event['trainId']
+    uniqueId = su.uuid()
     trainingConfigurationClient = bioims.client('training-configuration')
     trainInfo = trainingConfigurationClient.getTraining(trainId)
     embeddingName = trainInfo['embeddingName']
@@ -94,17 +95,21 @@ def handler(event, context):
     sagemaker_bucket = sagemaker_session.default_bucket()
     sagemaker_role = sagemaker.get_execution_role()
     py_version = '1.6.0'
-    instance_type = 'ml.p2.xlarge'
+    instance_type = embeddingInfo['trainingInstanceType']
+    trainingHyperparameters = embeddingInfo['trainingHyperparameters']
     fsxInfo = getFsxInfo()
     print(fsxInfo)
     directory_path = '/' + fsxInfo['mountName']
     sgIds=[]
     sgIds.append(fsxInfo['securityGroup'])
+    jobName = 'bioims-' + trainId + '-' + uniqueId
     
     file_system_input = FileSystemInput(file_system_id=fsxInfo['fsxId'],
                                     file_system_type='FSxLustre',
                                     directory_path=directory_path,
                                     file_system_access_mode='ro')
+    
+    trainingHyperparameters['train_list_file'] = trainListArtifactKey
 
     estimator = PyTorch(entry_point=localTrainingScript,
                     role=sagemaker_role,
@@ -115,25 +120,29 @@ def handler(event, context):
                     image_name='763104351884.dkr.ecr.us-east-1.amazonaws.com/pytorch-training:1.6.0-gpu-py36-cu101-ubuntu16.04',
                     subnets=fsxInfo['subnetIds'],
                     security_group_ids=sgIds,
-                    hyperparameters={
-                        'train_list_file': trainListArtifactKey,
-#                        'epochs': 15,
-                        'epochs': 1,
-                        'backend': 'gloo',
-                        'seed': 1,
-                        'batch_size': 1
-                    },
+                    # hyperparameters={
+                    #     'train_list_file': trainListArtifactKey,
+                    #     'epochs': 15,
+                    #     'backend': 'gloo',
+                    #     'seed': 1,
+                    #     'batch_size': 1
+                    # },
+                    hyperparameters = trainingHyperparameters,
                     #train_use_spot_instances=True,
                     #train_max_wait=20000,
                     #train_max_run=20000
                 )
 
-    estimatorResponse = estimator.fit(file_system_input, wait=False)
+    estimator.fit(file_system_input, wait=False, job_name=jobName)
     
+    responseInfo = {
+        'trainingJobName': jobName
+    }
+
     response = {
         'statusCode': 200,
-        'body': estimatorResponse
+        'body': responseInfo
     }
-    
+
     return response
     

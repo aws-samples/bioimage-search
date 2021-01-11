@@ -178,6 +178,17 @@ export class TrainStack extends cdk.Stack {
       lambdaFunction: this.trainBuildLambda,
       resultPath: '$.trainBuildOutput'
     });
+    
+    const trainComputeInput= new sfn.Pass(this, "Train Compute Input", {
+      parameters: {
+        trainId: sfn.JsonPath.stringAt("$.trainId")
+      }
+    });
+    
+    const trainCompute = new tasks.LambdaInvoke(this, "Train Compute", {
+      lambdaFunction: this.trainComputeLambda,
+      resultPath: '$.trainComputeOutput'
+    });
 
     const trainStepFunctionDef = trainInfoRequest
       .next(trainInfo)
@@ -188,6 +199,8 @@ export class TrainStack extends cdk.Stack {
       .next(plateProcessMap)
       .next(trainBuildInput)
       .next(trainBuild)
+      .next(trainComputeInput)
+      .next(trainCompute)
 
     const trainLogGroup = new logs.LogGroup(this, "TrainLogGroup");
 

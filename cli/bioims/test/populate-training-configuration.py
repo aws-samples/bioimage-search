@@ -14,6 +14,7 @@ embedding = {
     "imagePostMethodArn" : "imagePostMethodArn-placeholder",
     "modelTrainingScriptBucket" : "bioimage-search-input",
     "modelTrainingScriptKey" : "bbbc021-train-script.py",
+    "trainingInstanceType" : "ml.p2.xlarge",
     "trainingHyperparameters" : {
         'epochs': 15,
         'backend': 'gloo',
