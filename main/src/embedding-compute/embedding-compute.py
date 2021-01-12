@@ -203,42 +203,78 @@ BUCKET = os.environ['BUCKET']
 """
 Steps:
 
-1. Get trainInfo and embeddingInfo
-2. Determine the artifact path to the list of training prefix files
-3. Determine the fsxl equivalent path
-4. Create the estimator based on the assumption the training script is in the same dir
-5. Pass the prefix list file path as a hyper-parameter to the training job
-6. Start the SageMaker training job
+1. Inputs include:
+    a. trainInfo json, injected (obtained from trainId at higher level)
+    b. embeddingInfo json, injected (obtained from trainId->embeddingName at higher level)
+    c. plateId
+    d. imageId
+2. From the trainInfo, get:
+    a. trainingScriptKey
+    b. trainingScriptBucket
+    c. trained model key
+    d. trained model bucket
+3. Using the bioimagepath module, get:
+    a. trainKey (to ROI images)
+4. Load ROI images to numpy array
+5. If the trained model is not already in /tmp, load the trained model
+    a. implement a unique path mechanism to support multiple models
+6. Apply ROI images to model and compute output w/ PyTorch
+7. Calculate the average embedding from the ROI embedding array
+    a. Check the method vs literature
+8. Save the output embedding array to DDB image table (using imageId/trainId composite key), as a binary numpy array under pickle and then base64 encoded
+9. Save the average embedding (i.e., the image embedding) as a base64-encoded numpy array, to (imageId/trainId) in image table
 
 """
 
-def getS3TextObjectWriteToPath(bucket, key, path):
-    s3c = boto3.client("s3")
-    fileObject = s3c.get_object(Bucket=bucket, Key=key)
-    text = fileObject['Body'].read().decode('utf-8')
-    path_file = open(path, "w")
-    path_file.write(text)
-    path_file.close()
+# def getS3TextObjectWriteToPath(bucket, key, path):
+#     s3c = boto3.client("s3")
+#     fileObject = s3c.get_object(Bucket=bucket, Key=key)
+#     text = fileObject['Body'].read().decode('utf-8')
+#     path_file = open(path, "w")
+#     path_file.write(text)
+#     path_file.close()
+
+# def handler(event, context):
+#     trainId = event['trainId']
+#     uniqueId = su.uuid()
+#     trainingConfigurationClient = bioims.client('training-configuration')
+#     trainInfo = trainingConfigurationClient.getTraining(trainId)
+#     embeddingName = trainInfo['embeddingName']
+#     embeddingInfo = trainingConfigurationClient.getEmbeddingInfo(embeddingName)
+#     trainScriptBucket = embeddingInfo['modelTrainingScriptBucket']
+#     trainScriptKey =embeddingInfo['modelTrainingScriptKey']
+#     trainListArtifactKey = bp.getTrainImageListArtifactPath(trainId)
+
+#     responseInfo = {
+#         'embeddingJobName': 'test1'
+#     }
+
+#     response = {
+#         'statusCode': 200,
+#         'body': responseInfo
+#     }
+
+#     return response
+
+###############################################################################################
+
+
+
+###############################################################################################
 
 def handler(event, context):
-    trainId = event['trainId']
-    uniqueId = su.uuid()
-    trainingConfigurationClient = bioims.client('training-configuration')
-    trainInfo = trainingConfigurationClient.getTraining(trainId)
-    embeddingName = trainInfo['embeddingName']
-    embeddingInfo = trainingConfigurationClient.getEmbeddingInfo(embeddingName)
-    trainScriptBucket = embeddingInfo['modelTrainingScriptBucket']
-    trainScriptKey =embeddingInfo['modelTrainingScriptKey']
-    trainListArtifactKey = bp.getTrainImageListArtifactPath(trainId)
-
-    responseInfo = {
-        'embeddingJobName': 'test1'
-    }
-
+    trainInfo = event['trainInfo']
+    embeddingInfo = event['embeddingInfo']
+    plateId = event['plateId']
+    imageId = event['imageId']
+    print(trainInfo)
+    print(embeddingInfo)
+    print(plateId)
+    print(imageId)
+    
     response = {
         'statusCode': 200,
-        'body': responseInfo
+        'body': 'test1'
     }
-
-    return response
     
+    return response

@@ -1031,8 +1031,10 @@ class EmbeddingClient(BioimageSearchClient):
     def getLambdaArn(self):
         return self._resources.getEmbeddingLambdaArn()
     
-    def startEmbeddingCompute(self, trainId):
-        request = '{{ "method": "startEmbeddingCompute", "trainId": "{}" }}'.format(trainId)
+    def startEmbeddingCompute(self, trainInfo, embeddingInfo, plateId, imageId):
+        trainInfoStr =json.dumps(trainInfo)
+        embeddingInfoStr = json.dumps(embeddingInfo)
+        request = '{{ "method": "startEmbeddingCompute", "trainInfo": {}, "embeddingInfo": {}, "plateId": "{}", "imageId": "{}" }}'.format(trainInfo, embeddingInfo, plateId, imageId)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
