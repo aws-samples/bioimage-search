@@ -1,5 +1,6 @@
 import sys
 import io
+import tarfile
 from pathlib import Path
 import os as os
 from os import listdir
@@ -262,6 +263,14 @@ Steps:
 
 ###############################################################################################
 
+s3c = boto3.client('s3')
+smc = boto3.client('sagemaker')   
+
+def copyS3ObjectPathToLocalPath(s3path, localPath):
+    bucket = s3path[5:].split('/')[0]
+    key = s3path[(len(bucket)+6):]
+    s3c.download_file(bucket, key, localPath)
+
 def handler(event, context):
     trainInfo = event['trainInfo']
     embeddingInfo = event['embeddingInfo']
@@ -271,10 +280,49 @@ def handler(event, context):
     print(embeddingInfo)
     print(plateId)
     print(imageId)
+    trainingScriptBucket=embeddingInfo['modelTrainingScriptBucket']
+    trainingScriptKey=embeddingInfo['modelTrainingScriptKey']
+    trainingJobName=trainInfo['sagemakerJobName']
+    print(trainingScriptBucket)
+    print(trainingScriptKey)
+    print(trainingJobName)
+ 
+    trainingJobInfo = smc.describe_training_job(
+        TrainingJobName=trainingJobName
+    )
+    modelArtifacts=trainingJobInfo['ModelArtifacts']
+    s3ModelPath=modelArtifacts['S3ModelArtifacts']
+    print(s3ModelPath)
     
+    localModelDir = os.path.join('/tmp/',trainingJobName)
+    localModelGz = os.path.join(localModelDir, 'model.tar.gz')
+    if os.path.isdir(localModelDir):
+        print("Local dir {} already exists, assuming model is present".format(localModelDir))
+    else:
+        print("Creating {} and downloading model.tar.gz".format(localModelDir))
+        os.mkdir(localModelDir)
+        copyS3ObjectPathToLocalPath(s3ModelPath, localModelGz)
+        os.chdir(localModelDir)
+        tar = tarfile.open("model.tar.gz")
+        tar.extractall()
+        tar.close()
+
+    localTrainScript = os.path.join(localModelDir, 'bioimstrain.py')
+    if os.path.isfile(localTrainScript):
+        print("Using train script {}".format(localTrainScript))
+    else:
+        print("Downloading trainscript from bucket={} key={}".format(trainingScriptBucket, trainingScriptKey))
+        s3c.download_file(trainingScriptBucket, trainingScriptKey, localTrainScript)
+
+    os.chdir(localModelDir)
+    sys.path.insert(0, ".")
+    import bioimstrain
+    model=bioimstrain.model_fn(localModelDir)
+    print(model)
+
     response = {
         'statusCode': 200,
-        'body': 'test1'
+        'body': 'success'
     }
     
     return response

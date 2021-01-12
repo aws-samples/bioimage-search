@@ -307,6 +307,8 @@ export class ResourcePermissionsStack extends cdk.Stack {
     embeddingComputePolicy.addStatements(iamPolicyStatement);
     embeddingComputePolicy.addStatements(dataBucketPolicyStatement);
     props.embeddingComputeLambda!.role!.attachInlinePolicy(embeddingComputePolicy);
+    props.embeddingComputeLambda!.role!.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonSageMakerFullAccess"));
+
 
     //////////////////////////////////////////////////////////////////////////////
     // Batch
