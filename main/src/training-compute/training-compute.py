@@ -132,6 +132,8 @@ def handler(event, context):
                     #train_max_wait=20000,
                     #train_max_run=20000
                 )
+                
+    trainingConfigurationClient.updateTraining(trainId, 'sagemakerJobName', jobName)
 
     estimator.fit(file_system_input, wait=False, job_name=jobName)
     

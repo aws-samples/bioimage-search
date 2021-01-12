@@ -32,10 +32,13 @@ const COMMENTS_ATTRIBUTE = "comments";
 // Training
 const FILTER_BUCKET_ATTRIBUTE = "filterBucket";
 const FILTER_KEY_ATTRIBUTE = "filterKey";
+const SAGEMAKER_TRAIN_JOB_NAME = "sagemakerJobName";
 const SAGEMAKER_TRAIN_ID_ATTRIBUTE = "sagemakerTrainId";
 const TRAINING_MESSAGE_ID_ATTRIBUTE = "messageId";
-const MODEL_BUCKET_ATTRIBUTE = "modelBucket";
-const MODEL_KEY_ATTRIBUTE = "modelKey"
+
+// These can be obtained from 'sagemakerJobName' via boto3/cli
+//const MODEL_BUCKET_ATTRIBUTE = "modelBucket";
+//const MODEL_KEY_ATTRIBUTE = "modelKey"
 
 /*
 
@@ -111,9 +114,11 @@ function validTrainAttribute(attribute: any): boolean {
   if (attribute === FILTER_BUCKET_ATTRIBUTE ||
     attribute === FILTER_KEY_ATTRIBUTE ||
     attribute === SAGEMAKER_TRAIN_ID_ATTRIBUTE ||
-    attribute === TRAINING_MESSAGE_ID_ATTRIBUTE ||
-    attribute === MODEL_BUCKET_ATTRIBUTE ||
-    attribute === MODEL_KEY_ATTRIBUTE) {
+    attribute == SAGEMAKER_TRAIN_JOB_NAME ||
+    attribute === TRAINING_MESSAGE_ID_ATTRIBUTE
+//    attribute === MODEL_BUCKET_ATTRIBUTE ||
+//    attribute === MODEL_KEY_ATTRIBUTE
+    ) {
       return true;
     }
     return false;

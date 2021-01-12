@@ -62,9 +62,9 @@ embedding = {
 
 #print(r)
 
-r = trainingConfigurationClient.getTraining('2uqemYqVnt38iEKxqaacb8')
+# r = trainingConfigurationClient.getTraining('2uqemYqVnt38iEKxqaacb8')
 
-print(r)
+# print(r)
 
 
 # r = trainingConfigurationClient.createTraining(training)
@@ -82,3 +82,8 @@ print(r)
 # r = trainingConfigurationClient.deleteTraining(training["train_id"])
 
 # print(r)
+
+trainId = "r6KEudzQCuUtDwCzziiMZT"
+r = trainingConfigurationClient.updateTraining(trainId, 'sagemakerJobName', 'testJobName1')
+print(r)
+
