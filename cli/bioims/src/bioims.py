@@ -78,6 +78,9 @@ class BioimageSearchResources:
     def getTrainStack(self):
         return self.getStackByName('BioimageSearchTrainStack')
         
+    def getEmbeddingStack(self):
+        return self.getStackByName('BioimageSearchEmbeddingStack')
+        
 ##### FUNCTIONS
 
     def getStackOutputByPrefix(self, stack, prefix):
@@ -128,6 +131,14 @@ class BioimageSearchResources:
     def getTrainingComputeLambdaArn(self):
         return self.getStackOutputByPrefix(self.getTrainStack(), 'ExportsOutputFnGetAtttrainComputeFunction')
         
+    #TODO: update with general Embedding function
+    def getEmbeddingLambdaArn(self):
+        return self.getStackOutputByPrefix(self.getEmbeddingStack(), 'ExportsOutputFnGetAttembeddingComputeFunction')
+        
+    def getEmbeddingComputeLambdaArn(self):
+        return self.getStackOutputByPrefix(self.getEmbeddingStack(), 'ExportsOutputFnGetAttembeddingComputeFunction')
+        
+        
 ##### BATCH QUEUE
 
     def getBatchOnDemandQueueName(self):
@@ -165,6 +176,8 @@ def client(serviceName, params=None):
         return ProcessPlateClient(params)
     elif serviceName == 'train':
         return TrainClient(params)
+    elif serviceName =='embedding':
+        return EmbeddingClient(params)
     else:
         print('service type {} not recognized'.format(serviceName))
         return False
@@ -999,6 +1012,31 @@ class TrainClient(BioimageSearchClient):
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
             FunctionName=self._resources.getTrainingComputeLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        jbody = getResponseBodyAsJson(response)
+        return jbody
+
+#############################################
+#
+# EMBEDDING
+#
+#############################################
+    
+class EmbeddingClient(BioimageSearchClient):
+    def __init__(self, params=None):
+        super().__init__(params)
+
+    def getLambdaArn(self):
+        return self._resources.getEmbeddingLambdaArn()
+    
+    def startEmbeddingCompute(self, trainId):
+        request = '{{ "method": "startEmbeddingCompute", "trainId": "{}" }}'.format(trainId)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self._resources.getEmbeddingComputeLambdaArn(),
             InvocationType='RequestResponse',
             Payload=payload
             )

@@ -128,7 +128,8 @@ const resourcePermissionsStack = new ResourcePermissionsStack(app, 'BioimageSear
     trainLambda: trainStack.trainLambda,
     trainStateMachine: trainStack.trainStateMachine,
     trainBuildLambda: trainStack.trainBuildLambda,
-    trainComputeLambda: trainStack.trainComputeLambda
+    trainComputeLambda: trainStack.trainComputeLambda,
+    embeddingComputeLambda: embeddingStack.embeddingComputeLambda
 })
 
 })();

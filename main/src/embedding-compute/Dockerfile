@@ -1,14 +1,11 @@
 FROM public.ecr.aws/lambda/python:3.8
 
-# RUN apt-get update && \
-#     apt-get install -y \
-#     python3-pip && \
-#     pip3 install numpy && \
-#     pip3 install torch && \
-#     pip3 install torchvision && \
-#     pip3 install s3fs && \
-#     pip3 install sagemaker && \
-#     pip3 install shortuuid
+RUN pip3 install numpy && \
+    pip3 install torch && \
+    pip3 install torchvision && \
+    pip3 install s3fs && \
+    pip3 install sagemaker && \
+    pip3 install shortuuid
 
 COPY ./build/bioimagepath.py ${LAMBDA_TASK_ROOT}
 

@@ -229,12 +229,10 @@ def handler(event, context):
     embeddingInfo = trainingConfigurationClient.getEmbeddingInfo(embeddingName)
     trainScriptBucket = embeddingInfo['modelTrainingScriptBucket']
     trainScriptKey =embeddingInfo['modelTrainingScriptKey']
-    localTrainingScript = '/tmp/bioims-training-script.py'
-    getS3TextObjectWriteToPath(trainScriptBucket, trainScriptKey, localTrainingScript)
     trainListArtifactKey = bp.getTrainImageListArtifactPath(trainId)
 
     responseInfo = {
-        'trainingJobName': 'test1'
+        'embeddingJobName': 'test1'
     }
 
     response = {

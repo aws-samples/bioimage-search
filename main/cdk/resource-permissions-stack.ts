@@ -23,6 +23,7 @@ export interface ResourcePermissionsStackProps extends cdk.StackProps {
   trainStateMachine: sfn.StateMachine;
   trainBuildLambda: lambda.Function;
   trainComputeLambda: lambda.Function;
+  embeddingComputeLambda: lambda.Function;
 }
 
 export class ResourcePermissionsStack extends cdk.Stack {
@@ -30,7 +31,7 @@ export class ResourcePermissionsStack extends cdk.Stack {
   public externalResourcesPolicy: iam.Policy;
   public bioimageSearchUser: iam.User;
   public bioimageSearchRole: iam.Role;
-
+  
   addBucketResourceReadOnly(bucketname: string, policy: any) {
     const rs = crs({ length: 10 });
     const bucket = s3.Bucket.fromBucketName(
@@ -78,6 +79,21 @@ export class ResourcePermissionsStack extends cdk.Stack {
     this.bioimageSearchManagedPolicy = new iam.ManagedPolicy(this, "biomageSearchManagedPolicy");
 
     this.externalResourcesPolicy = new iam.Policy(this, "externalResourcesPolicy");
+    
+    const s3FullAccessPolicyStatement = new iam.PolicyStatement({
+        actions: ["s3:*"],
+        effect: iam.Effect.ALLOW,
+        resources: ["*"]
+    });
+    
+    const iamPolicyStatement = new iam.PolicyStatement({
+      actions: [
+        "iam:get*",
+        "iam:PassRole"
+        ],
+      effect: iam.Effect.ALLOW,
+      resources: ["*"]
+    });
 
     const cloudFormationPolicyStatement = new iam.PolicyStatement({
       actions: [
@@ -138,7 +154,8 @@ export class ResourcePermissionsStack extends cdk.Stack {
                   props.processPlateLambda.functionArn,
                   props.trainLambda.functionArn,
                   props.trainBuildLambda.functionArn,
-                  props.trainComputeLambda.functionArn
+                  props.trainComputeLambda.functionArn,
+                  props.embeddingComputeLambda.functionArn
                 ]
     });
     
@@ -163,6 +180,7 @@ export class ResourcePermissionsStack extends cdk.Stack {
     props.processPlateLambda!.role!.attachInlinePolicy(this.externalResourcesPolicy);
     props.trainLambda!.role!.attachInlinePolicy(this.externalResourcesPolicy);
     props.trainBuildLambda!.role!.attachInlinePolicy(this.externalResourcesPolicy);
+    props.embeddingComputeLambda!.role!.attachInlinePolicy(this.externalResourcesPolicy);
     
     // const artifactPolicyStatement = new iam.PolicyStatement({
     //   actions: ["s3:*"],
@@ -258,19 +276,6 @@ export class ResourcePermissionsStack extends cdk.Stack {
                   props.artifactLambda.functionArn
                 ]
     })
-    const s3FullAccessPolicyStatement = new iam.PolicyStatement({
-      actions: ["s3:*"],
-      effect: iam.Effect.ALLOW,
-      resources: ["*"]
-    });
-    const iamPolicyStatement = new iam.PolicyStatement({
-      actions: [
-        "iam:get*",
-        "iam:PassRole"
-        ],
-      effect: iam.Effect.ALLOW,
-      resources: ["*"]
-    })
     const trainComputePolicy = new iam.Policy(this, "trainComputePolicy");
     trainComputePolicy.addStatements(trainComputePolicyStatement);
     trainComputePolicy.addStatements(dataBucketPolicyStatement);
@@ -287,6 +292,22 @@ export class ResourcePermissionsStack extends cdk.Stack {
         effect: iam.Effect.ALLOW
     }));
     
+    const embeddingComputePolicyStatement = new iam.PolicyStatement({
+      actions: ["lambda:InvokeFunction"],
+      effect: iam.Effect.ALLOW,
+      resources: [props.messageLambda.functionArn,
+                  props.imageManagementLambda.functionArn,
+                  props.trainingConfigurationLambda.functionArn,
+                  props.artifactLambda.functionArn
+                ]
+    })
+    const embeddingComputePolicy = new iam.Policy(this, "embeddingComputePolicy");
+    embeddingComputePolicy.addStatements(embeddingComputePolicyStatement);
+    embeddingComputePolicy.addStatements(cloudFormationPolicyStatement);
+    embeddingComputePolicy.addStatements(iamPolicyStatement);
+    embeddingComputePolicy.addStatements(dataBucketPolicyStatement);
+    props.embeddingComputeLambda!.role!.attachInlinePolicy(embeddingComputePolicy);
+
     //////////////////////////////////////////////////////////////////////////////
     // Batch
     //////////////////////////////////////////////////////////////////////////////
@@ -296,7 +317,6 @@ export class ResourcePermissionsStack extends cdk.Stack {
     batchInstancePolicy.addStatements(dataBucketPolicyStatement);
     batchInstancePolicy.addStatements(invokeLambdaPolicyStatement);
     this.addBucketResourceReadOnly("bioimagesearchbbbc021stack-bbbc021bucket544c3e64-10ecnwo51127", batchInstancePolicy);
-
 
     props.batchInstanceRole.attachInlinePolicy(batchInstancePolicy);
 
