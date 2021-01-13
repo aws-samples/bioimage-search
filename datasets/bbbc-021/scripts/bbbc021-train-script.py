@@ -30,6 +30,36 @@ channels = 3
 height_width = 128
 
 
+# ORIGINAL
+# class Net(nn.Module): 
+#     def __init__(self):
+#         super(Net, self).__init__()
+#         self.conv1 = nn.Conv2d(channels, 16, 3, stride=2)
+#         self.conv2 = nn.Conv2d(16, 32, 3, stride=2)
+#         self.conv3 = nn.Conv2d(32, 64, 3, stride=2)
+#         self.conv4 = nn.Conv2d(64, 128, 3, stride=2)
+#         self.conv5 = nn.Conv2d(128, 256, 3, stride=2)
+#         self.pool1 = nn.AvgPool2d(kernel_size = 2, stride=0, padding=0, ceil_mode=False, count_include_pad=True)
+#         self.fc1 = nn.Linear(256, 32)
+
+#     def forward(self, x):
+#         x = self.conv1(x)
+#         x = F.relu(x)
+#         x = self.conv2(x)
+#         x = F.relu(x)
+#         x = self.conv3(x)
+#         x = F.relu(x)
+#         x = self.conv4(x)
+#         x = F.relu(x)
+#         x = self.conv5(x)
+#         x = F.relu(x)
+#         x = self.pool1(x)
+#         x = x.view(-1, 256)
+#         x = self.fc1(x)
+#         n = x.norm(p=2, dim=1, keepdim=True)
+#         x = x.div(n)
+#         return x
+        
 class Net(nn.Module): 
     def __init__(self):
         super(Net, self).__init__()
@@ -38,7 +68,7 @@ class Net(nn.Module):
         self.conv3 = nn.Conv2d(32, 64, 3, stride=2)
         self.conv4 = nn.Conv2d(64, 128, 3, stride=2)
         self.conv5 = nn.Conv2d(128, 256, 3, stride=2)
-        self.pool1 = nn.AvgPool2d(kernel_size = 2, stride=0, padding=0, ceil_mode=False, count_include_pad=True)
+        self.pool1 = nn.AvgPool2d(kernel_size = 2, padding=0, ceil_mode=False, count_include_pad=True)
         self.fc1 = nn.Linear(256, 32)
 
     def forward(self, x):
@@ -58,6 +88,7 @@ class Net(nn.Module):
         n = x.norm(p=2, dim=1, keepdim=True)
         x = x.div(n)
         return x
+        
     
 
 # def load_training_data(base_dir):

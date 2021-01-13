@@ -28,7 +28,7 @@ embedding = {
     "roiHeight" : 128,
     "roiWidth" : 128,
     "roiDepth" : 1,
-    "embeddingVectorLength" : 256,
+    "embeddingVectorLength" : 32,
     "comments" : ""
 }
 

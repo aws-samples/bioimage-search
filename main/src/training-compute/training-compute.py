@@ -128,9 +128,9 @@ def handler(event, context):
                     #     'batch_size': 1
                     # },
                     hyperparameters = trainingHyperparameters,
-                    #train_use_spot_instances=True,
-                    #train_max_wait=20000,
-                    #train_max_run=20000
+                    train_use_spot_instances=True,
+                    train_max_wait=100000,
+                    train_max_run=100000
                 )
                 
     trainingConfigurationClient.updateTraining(trainId, 'sagemakerJobName', jobName)

@@ -264,20 +264,27 @@ Steps:
 ###############################################################################################
 
 s3c = boto3.client('s3')
+s3f = S3FileSystem()
 smc = boto3.client('sagemaker')   
 
 def copyS3ObjectPathToLocalPath(s3path, localPath):
     bucket = s3path[5:].split('/')[0]
     key = s3path[(len(bucket)+6):]
     s3c.download_file(bucket, key, localPath)
+    
+def getNumpyArrayFromS3(bucket, key):
+    nparr = np.load(s3f.open('{}/{}'.format(bucket, key)))
+    return nparr    
 
 def handler(event, context):
     trainInfo = event['trainInfo']
     embeddingInfo = event['embeddingInfo']
+    embeddingName = embeddingInfo['embeddingName']
     plateId = event['plateId']
     imageId = event['imageId']
     print(trainInfo)
     print(embeddingInfo)
+    print(embeddingName)
     print(plateId)
     print(imageId)
     trainingScriptBucket=embeddingInfo['modelTrainingScriptBucket']
@@ -319,6 +326,46 @@ def handler(event, context):
     import bioimstrain
     model=bioimstrain.model_fn(localModelDir)
     print(model)
+    
+    roiTrainKey = bp.getTrainKey(embeddingName, plateId, imageId)
+    data = getNumpyArrayFromS3(BUCKET, roiTrainKey).astype(np.float32)
+    print(data.shape)
+    
+    ##########################################################################
+    # TODO: Handle 3D data 
+    #
+    # The dev model assumes input with 4 dimensions. It assumes 2D rather then 3D data, with 3 channels:
+    #    image#, channels, y, x 
+    #  
+    # With channels=3, x and y = 128
+    #
+    # However, actual input is 3D and will be <#>, 3, 1, 128, 128
+    #
+    ##########################################################################
+    
+    #dataDimArr = [data.shape[0], 3, 128, 128]
+    print("v1")
+    dataDimArr = [600, 3, 128, 128]
+    dimTuple = tuple(dataDimArr)
+    model_data = np.zeros(dimTuple, dtype=np.float32)
+    for i in range(data.shape[0]):
+        model_data[i][0]=data[i][0][0]
+        model_data[i][1]=data[i][1][0]
+        model_data[i][2]=data[i][2][0]
+    
+    print(model_data.shape)
+    if data.shape[0] > 0:
+        t1 = torch.tensor(model_data)
+        print(t1.shape)
+        embeddingDataTensor = model(t1)
+        t2 = embeddingDataTensor.detach()
+        embeddingData = t2.numpy()
+        ea = np.mean(embeddingData[:data.shape[0]], axis=0)
+        print("Check0")
+        print(embeddingData.shape)
+        print("Check1")
+        print(ea.shape)
+        print("Check2")
 
     response = {
         'statusCode': 200,
