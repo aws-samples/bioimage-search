@@ -53,7 +53,7 @@ export class EmbeddingStack extends cdk.Stack {
     //
     ///////////////////////////////////////////
 
-    const plateFormat1 = new sfn.Pass(this, "Plate Format 1", {
+    const imagesByPlateInput = new sfn.Pass(this, "ImagesByPlateInput", {
       parameters: {
         method: "getImagesByPlateId",
         plateId: sfn.JsonPath.stringAt("$.plateId"),
@@ -61,10 +61,38 @@ export class EmbeddingStack extends cdk.Stack {
       resultPath: '$.getImagesInput',
     });
 
-    const plateToImages1 = new tasks.LambdaInvoke(this, "Plate To Images 1", {
+    const plateToImages = new tasks.LambdaInvoke(this, "Plate To Images", {
       lambdaFunction: props.imageManagementLambda,
       inputPath: '$.getImagesInput',
       resultPath: '$.imageList'
+    });
+    
+    const trainInfoInput = new sfn.Pass(this, "TrainInfoInput", {
+      parameters: {
+        method: "getTraining",
+        trainId: sfn.JsonPath.stringAt("$.trainId"),
+      },
+      resultPath: '$.getTrainInfoInput',
+    });
+    
+    const getTrainInfo = new tasks.LambdaInvoke(this, "GetTrainInfo", {
+      lambdaFunction: props.trainingConfigurationLambda,
+      inputPath: '$.getTrainInfoInput',
+      resultPath: '$.trainInfo'
+    });
+    
+    const embeddingInfoInput = new sfn.Pass(this, "EmbeddingInfoInput", {
+      parameters: {
+        method: "getEmbeddingInfo",
+        embeddingName: sfn.JsonPath.stringAt("$.trainInfo.embeddingName")
+      },
+      resultPath: '$.getEmbeddingInfoInput',
+    });
+    
+    const getEmbeddingInfo = new tasks.LambdaInvoke(this, "GetEmbeddingInfo", {
+      lambdaFunction: props.trainingConfigurationLambda,
+      inputPath: '$.getEmbeddingInfoInput',
+      resultPath: '$.embeddingInfo'
     });
 
     const imageRoiEmbeddingCompute = new tasks.LambdaInvoke(this, "Image Roi Embedding Compute", {
@@ -73,14 +101,24 @@ export class EmbeddingStack extends cdk.Stack {
     });
 
     const embeddingComputeMap = new sfn.Map(this, "Embedding Compute Map", {
-      maxConcurrency: 0,
+      maxConcurrency: 10,
+      parameters: {
+        'imageId.$' : "$$.Map.Item.Value.Item.imageId",
+        'plateId.$' : '$.plateId',
+        'trainInfo.$' : '$.trainInfo',
+        'embeddingInfo.$' : '$.embeddingInfo'
+      },
       itemsPath: '$.imageList.Payload.body',
       resultPath: '$.inspectorMapResult',
     });
     embeddingComputeMap.iterator(imageRoiEmbeddingCompute);
     
-    const embeddingComputeStepFunctionDef = plateFormat1
-      .next(plateToImages1)
+    const embeddingComputeStepFunctionDef = imagesByPlateInput
+      .next(plateToImages)
+      .next(trainInfoInput)
+      .next(getTrainInfo)
+      .next(embeddingInfoInput)
+      .next(getEmbeddingInfo)
       .next(embeddingComputeMap)
 
 //    const embeddingComputeLogGroup = new logs.LogGroup(this, "EmbeddingComputeLogGroup");
