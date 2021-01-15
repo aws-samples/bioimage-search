@@ -157,6 +157,9 @@ export const handler = async (event: any = {}): Promise<any> => {
         event.artifact.artifact) {
       try {
        const response = await createArtifact(event.artifact);
+       console.log("Created artifact=")
+       console.log(event.artifact)
+       console.log("==")
         return { statusCode: 200, body: JSON.stringify(response) };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };

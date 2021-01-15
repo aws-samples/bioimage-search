@@ -905,6 +905,18 @@ class ImageManagementClient(BioimageSearchClient):
             )
         jbody = getResponseBodyAsJson(response)
         return jbody
+
+    def createImageTrainResult(self, imageId, trainId, embeddingVector, roiEmbeddingKey):
+        request = '{{ "method": "createImageTrainResult", "imageId": "{}", "trainId": "{}", "embeddingVector": "{}", "roiEmbeddingKey": "{}" }}'.format(imageId, trainId, embeddingVector, roiEmbeddingKey)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self.getLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        jbody = getResponseBodyAsJson(response)
+        return jbody
         
     def listCompatiblePlates(self, width, height, depth, channels):
         request = '{{ "method": "listCompatiblePlates", "width": {}, "height": {}, "depth": {}, "channels": {} }}'.format(width, height, depth, channels);
@@ -1031,15 +1043,15 @@ class EmbeddingClient(BioimageSearchClient):
     def getLambdaArn(self):
         return self._resources.getEmbeddingLambdaArn()
     
-    def startEmbeddingCompute(self, trainInfo, embeddingInfo, plateId, imageId):
+    def executeImageEmbeddingCompute(self, trainInfo, embeddingInfo, plateId, imageId):
         trainInfoStr =json.dumps(trainInfo)
         embeddingInfoStr = json.dumps(embeddingInfo)
-        request = '{{ "method": "startEmbeddingCompute", "trainInfo": {}, "embeddingInfo": {}, "plateId": "{}", "imageId": "{}" }}'.format(trainInfoStr, embeddingInfoStr, plateId, imageId)
+        request = '{{ "method": "executeImageEmbeddingCompute", "trainInfo": {}, "embeddingInfo": {}, "plateId": "{}", "imageId": "{}" }}'.format(trainInfoStr, embeddingInfoStr, plateId, imageId)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
             FunctionName=self._resources.getEmbeddingComputeLambdaArn(),
-            InvocationType='Event',
+            InvocationType='RequestResponse',
             Payload=payload
             )
         jbody = getResponseBodyAsJson(response)

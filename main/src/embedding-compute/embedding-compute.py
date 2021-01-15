@@ -6,6 +6,7 @@ import os as os
 from os import listdir
 import boto3
 import json
+import base64
 import shortuuid as su
 import bioimagepath as bp
 import bioims
@@ -23,177 +24,6 @@ from torch.utils.data import TensorDataset, DataLoader
 from time import time
 from s3fs.core import S3FileSystem
 
-# def usage():
-#     print("usage: bbbc021-embed.py <platePrefix, e.g., Week2_24361>")
-#     exit(1)
-
-# tmpDir = '/tmp/' + str(uuid.uuid4())
-# channels=3
-
-# ###================================================================================
-# sageMakerTrainingBucket = 'sagemaker-us-east-1-580829821648'
-# modelKey = 'pytorch-training-2020-07-26-02-52-25-040/output/model.tar.gz'
-
-# class Net(nn.Module): 
-#     def __init__(self):
-#         super(Net, self).__init__()
-#         self.conv1 = nn.Conv2d(channels, 16, 3, stride=2)
-#         self.conv2 = nn.Conv2d(16, 32, 3, stride=2)
-#         self.conv3 = nn.Conv2d(32, 64, 3, stride=2)
-#         self.conv4 = nn.Conv2d(64, 128, 3, stride=2)
-#         self.conv5 = nn.Conv2d(128, 256, 3, stride=2)
-#         self.pool1 = nn.AvgPool2d(kernel_size = 2, stride=0, padding=0, ceil_mode=False, count_include_pad=True)
-#         self.fc1 = nn.Linear(256, 32)
-
-#     def forward(self, x):
-#         x = self.conv1(x)
-#         x = F.relu(x)
-#         x = self.conv2(x)
-#         x = F.relu(x)
-#         x = self.conv3(x)
-#         x = F.relu(x)
-#         x = self.conv4(x)
-#         x = F.relu(x)
-#         x = self.conv5(x)
-#         x = F.relu(x)
-#         x = self.pool1(x)
-#         x = x.view(-1, 256)
-#         x = self.fc1(x)
-#         n = x.norm(p=2, dim=1, keepdim=True)
-#         x = x.div(n)
-#         return x
-
-# ###================================================================================
-
-# projectBucket = 'phis-experiment-tensorflow'
-# projectEmbeddingKeyPrefix = 'embedding/bbbc021'
-
-# bucket_source = 'phis-data-bbbc021-1'
-# cell_key_prefix = 'cell-images'
-# imageMetadataKey = 'BBBC021_v1_image.csv'
-# moaKey = 'BBBC021_v1_moa.csv'
-# compoundKey = 'BBBC021_v1_compound.csv'
-
-# ec2homePath=Path("/home/ec2-user")
-# if ec2homePath.exists():
-#     tmpDir = '/home/ec2-user' + tmpDir
-
-# tmpPath=Path(tmpDir)
-# if not tmpPath.exists():
-#     tmpPath.mkdir()
-
-# tmpPath = str(tmpPath)
-    
-# if len(sys.argv) < 2:
-#     usage()
-
-# platePrefix=sys.argv[1]
-
-# s3c = boto3.client('s3', region_name='us-east-1')
-
-# def getCsvDfFromS3(bucket, key):
-#     csvObject = s3c.get_object(Bucket=bucket, Key=key)
-#     file_stream = csvObject['Body']
-#     df = pd.read_csv(file_stream)
-#     return df
-
-# image_df = getCsvDfFromS3(bucket_source, imageMetadataKey)
-# moa_df = getCsvDfFromS3(bucket_source, moaKey)
-# compound_df = getCsvDfFromS3(bucket_source, compoundKey)
-
-# moa_label_number_map = {}
-# moa_unique_arr = moa_df['moa'].unique()
-# moa_unique_arr.sort()
-# for i, l in enumerate(moa_unique_arr):
-#     moa_label_number_map[l] = i
-
-# compound_moa_map = {}
-# for i in moa_df.index:
-#     r = moa_df.iloc[i]
-#     compound = r['compound']
-#     moa = r['moa']
-#     compound_moa_map[compound] = moa
-
-# train_key_label_map = {}
-# for i in image_df.index:
-#     image_row = image_df.iloc[i]
-#     dapiFile = image_row['Image_FileName_DAPI']
-#     dapiPath = image_row['Image_PathName_DAPI']
-#     compound = image_row['Image_Metadata_Compound']
-#     if compound in compound_moa_map:
-#         moa = compound_moa_map[compound]
-#         label = moa_label_number_map[moa]
-#         dapiWeekPrefix = dapiPath.split('/')[1]
-#         if dapiWeekPrefix == platePrefix:
-#             sourceKey = cell_key_prefix + '/' + dapiWeekPrefix + '/' + dapiFile[:-4] + '-cell.npy'
-#             train_key_label_map[sourceKey] = label
-
-# def getNumpyArrayFromS3(bucket, key):
-#     nparr = np.load(s3f.open('{}/{}'.format(bucket, key)))
-#     return nparr
-
-# def getNumpyByDownloadTmpFile(bucket, key):
-#     tmpFile = tmpPath + '/' + str(uuid.uuid4()) + '.npy'
-#     s3c.download_file(bucket, key, tmpFile)
-#     nparr = np.load(tmpFile)
-#     os.remove(tmpFile)
-#     return nparr
-
-# def copyS3ObjectPathToLocalPath(s3path, localPath):
-#     bucket = s3path[5:].split('/')[0]
-#     key = s3path[(len(bucket)+6):]
-#     s3c.download_file(bucket, key, localPath)
-
-# def getPytorchModelFromS3(modelDataS3Location):
-#     print('Retrieving model from: ', modelDataS3Location)
-#     localPath = tmpPath + '/model.tar.gz'
-#     copyS3ObjectPathToLocalPath(modelDataS3Location, localPath)
-#     tarCmd = 'cd ' + tmpPath + '; tar xf model.tar.gz'
-#     os.system(tarCmd)
-#     dl = listdir(tmpPath)
-#     for d in dl:
-#         if d != 'model.tar.gz':
-#             path2=tmpPath + '/' + d
-#             break
-#     checkpoint = torch.load(path2)
-#     model = Net()
-#     model.load_state_dict(checkpoint)
-#     return model
-
-# def writeDictToS3(d, bucket, key):
-#     keySuffix=key.split('/')[-1]
-#     fn = tmpPath + '/' + keySuffix
-#     with open(fn, 'wb') as handle:
-#         pickle.dump(d, handle)
-#     with open(fn, 'rb') as fdata:
-#         s3c.upload_fileobj(fdata, bucket, key)
-#     fnPath=Path(fn)
-#     fnPath.unlink()
-
-# modelPath = 's3://'+ sageMakerTrainingBucket + '/' + modelKey
-# model = getPytorchModelFromS3(modelPath)
-
-# embeddingMapByTrainKey = {}
-
-# wellIndex=0
-# total = len(train_key_label_map)
-# buffer = np.zeros( (600, 3, 128, 128), dtype=np.float32 )
-# for sourceKey in train_key_label_map:
-#     print("Reading {} , {} of {}".format(sourceKey, wellIndex, total))
-#     data = getNumpyByDownloadTmpFile(bucket_source, sourceKey).astype(np.float32)
-#     if data.shape[0] > 0:
-#         for j in range(data.shape[0]):
-#             buffer[j] = data[j]
-#         t1 = torch.tensor(buffer)
-#         embeddingDataTensor = model(t1)
-#         t2 = embeddingDataTensor.detach()
-#         embeddingData = t2.numpy()
-#         ea = np.mean(embeddingData[:data.shape[0]], axis=0)
-#         embeddingMapByTrainKey[sourceKey] = ea
-#     wellIndex += 1
-
-# targetKey = projectEmbeddingKeyPrefix + '/' + platePrefix + '.pickle'
-# writeDictToS3(embeddingMapByTrainKey, projectBucket, targetKey)
 
 MESSAGE_LAMBDA_ARN = os.environ['MESSAGE_LAMBDA_ARN']
 IMAGE_MANAGEMENT_LAMBDA_ARN = os.environ['IMAGE_MANAGEMENT_LAMBDA_ARN']
@@ -227,45 +57,10 @@ Steps:
 
 """
 
-# def getS3TextObjectWriteToPath(bucket, key, path):
-#     s3c = boto3.client("s3")
-#     fileObject = s3c.get_object(Bucket=bucket, Key=key)
-#     text = fileObject['Body'].read().decode('utf-8')
-#     path_file = open(path, "w")
-#     path_file.write(text)
-#     path_file.close()
-
-# def handler(event, context):
-#     trainId = event['trainId']
-#     uniqueId = su.uuid()
-#     trainingConfigurationClient = bioims.client('training-configuration')
-#     trainInfo = trainingConfigurationClient.getTraining(trainId)
-#     embeddingName = trainInfo['embeddingName']
-#     embeddingInfo = trainingConfigurationClient.getEmbeddingInfo(embeddingName)
-#     trainScriptBucket = embeddingInfo['modelTrainingScriptBucket']
-#     trainScriptKey =embeddingInfo['modelTrainingScriptKey']
-#     trainListArtifactKey = bp.getTrainImageListArtifactPath(trainId)
-
-#     responseInfo = {
-#         'embeddingJobName': 'test1'
-#     }
-
-#     response = {
-#         'statusCode': 200,
-#         'body': responseInfo
-#     }
-
-#     return response
-
-###############################################################################################
-
-
-
-###############################################################################################
-
 s3c = boto3.client('s3')
 s3f = S3FileSystem()
 smc = boto3.client('sagemaker')   
+lam = boto3.client('lambda')
 
 def copyS3ObjectPathToLocalPath(s3path, localPath):
     bucket = s3path[5:].split('/')[0]
@@ -275,11 +70,40 @@ def copyS3ObjectPathToLocalPath(s3path, localPath):
 def getNumpyArrayFromS3(bucket, key):
     nparr = np.load(s3f.open('{}/{}'.format(bucket, key)))
     return nparr    
+    
+def writeNumpyToS3(data_array, bucket, keyPath):
+    keySuffix=keyPath.split('/')[-1]
+    fn = '/tmp/' + keySuffix
+    np.save(fn, data_array)
+    with open(fn, 'rb') as fdata:
+        s3c.upload_fileobj(fdata, bucket, keyPath)
+    fnPath=Path(fn)
+    fnPath.unlink()
+    
+def createArtifact(artifact):
+    artifactStr = json.dumps(artifact)
+    request = '{{ "method": "createArtifact", "artifact": {} }}'.format(artifactStr)
+    payload = bytes(request, encoding='utf-8')
+    response = lam.invoke(
+        FunctionName=ARTIFACT_LAMBDA_ARN,
+        InvocationType='RequestResponse',
+        Payload=payload
+        )
+        
+def applyEmbeddingResult(imageId, trainId, embeddingVector, roiEmbeddingKey):
+    request = '{{ "method": "createImageTrainResult", "imageId": "{}", "trainId": "{}", "embeddingVector": "{}", "roiEmbeddingKey": "{}" }}'.format(imageId, trainId, embeddingVector, roiEmbeddingKey)
+    payload = bytes(request, encoding='utf-8')
+    response = lam.invoke(
+        FunctionName=IMAGE_MANAGEMENT_LAMBDA_ARN,
+        InvocationType='RequestResponse',
+        Payload=payload
+        )
 
 def handler(event, context):
     trainInfo = event['trainInfo']
     embeddingInfo = event['embeddingInfo']
     embeddingName = embeddingInfo['embeddingName']
+    trainId = trainInfo['trainId']
     plateId = event['plateId']
     imageId = event['imageId']
     print(trainInfo)
@@ -344,7 +168,7 @@ def handler(event, context):
     ##########################################################################
     
     #dataDimArr = [data.shape[0], 3, 128, 128]
-    print("v1")
+    print("v3")
     dataDimArr = [600, 3, 128, 128]
     dimTuple = tuple(dataDimArr)
     model_data = np.zeros(dimTuple, dtype=np.float32)
@@ -360,16 +184,32 @@ def handler(event, context):
         embeddingDataTensor = model(t1)
         t2 = embeddingDataTensor.detach()
         embeddingData = t2.numpy()
-        ea = np.mean(embeddingData[:data.shape[0]], axis=0)
-        print("Check0")
-        print(embeddingData.shape)
-        print("Check1")
+        embeddingResult = embeddingData[:data.shape[0]]
+        ea = np.mean(embeddingResult, axis=0)
+        print(embeddingResult.shape)
         print(ea.shape)
-        print("Check2")
+        roiEmbeddingKey = bp.getRoiEmbeddingKey(imageId, plateId, trainId)
+        writeNumpyToS3(embeddingResult, BUCKET, roiEmbeddingKey)
+        artifactStr = 's3key#' + roiEmbeddingKey
+        roiEmbeddingArtifact = {
+            'contextId': imageId,
+            'trainId': trainId,
+            'artifact': artifactStr
+        }
+        createArtifact(roiEmbeddingArtifact)
+        ea64 = base64.b64encode(ea)
+        applyEmbeddingResult(imageId, trainId, ea64, roiEmbeddingKey)
+        # de64 = base64.decodebytes(ea64)
+        # ea2 = np.frombuffer(de64, dtype=np.float32)
+        # isOk = np.allclose(ea, ea2)
+        # print("base64 check={}".format(isOk))
+
+    else:
+        print("No input data found - skipping")
 
     response = {
         'statusCode': 200,
-        'body': 'success'
+        'body': ea64
     }
     
     return response

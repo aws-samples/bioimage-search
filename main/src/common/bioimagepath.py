@@ -20,6 +20,9 @@ def getRoiKey(embeddingName, plateId, imageId):
 def getTrainImageListArtifactPath(trainId):
     return "artifact/train/" + trainId + "/" + trainId + "-image-prefix-list.txt"
     
+def getRoiEmbeddingKey(imageId, plateId, trainId):
+    return "artifact/train/" + trainId + "/plate/" + plateId + "/" + imageId + "-roi-embedding.npy"
+    
 def getFlatFieldKeyForChannel(plateId, embeddingName, channelName):
     flatFieldKey = "artifact/plate/" + plateId + "/" + embeddingName + "/channel-" + channelName + "-flatfield.npy"
     return flatFieldKey
