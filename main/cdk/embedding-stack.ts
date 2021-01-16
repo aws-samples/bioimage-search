@@ -55,7 +55,7 @@ export class EmbeddingStack extends cdk.Stack {
 
     const imagesByPlateInput = new sfn.Pass(this, "ImagesByPlateInput", {
       parameters: {
-        method: "getImagesByPlateId",
+        method: "getImageIdsByPlateId",
         plateId: sfn.JsonPath.stringAt("$.plateId"),
       },
       resultPath: '$.getImagesInput',
@@ -84,7 +84,7 @@ export class EmbeddingStack extends cdk.Stack {
     const embeddingInfoInput = new sfn.Pass(this, "EmbeddingInfoInput", {
       parameters: {
         method: "getEmbeddingInfo",
-        embeddingName: sfn.JsonPath.stringAt("$.trainInfo.embeddingName")
+        embeddingName: sfn.JsonPath.stringAt("$.trainInfo.Payload.body.embeddingName")
       },
       resultPath: '$.getEmbeddingInfoInput',
     });
@@ -103,10 +103,10 @@ export class EmbeddingStack extends cdk.Stack {
     const embeddingComputeMap = new sfn.Map(this, "Embedding Compute Map", {
       maxConcurrency: 10,
       parameters: {
-        'imageId.$' : "$$.Map.Item.Value.Item.imageId",
+        'imageId.$' : "$$.Map.Item.Value",
         'plateId.$' : '$.plateId',
-        'trainInfo.$' : '$.trainInfo',
-        'embeddingInfo.$' : '$.embeddingInfo'
+        'trainInfo.$' : '$.trainInfo.Payload.body',
+        'embeddingInfo.$' : '$.embeddingInfo.Payload.body.Item'
       },
       itemsPath: '$.imageList.Payload.body',
       resultPath: '$.inspectorMapResult',

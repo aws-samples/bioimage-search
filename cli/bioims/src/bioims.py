@@ -1056,3 +1056,28 @@ class EmbeddingClient(BioimageSearchClient):
             )
         jbody = getResponseBodyAsJson(response)
         return jbody
+        
+    def startComputePlateEmbedding(self, trainId, plateId):
+        request = '{{ "method": "startComputePlateEmbedding", "trainId": "{}", "plateId": "{}" }}'.format(trainId, plateId)
+        payload = bytes(request, encoding='utf-8')
+        sfn = boto3.client('stepfunctions')
+        listResponse = sfn.list_state_machines(
+            maxResults=1000
+        )
+        stateMachines = listResponse['stateMachines']
+        embeddingComputeSfn=None
+        for sfnEntry in stateMachines:
+            if sfnEntry['name'].startswith('EmbeddingCompute'):
+                embeddingComputeSfn=sfnEntry
+                break
+        if embeddingComputeSfn==None:
+            print("Embedding Compute stateMachine not found")
+            return "Error - no embedding compute stateMachine found"
+        else:
+            jobName = trainId + "-" + plateId + "-" + shortuuid.uuid()
+            response = sfn.start_execution(
+                stateMachineArn=embeddingComputeSfn['stateMachineArn'],
+                name=jobName,
+                input=request,
+            )
+            return jobName
