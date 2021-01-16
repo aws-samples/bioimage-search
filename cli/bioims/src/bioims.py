@@ -701,6 +701,17 @@ class TrainingConfigurationClient(BioimageSearchClient):
             )
         return getResponseBodyAsJson(response)
 
+    def getTrainingJobInfo(self, trainingJobName):
+        request = '{{ "method": "getTrainingJobInfo", "trainingJobName": "{}" }}'.format(trainingJobName)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self.getLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        return getResponseBodyAsJson(response)
+
 #############################################
 #
 # ARTIFACT

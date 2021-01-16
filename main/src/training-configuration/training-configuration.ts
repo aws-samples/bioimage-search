@@ -1,5 +1,6 @@
 const AWS = require("aws-sdk");
 const db = new AWS.DynamoDB.DocumentClient();
+const sagemaker = new AWS.SageMaker();
 const dy = require("bioimage-dynamo");
 const TABLE_NAME = process.env.TABLE_NAME || "";
 const PARTITION_KEY_EMB_NAME = process.env.PARTITION_KEY || "";
@@ -274,6 +275,12 @@ async function getEmbeddingTrainings(embeddingName: any) {
   return result;
 }
 
+async function getTrainingJobInfo(trainingJobName: any) {
+  var params = {
+    TrainingJobName: trainingJobName
+  };
+  return sagemaker.describeTrainingJob(params).promise();
+}
 
 /////////////////////////////////////////////////
 
@@ -413,6 +420,22 @@ export const handler = async (event: any = {}): Promise<any> => {
       try {
         const response = await deleteEmbedding(event.embeddingName)
         return { statusCode: 200, body: JSON.stringify(response) };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
+    } else {
+      return {
+        statusCode: 400,
+        body: `Error: name required`,
+      };
+    }
+  }
+
+  else if (event.method === "getTrainingJobInfo") {
+    if (event.trainingJobName) {
+      try {
+        const response = await getTrainingJobInfo(event.trainingJobName)
+        return { statusCode: 200, body: response };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };
       }

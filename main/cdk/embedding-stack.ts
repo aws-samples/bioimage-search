@@ -81,6 +81,20 @@ export class EmbeddingStack extends cdk.Stack {
       resultPath: '$.trainInfo'
     });
     
+    const trainingJobInfoInput = new sfn.Pass(this, "TrainingJobInfoInput", {
+      parameters: {
+        method: "getTrainingJobInfo",
+        trainingJobName: sfn.JsonPath.stringAt("$.trainInfo.Payload.body.sagemakerJobName"),
+      },
+      resultPath: '$.getTrainingJobInfoInput',
+    });
+    
+    const trainingJobInfo = new tasks.LambdaInvoke(this, "TrainingJobInfo", {
+      lambdaFunction: props.trainingConfigurationLambda,
+      inputPath: '$.getTrainingJobInfoInput',
+      resultPath: '$.trainingJobInfo'
+    });
+    
     const embeddingInfoInput = new sfn.Pass(this, "EmbeddingInfoInput", {
       parameters: {
         method: "getEmbeddingInfo",
@@ -106,6 +120,7 @@ export class EmbeddingStack extends cdk.Stack {
         'imageId.$' : "$$.Map.Item.Value",
         'plateId.$' : '$.plateId',
         'trainInfo.$' : '$.trainInfo.Payload.body',
+        'trainingJobInfo.$' : '$.trainingJobInfo.Payload.body',
         'embeddingInfo.$' : '$.embeddingInfo.Payload.body.Item'
       },
       itemsPath: '$.imageList.Payload.body',
@@ -117,6 +132,8 @@ export class EmbeddingStack extends cdk.Stack {
       .next(plateToImages)
       .next(trainInfoInput)
       .next(getTrainInfo)
+      .next(trainingJobInfoInput)
+      .next(trainingJobInfo)
       .next(embeddingInfoInput)
       .next(getEmbeddingInfo)
       .next(embeddingComputeMap)

@@ -84,6 +84,11 @@ embedding = {
 # print(r)
 
 trainId = "r6KEudzQCuUtDwCzziiMZT"
-r = trainingConfigurationClient.updateTraining(trainId, 'sagemakerJobName', 'testJobName1')
+trainingJobName = "bioims-r6KEudzQCuUtDwCzziiMZT-gk34gTVUw8RiCd6MXaTWqC"
+
+#r = trainingConfigurationClient.updateTraining(trainId, 'sagemakerJobName', 'testJobName1')
+
+r = trainingConfigurationClient.getTrainingJobInfo(trainingJobName)
+
 print(r)
 

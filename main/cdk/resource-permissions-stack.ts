@@ -188,6 +188,8 @@ export class ResourcePermissionsStack extends cdk.Stack {
     //   resources: ["*"],
     // });
     
+    props.trainingConfigurationLambda!.role!.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonSageMakerFullAccess"))
+
     const artifactPolicy = new iam.Policy(this, "artifactPolicy");
     artifactPolicy.addStatements(dataBucketPolicyStatement);
     artifactPolicy.addStatements(cloudFormationPolicyStatement);

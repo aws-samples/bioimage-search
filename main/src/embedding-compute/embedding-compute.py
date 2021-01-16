@@ -118,9 +118,11 @@ def handler(event, context):
     print(trainingScriptKey)
     print(trainingJobName)
  
-    trainingJobInfo = smc.describe_training_job(
-        TrainingJobName=trainingJobName
-    )
+    # trainingJobInfo = smc.describe_training_job(
+    #     TrainingJobName=trainingJobName
+    # )
+    trainingJobInfo = event['trainingJobInfo']
+    
     modelArtifacts=trainingJobInfo['ModelArtifacts']
     s3ModelPath=modelArtifacts['S3ModelArtifacts']
     print(s3ModelPath)
