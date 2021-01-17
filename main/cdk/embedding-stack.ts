@@ -25,14 +25,15 @@ export interface EmbeddingStackProps extends cdk.StackProps {
 
 export class EmbeddingStack extends cdk.Stack {
   public embeddingComputeLambda: lambda.Function;
+  public plateEmbeddingComputeStateMachine: sfn.StateMachine;
   public embeddingComputeStateMachine: sfn.StateMachine;
 
   constructor(app: cdk.App, id: string, props: EmbeddingStackProps) {
     super(app, id, props);
     
-    this.embeddingComputeLambda = new lambda.DockerImageFunction(
+    this.plateEmbeddingComputeLambda = new lambda.DockerImageFunction(
       this,
-      "embeddingComputeFunction",
+      "plateEmbeddingComputeFunction",
       {
         code: lambda.DockerImageCode.fromImageAsset("src/embedding-compute"),
         memorySize: 3008,
@@ -43,6 +44,22 @@ export class EmbeddingStack extends cdk.Stack {
           IMAGE_MANAGEMENT_LAMBDA_ARN: props.imageManagementLambda.functionArn,
           TRAINING_CONFIGURATION_LAMBDA_ARN: props.trainingConfigurationLambda.functionArn,
           BUCKET: props.dataBucket.bucketName
+        },
+      }
+    );
+    
+    this.embeddingManagementLambda = new lambda.Function(
+      this,
+      "embeddingManagementFunction",
+      {
+        code: lambda.Code.fromAsset("src/embedding-management/build"),
+        handler: "embedding-management.handler",
+        runtime: lambda.Runtime.NODEJS_12_X,
+        memorySize: 256,
+        timeout: cdk.Duration.minutes(3),
+        environment: {
+          EMBEDDING_COMPUTE_SFN_ARN: this.embeddingComputeStateMachine.stateMachineArn,
+          PLATE_EMBEDDING_COMPUTE_SFN_ARN: this.plateEmbeddingComputeStateMachines.stateMachineArn
         },
       }
     );
@@ -67,7 +84,7 @@ export class EmbeddingStack extends cdk.Stack {
       resultPath: '$.imageList'
     });
     
-    const trainInfoInput = new sfn.Pass(this, "TrainInfoInput", {
+    const trainInfoInput1 = new sfn.Pass(this, "TrainInfoInput1", {
       parameters: {
         method: "getTraining",
         trainId: sfn.JsonPath.stringAt("$.trainId"),
@@ -75,7 +92,7 @@ export class EmbeddingStack extends cdk.Stack {
       resultPath: '$.getTrainInfoInput',
     });
     
-    const getTrainInfo = new tasks.LambdaInvoke(this, "GetTrainInfo", {
+    const getTrainInfo1 = new tasks.LambdaInvoke(this, "GetTrainInfo1", {
       lambdaFunction: props.trainingConfigurationLambda,
       inputPath: '$.getTrainInfoInput',
       resultPath: '$.trainInfo'
@@ -95,7 +112,7 @@ export class EmbeddingStack extends cdk.Stack {
       resultPath: '$.trainingJobInfo'
     });
     
-    const embeddingInfoInput = new sfn.Pass(this, "EmbeddingInfoInput", {
+    const embeddingInfoInput1 = new sfn.Pass(this, "EmbeddingInfoInput1", {
       parameters: {
         method: "getEmbeddingInfo",
         embeddingName: sfn.JsonPath.stringAt("$.trainInfo.Payload.body.embeddingName")
@@ -103,7 +120,7 @@ export class EmbeddingStack extends cdk.Stack {
       resultPath: '$.getEmbeddingInfoInput',
     });
     
-    const getEmbeddingInfo = new tasks.LambdaInvoke(this, "GetEmbeddingInfo", {
+    const getEmbeddingInfo1 = new tasks.LambdaInvoke(this, "GetEmbeddingInfo1", {
       lambdaFunction: props.trainingConfigurationLambda,
       inputPath: '$.getEmbeddingInfoInput',
       resultPath: '$.embeddingInfo'
@@ -114,7 +131,7 @@ export class EmbeddingStack extends cdk.Stack {
       outputPath: '$.Payload'
     });
 
-    const embeddingComputeMap = new sfn.Map(this, "Embedding Compute Map", {
+    const plateEmbeddingComputeMap = new sfn.Map(this, "Plate Embedding Compute Map", {
       maxConcurrency: 10,
       parameters: {
         'imageId.$' : "$$.Map.Item.Value",
@@ -126,25 +143,25 @@ export class EmbeddingStack extends cdk.Stack {
       itemsPath: '$.imageList.Payload.body',
       resultPath: '$.inspectorMapResult',
     });
-    embeddingComputeMap.iterator(imageRoiEmbeddingCompute);
+    plateEmbeddingComputeMap.iterator(imageRoiEmbeddingCompute);
     
-    const embeddingComputeStepFunctionDef = imagesByPlateInput
+    const plateEmbeddingComputeStepFunctionDef = imagesByPlateInput
       .next(plateToImages)
-      .next(trainInfoInput)
-      .next(getTrainInfo)
+      .next(trainInfoInput1)
+      .next(getTrainInfo1)
       .next(trainingJobInfoInput)
       .next(trainingJobInfo)
-      .next(embeddingInfoInput)
-      .next(getEmbeddingInfo)
-      .next(embeddingComputeMap)
+      .next(embeddingInfoInput1)
+      .next(getEmbeddingInfo1)
+      .next(plateEmbeddingComputeMap)
 
 //    const embeddingComputeLogGroup = new logs.LogGroup(this, "EmbeddingComputeLogGroup");
 
-    this.embeddingComputeStateMachine = new sfn.StateMachine(
+    this.plateEmbeddingComputeStateMachine = new sfn.StateMachine(
       this,
-      "Embedding Compute StateMachine",
+      "Plate Embedding Compute StateMachine",
       {
-        definition: embeddingComputeStepFunctionDef,
+        definition: plateEmbeddingComputeStepFunctionDef,
         timeout: cdk.Duration.minutes(60),
         // logs: {
         //   destination: embeddingComputeLogGroup,
