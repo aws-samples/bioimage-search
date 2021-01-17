@@ -58,10 +58,6 @@ export class EmbeddingStack extends cdk.Stack {
         runtime: lambda.Runtime.NODEJS_12_X,
         memorySize: 256,
         timeout: cdk.Duration.minutes(3),
-        environment: {
-          EMBEDDING_COMPUTE_SFN_ARN: this.embeddingComputeStateMachine.stateMachineArn,
-          PLATE_EMBEDDING_COMPUTE_SFN_ARN: this.plateEmbeddingComputeStateMachine.stateMachineArn
-        },
       }
     );
     

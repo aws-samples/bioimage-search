@@ -32,6 +32,7 @@ cd src/training-build; ./build.sh; cd ../..
 cd src/training-compute; ./build.sh; cd ../..
 cd src/train; ./build.sh; cd ../..
 cd src/embedding-compute; ./build.sh; cd ../..
+cd src/embedding-management; ./build.sh; cd ../..
 
 cdk bootstrap
 
