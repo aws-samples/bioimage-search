@@ -23,7 +23,8 @@ export interface ResourcePermissionsStackProps extends cdk.StackProps {
   trainStateMachine: sfn.StateMachine;
   trainBuildLambda: lambda.Function;
   trainComputeLambda: lambda.Function;
-  embeddingComputeLambda: lambda.Function;
+  plateEmbeddingComputeLambda: lambda.Function;
+  embeddingManagementLambda: lambda.Function;
 }
 
 export class ResourcePermissionsStack extends cdk.Stack {
@@ -155,7 +156,8 @@ export class ResourcePermissionsStack extends cdk.Stack {
                   props.trainLambda.functionArn,
                   props.trainBuildLambda.functionArn,
                   props.trainComputeLambda.functionArn,
-                  props.embeddingComputeLambda.functionArn
+                  props.plateEmbeddingComputeLambda.functionArn,
+                  props.embeddingManagementLambda.functionArn
                 ]
     });
     
@@ -180,7 +182,7 @@ export class ResourcePermissionsStack extends cdk.Stack {
     props.processPlateLambda!.role!.attachInlinePolicy(this.externalResourcesPolicy);
     props.trainLambda!.role!.attachInlinePolicy(this.externalResourcesPolicy);
     props.trainBuildLambda!.role!.attachInlinePolicy(this.externalResourcesPolicy);
-    props.embeddingComputeLambda!.role!.attachInlinePolicy(this.externalResourcesPolicy);
+    props.plateEmbeddingComputeLambda!.role!.attachInlinePolicy(this.externalResourcesPolicy);
     
     // const artifactPolicyStatement = new iam.PolicyStatement({
     //   actions: ["s3:*"],
@@ -308,8 +310,8 @@ export class ResourcePermissionsStack extends cdk.Stack {
     embeddingComputePolicy.addStatements(cloudFormationPolicyStatement);
     embeddingComputePolicy.addStatements(iamPolicyStatement);
     embeddingComputePolicy.addStatements(dataBucketPolicyStatement);
-    props.embeddingComputeLambda!.role!.attachInlinePolicy(embeddingComputePolicy);
-    props.embeddingComputeLambda!.role!.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonSageMakerFullAccess"));
+    props.plateEmbeddingComputeLambda!.role!.attachInlinePolicy(embeddingComputePolicy);
+    props.plateEmbeddingComputeLambda!.role!.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonSageMakerFullAccess"));
 
 
     //////////////////////////////////////////////////////////////////////////////
