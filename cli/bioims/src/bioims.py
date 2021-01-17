@@ -1078,12 +1078,12 @@ class EmbeddingClient(BioimageSearchClient):
         stateMachines = listResponse['stateMachines']
         embeddingComputeSfn=None
         for sfnEntry in stateMachines:
-            if sfnEntry['name'].startswith('EmbeddingCompute'):
+            if sfnEntry['name'].startswith('PlateEmbeddingCompute'):
                 embeddingComputeSfn=sfnEntry
                 break
         if embeddingComputeSfn==None:
-            print("Embedding Compute stateMachine not found")
-            return "Error - no embedding compute stateMachine found"
+            print("Plate Embedding Compute stateMachine not found")
+            return "Error - no plate embedding compute stateMachine found"
         else:
             jobName = trainId + "-" + plateId + "-" + shortuuid.uuid()
             response = sfn.start_execution(
@@ -1092,3 +1092,29 @@ class EmbeddingClient(BioimageSearchClient):
                 input=request,
             )
             return jobName
+
+    def startComputeEmbedding(self, trainId):
+        request = '{{ "method": "startComputeEmbedding", "trainId": "{}" }}'.format(trainId)
+        payload = bytes(request, encoding='utf-8')
+        sfn = boto3.client('stepfunctions')
+        listResponse = sfn.list_state_machines(
+            maxResults=1000
+        )
+        stateMachines = listResponse['stateMachines']
+        embeddingComputeSfn=None
+        for sfnEntry in stateMachines:
+            if sfnEntry['name'].startswith('EmbeddingCompute'):
+                embeddingComputeSfn=sfnEntry
+                break
+        if embeddingComputeSfn==None:
+            print("Embedding Compute stateMachine not found")
+            return "Error - no embedding compute stateMachine found"
+        else:
+            jobName = trainId + "-" + shortuuid.uuid()
+            response = sfn.start_execution(
+                stateMachineArn=embeddingComputeSfn['stateMachineArn'],
+                name=jobName,
+                input=request,
+            )
+            return jobName
+            

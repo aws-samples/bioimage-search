@@ -208,6 +208,7 @@ def handler(event, context):
 
     else:
         print("No input data found - skipping")
+        ea64=''
 
     response = {
         'statusCode': 200,

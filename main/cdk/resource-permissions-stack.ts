@@ -312,6 +312,10 @@ export class ResourcePermissionsStack extends cdk.Stack {
     embeddingComputePolicy.addStatements(dataBucketPolicyStatement);
     props.plateEmbeddingComputeLambda!.role!.attachInlinePolicy(embeddingComputePolicy);
     props.plateEmbeddingComputeLambda!.role!.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonSageMakerFullAccess"));
+    
+    const embeddingManagementPolicy = new iam.Policy(this, "embeddingManagementPolicy");
+    embeddingManagementPolicy.addStatements(invokeStepFunctionsPolicyStatement);
+    props.embeddingManagementLambda!.role!.attachInlinePolicy(embeddingManagementPolicy);
 
 
     //////////////////////////////////////////////////////////////////////////////

@@ -220,7 +220,6 @@ export class EmbeddingStack extends cdk.Stack {
     
     const plateProcessor = new tasks.StepFunctionsStartExecution(this, "Plate Embedding Compute SFN", {
       stateMachine: this.plateEmbeddingComputeStateMachine,
-      outputPath: '$.plateProcessorOutput'
     });
     
     const plateWait = new sfn.Wait(this, "Plate Wait", {
@@ -230,7 +229,7 @@ export class EmbeddingStack extends cdk.Stack {
     const plateStatusInput = new sfn.Pass(this, "Plate Status Input", {
       parameters: {
         method: "describeExecution",
-        executionArn: sfn.JsonPath.stringAt('$.executionArn')
+        ExecutionArn: sfn.JsonPath.stringAt('$.ExecutionArn')
       }
     });
     
@@ -275,7 +274,7 @@ export class EmbeddingStack extends cdk.Stack {
 
     this.embeddingComputeStateMachine = new sfn.StateMachine(
       this,
-      "Train StateMachine",
+      "EmbeddingComputeStateMachine",
       {
         definition: embeddingStepFunctionDef,
         timeout: cdk.Duration.hours(24),
