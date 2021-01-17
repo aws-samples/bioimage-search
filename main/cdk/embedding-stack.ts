@@ -24,7 +24,8 @@ export interface EmbeddingStackProps extends cdk.StackProps {
 }
 
 export class EmbeddingStack extends cdk.Stack {
-  public embeddingComputeLambda: lambda.Function;
+  public plateEmbeddingComputeLambda: lambda.Function;
+  public embeddingManagementLambda: lambda.Function;
   public plateEmbeddingComputeStateMachine: sfn.StateMachine;
   public embeddingComputeStateMachine: sfn.StateMachine;
 
@@ -59,14 +60,14 @@ export class EmbeddingStack extends cdk.Stack {
         timeout: cdk.Duration.minutes(3),
         environment: {
           EMBEDDING_COMPUTE_SFN_ARN: this.embeddingComputeStateMachine.stateMachineArn,
-          PLATE_EMBEDDING_COMPUTE_SFN_ARN: this.plateEmbeddingComputeStateMachines.stateMachineArn
+          PLATE_EMBEDDING_COMPUTE_SFN_ARN: this.plateEmbeddingComputeStateMachine.stateMachineArn
         },
       }
     );
     
     ///////////////////////////////////////////
     //
-    // Embedding Compute State Machine
+    // Plate Embedding Compute State Machine
     //
     ///////////////////////////////////////////
 
@@ -127,7 +128,7 @@ export class EmbeddingStack extends cdk.Stack {
     });
 
     const imageRoiEmbeddingCompute = new tasks.LambdaInvoke(this, "Image Roi Embedding Compute", {
-      lambdaFunction: this.embeddingComputeLambda,
+      lambdaFunction: this.plateEmbeddingComputeLambda,
       outputPath: '$.Payload'
     });
 
@@ -169,6 +170,122 @@ export class EmbeddingStack extends cdk.Stack {
         // },
       }
     );
+    
+    ///////////////////////////////////////////
+    //
+    // Embedding Compute State Machine
+    //
+    ///////////////////////////////////////////
+    
+    const trainInfoRequest = new sfn.Pass(this, "Train Info Request", {
+      parameters: {
+        method: "getTraining",
+        trainId: sfn.JsonPath.stringAt("$.trainId"),
+      },
+      resultPath: '$.trainInfoRequest'
+    });
+
+    const trainInfo = new tasks.LambdaInvoke(this, "Train Info", {
+      lambdaFunction: props.trainingConfigurationLambda,
+      resultPath: '$.trainInfo',
+      inputPath: '$.trainInfoRequest',
+    });
+    
+    const embeddingInfoRequest = new sfn.Pass(this, "Embedding Info Request", {
+      parameters: {
+        method: "getEmbeddingInfo",
+        embeddingName: sfn.JsonPath.stringAt('$.trainInfo.Payload.body.embeddingName')
+      },
+      resultPath: '$.embeddingInfoRequest'
+    });
+    
+    const embeddingInfo = new tasks.LambdaInvoke(this, "Embedding Info", {
+      lambdaFunction: props.trainingConfigurationLambda,
+      resultPath: sfn.JsonPath.stringAt('$.embeddingInfo'),
+      inputPath: '$.embeddingInfoRequest',
+    });
+
+    const plateSurveyRequest = new sfn.Pass(this, "Plate Survey Request", {
+      parameters: {
+        method: "listCompatiblePlates",
+        width: sfn.JsonPath.stringAt('$.embeddingInfo.Payload.body.Item.inputWidth'),
+        height: sfn.JsonPath.stringAt('$.embeddingInfo.Payload.body.Item.inputHeight'),
+        depth: sfn.JsonPath.stringAt('$.embeddingInfo.Payload.body.Item.inputDepth'),
+        channels: sfn.JsonPath.stringAt('$.embeddingInfo.Payload.body.Item.inputChannels')
+      },
+      resultPath: '$.plateSurveyRequest'
+    });
+    
+    const plateList = new tasks.LambdaInvoke(this, "Plate List", {
+      lambdaFunction: props.imageManagementLambda,
+      resultPath: sfn.JsonPath.stringAt('$.plateList'),
+      inputPath: '$.plateSurveyRequest'
+    });
+    
+    const plateProcessor = new tasks.StepFunctionsStartExecution(this, "Plate Embedding Compute SFN", {
+      stateMachine: this.plateEmbeddingComputeStateMachine,
+      outputPath: '$.plateProcessorOutput'
+    });
+    
+    const plateWait = new sfn.Wait(this, "Plate Wait", {
+      time: sfn.WaitTime.duration(cdk.Duration.seconds(30))
+    });
+    
+    const plateStatusInput = new sfn.Pass(this, "Plate Status Input", {
+      parameters: {
+        method: "describeExecution",
+        executionArn: sfn.JsonPath.stringAt('$.executionArn')
+      }
+    });
+    
+    const plateStatus = new tasks.LambdaInvoke(this, "Plate Status", {
+      lambdaFunction: this.embeddingManagementLambda,
+      outputPath: '$.Payload.body'      
+    });
+    
+    const plateNotRunning = new sfn.Pass(this, "Plate Not Running", {
+      parameters: {
+        status: sfn.JsonPath.stringAt('$.status')
+      }
+    });
+    
+    const plateSequence = plateProcessor
+      .next(plateWait)
+      .next(plateStatusInput)
+      .next(plateStatus)
+      .next(new sfn.Choice(this, 'Plate Sfn Complete?')
+        .when(sfn.Condition.stringEquals('$.status', 'RUNNING'), plateWait)
+        .otherwise(plateNotRunning));
+
+    const embeddingComputeMap = new sfn.Map(this, "Embedding Compute Map", {
+      maxConcurrency: 10,
+      itemsPath: '$.plateList.Payload.body',
+      resultPath: '$.embeddingComputeMapResult',
+      parameters: {
+        method: "startComputePlateEmbedding",
+        'trainId.$' : '$.trainId',
+        'plateId.$' : "$$.Map.Item.Value.plateId"
+      }
+    });
+    embeddingComputeMap.iterator(plateSequence);
+    
+    const embeddingStepFunctionDef = trainInfoRequest
+      .next(trainInfo)
+      .next(embeddingInfoRequest)
+      .next(embeddingInfo)
+      .next(plateSurveyRequest)
+      .next(plateList)
+      .next(embeddingComputeMap)
+
+    this.embeddingComputeStateMachine = new sfn.StateMachine(
+      this,
+      "Train StateMachine",
+      {
+        definition: embeddingStepFunctionDef,
+        timeout: cdk.Duration.hours(24),
+      }
+    );
+
 
   }
 }
