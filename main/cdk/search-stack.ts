@@ -11,6 +11,7 @@ import iam = require("@aws-cdk/aws-iam");
 import cdk = require("@aws-cdk/core");
 import * as sfn from "@aws-cdk/aws-stepfunctions";
 import * as tasks from "@aws-cdk/aws-stepfunctions-tasks";
+import * as sqs from '@aws-cdk/aws-sqs';
 
 export interface SearchStackProps extends cdk.StackProps {
   trainingConfigurationLambda: lambda.Function;
@@ -22,6 +23,8 @@ const TABLE_NAME = "BioimsSearch"
 
 export class SearchStack extends cdk.Stack {
   public searchLambda: lambda.Function;
+  public searchQueue: sqs.Queue;
+  public managementQueue: sqs.Queue;
 
   constructor(app: cdk.App, id: string, props: SearchStackProps) {
     super(app, id, props);
@@ -58,7 +61,14 @@ export class SearchStack extends cdk.Stack {
         TABLE_NAME
       ) as Table;
     }
+    
+    this.searchQueue = new sqs.Queue(this, 'SearchQueue', {
+      fifo: true,
+    });
 
+    this.managementQueue = new sqs.Queue(this, 'ManagementQueue', {
+      fifo: true,
+    });
 
     this.searchLambda = new lambda.Function(
       this,
@@ -71,9 +81,10 @@ export class SearchStack extends cdk.Stack {
           TABLE_NAME: searchTable.tableName,
           PARTITION_KEY: "searchId",
           SORT_KEY: "imageId",
-          TRAINING_CONFIGURATION_LAMBDA_ARN:
-            props.trainingConfigurationLambda.functionArn,
+          TRAINING_CONFIGURATION_LAMBDA_ARN: props.trainingConfigurationLambda.functionArn,
           MESSAGE_LAMBDA_ARN: props.messageLambda.functionArn,
+          SEARCH_QUEUE_URL: this.searchQueue.queueUrl,
+          MANAGEMENT_QUEUE_URL: this.managementQueue.queueUrl
         },
         memorySize: 3008,
         timeout: cdk.Duration.minutes(15),

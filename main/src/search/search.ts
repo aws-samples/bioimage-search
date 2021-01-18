@@ -1,5 +1,6 @@
 const AWS = require("aws-sdk");
 const s3 = new AWS.S3({ apiVersion: "2006-03-01" });
+var sqs = new AWS.SQS();
 const lambda = new AWS.Lambda({ apiVersion: "2015-03-31" });
 const db = new AWS.DynamoDB.DocumentClient();
 const dy = require("bioimage-dynamo");
@@ -11,6 +12,8 @@ const PARTITION_KEY_SRTID = process.env.PARTITION_KEY || "";
 const SORT_KEY_IMGID = process.env.SORT_KEY || "";
 const TRAINING_CONFIGURATION_LAMBDA_ARN = process.env.TRAINING_CONFIGURATION_LAMBDA_ARN || "";
 const MESSAGE_LAMBDA_ARN = process.env.MESSAGE_LAMBDA_ARN || "";
+const SEARCH_QUEUE_URL = process.env.SEARCH_QUEUE_URL || "";
+const MANAGEMENT_QUEUE_URL = process.env.MANAGEMENT_QUEUE_URL || "";
 
 const LATEST = "LATEST";
 const DDB_MAX_BATCH = 25;
@@ -77,13 +80,29 @@ async function submitSearch(search: any) {
     [SUBMIT_TIMESTAMP]: submitTimestamp
   }
   
-  const params = {
+  const dynamoParams = {
     TableName: TABLE_NAME,
     Item: searchEntry
   };
   
-  await db.put(params).promise();
+  const sqsParams = {
+    MessageAttributes: {
+      "SearchId": {
+        DataType: "String",
+        StringValue: searchId
+      },
+    },
+    MessageBody: JSON.stringify(searchEntry),
+    MessageGroupId: "BioimsSearch",
+    MessageDeduplicationId: searchId,
+    QueueUrl: SEARCH_QUEUE_URL
+  };
   
+  const p: any[] = [];
+  p.push(db.put(dynamoParams).promise());
+  p.push(sqs.sendMessage(sqsParams).promise());
+  await Promise.all(p)
+
   const response = {
     searchId: searchId
   }

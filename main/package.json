@@ -17,6 +17,7 @@
     "typescript": "~3.9.7"
   },
   "dependencies": {
+    "@aws-cdk/aws-sqs": "^1.83.0",
     "@aws-cdk/aws-apigateway": "^1.83.0",
     "@aws-cdk/aws-cloudformation": "^1.83.0",
     "@aws-cdk/aws-codebuild": "^1.83.0",

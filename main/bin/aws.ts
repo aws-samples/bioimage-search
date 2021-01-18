@@ -2,6 +2,10 @@ import 'source-map-support/register';
 import * as cdk from '@aws-cdk/core';
 import iam = require('@aws-cdk/aws-iam');
 import s3 = require('@aws-cdk/aws-s3');
+import * as sqs from '@aws-cdk/aws-sqs';
+import * as Dynamodb from 'aws-sdk/clients/dynamodb';
+import { SharedIniFileCredentials } from 'aws-sdk';
+
 import { BaseStack } from '../cdk/base-stack';
 import { LustreStack } from '../cdk/lustre-stack';
 import { BatchSetupStack } from '../cdk/batch-setup-stack';
@@ -19,8 +23,6 @@ import { ProcessPlateStack } from '../cdk/process-plate-stack';
 import { TrainStack } from '../cdk/train-stack';
 import { EmbeddingStack } from '../cdk/embedding-stack';
 import { SearchStack } from '../cdk/search-stack';
-import * as Dynamodb from 'aws-sdk/clients/dynamodb';
-import { SharedIniFileCredentials } from 'aws-sdk';
 
 const credentials = new SharedIniFileCredentials({profile: 'default'});
 const dynamodb = new Dynamodb({
@@ -138,7 +140,9 @@ const resourcePermissionsStack = new ResourcePermissionsStack(app, 'BioimageSear
     trainComputeLambda: trainStack.trainComputeLambda,
     plateEmbeddingComputeLambda: embeddingStack.plateEmbeddingComputeLambda,
     embeddingManagementLambda: embeddingStack.embeddingManagementLambda,
-    searchLambda: searchStack.searchLambda
+    searchLambda: searchStack.searchLambda,
+    searchQueue: searchStack.searchQueue,
+    managementQueue: searchStack.managementQueue
 })
 
 })();

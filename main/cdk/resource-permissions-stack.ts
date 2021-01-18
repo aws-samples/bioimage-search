@@ -4,6 +4,7 @@ import s3 = require("@aws-cdk/aws-s3");
 import lambda = require("@aws-cdk/aws-lambda");
 import * as sfn from '@aws-cdk/aws-stepfunctions';
 import crs = require("crypto-random-string");
+import * as sqs from '@aws-cdk/aws-sqs';
 
 export interface ResourcePermissionsStackProps extends cdk.StackProps {
   dataBucket: s3.Bucket;
@@ -26,6 +27,8 @@ export interface ResourcePermissionsStackProps extends cdk.StackProps {
   plateEmbeddingComputeLambda: lambda.Function;
   embeddingManagementLambda: lambda.Function;
   searchLambda: lambda.Function;
+  searchQueue: sqs.Queue;
+  managementQueue: sqs.Queue;
 }
 
 export class ResourcePermissionsStack extends cdk.Stack {
@@ -319,15 +322,25 @@ export class ResourcePermissionsStack extends cdk.Stack {
     embeddingManagementPolicy.addStatements(invokeStepFunctionsPolicyStatement);
     props.embeddingManagementLambda!.role!.attachInlinePolicy(embeddingManagementPolicy);
     
-    const searchPolicyStatement = new iam.PolicyStatement({
+    const searchLambdaPolicyStatement = new iam.PolicyStatement({
       actions: ["lambda:InvokeFunction"],
       effect: iam.Effect.ALLOW,
       resources: [props.messageLambda.functionArn,
                   props.trainingConfigurationLambda.functionArn
                 ]
     });
+    
+    const searchSQSPolicyStatement = new iam.PolicyStatement({
+      actions: ["sqs:*"],
+      effect: iam.Effect.ALLOW,
+      resources: [props.searchQueue.queueArn,
+                  props.managementQueue.queueArn
+                ]
+    });
+
     const searchPolicy = new iam.Policy(this, "searchPolicy");
-    searchPolicy.addStatements(searchPolicyStatement);
+    searchPolicy.addStatements(searchLambdaPolicyStatement);
+    searchPolicy.addStatements(searchSQSPolicyStatement);
     searchPolicy.addStatements(invokeStepFunctionsPolicyStatement);
     props.searchLambda!.role!.attachInlinePolicy(searchPolicy);
 
