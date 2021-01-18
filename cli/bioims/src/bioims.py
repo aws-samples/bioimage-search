@@ -81,6 +81,9 @@ class BioimageSearchResources:
     def getEmbeddingStack(self):
         return self.getStackByName('BioimageSearchEmbeddingStack')
         
+    def getSearchStack(self):
+        return self.getStackByName('BioimageSearchSearchStack')
+        
 ##### FUNCTIONS
 
     def getStackOutputByPrefix(self, stack, prefix):
@@ -138,6 +141,8 @@ class BioimageSearchResources:
     def getEmbeddingComputeLambdaArn(self):
         return self.getStackOutputByPrefix(self.getEmbeddingStack(), 'ExportsOutputFnGetAttembeddingComputeFunction')
         
+    def getSearchLambdaArn(self):
+        return self.getStackOutputByPrefix(self.getSearchStack(), 'ExportsOutputFnGetAttsearchFunction')
         
 ##### BATCH QUEUE
 
@@ -176,8 +181,10 @@ def client(serviceName, params=None):
         return ProcessPlateClient(params)
     elif serviceName == 'train':
         return TrainClient(params)
-    elif serviceName =='embedding':
+    elif serviceName == 'embedding':
         return EmbeddingClient(params)
+    elif serviceName == 'search':
+        return SearchClient(params)
     else:
         print('service type {} not recognized'.format(serviceName))
         return False
@@ -1118,3 +1125,28 @@ class EmbeddingClient(BioimageSearchClient):
             )
             return jobName
             
+#############################################
+#
+# SEARCH
+#
+#############################################
+
+class SearchClient(BioimageSearchClient):
+    def __init__(self, params=None):
+        super().__init__(params)
+
+    def getLambdaArn(self):
+        return self._resources.getSearchLambdaArn()
+    
+    def submitSearch(self, search):
+        searchStr =json.dumps(search)
+        request = '{{ "method": "submitSearch", "search": {} }}'.format(searchStr)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self.getLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        jbody = getResponseBodyAsJson(response)
+        return jbody

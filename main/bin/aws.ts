@@ -18,6 +18,7 @@ import { ImageManagementStack } from '../cdk/image-management-stack';
 import { ProcessPlateStack } from '../cdk/process-plate-stack';
 import { TrainStack } from '../cdk/train-stack';
 import { EmbeddingStack } from '../cdk/embedding-stack';
+import { SearchStack } from '../cdk/search-stack';
 import * as Dynamodb from 'aws-sdk/clients/dynamodb';
 import { SharedIniFileCredentials } from 'aws-sdk';
 
@@ -111,6 +112,12 @@ const embeddingStack = new EmbeddingStack(app, 'BioimageSearchEmbeddingStack', {
     dataBucket: baseStack.dataBucket
 })
 
+const searchStack = new SearchStack(app, 'BioimageSearchSearchStack', {
+    trainingConfigurationLambda: trainingConfigurationStack.trainingConfigurationLambda,
+    messageLambda: messageStack.messageLambda,
+    dynamoTableNames: dynamoTableNames
+})
+
 const resourcePermissionsStack = new ResourcePermissionsStack(app, 'BioimageSearchResourcePermissionsStack', {
     dataBucket: baseStack.dataBucket,
     batchInstanceRole: batchSetupStack.batchInstanceRole,
@@ -130,7 +137,8 @@ const resourcePermissionsStack = new ResourcePermissionsStack(app, 'BioimageSear
     trainBuildLambda: trainStack.trainBuildLambda,
     trainComputeLambda: trainStack.trainComputeLambda,
     plateEmbeddingComputeLambda: embeddingStack.plateEmbeddingComputeLambda,
-    embeddingManagementLambda: embeddingStack.embeddingManagementLambda
+    embeddingManagementLambda: embeddingStack.embeddingManagementLambda,
+    searchLambda: searchStack.searchLambda
 })
 
 })();

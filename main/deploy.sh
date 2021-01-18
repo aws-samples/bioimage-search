@@ -16,6 +16,7 @@ cd src/image-management; npm install; cd ../..
 cd src/process-plate; npm install; cd ../..
 cd src/train; npm install; cd ../..
 cd src/artifact; npm install; cd ../..
+cd src/search; npm install; cd ../..
 
 cd src/image-artifact/lambda/default-artifact; ./build.sh; cd ../../../..
 cd src/plate-preprocessing; ./build.sh; cd ../..
@@ -33,6 +34,7 @@ cd src/training-compute; ./build.sh; cd ../..
 cd src/train; ./build.sh; cd ../..
 cd src/embedding-compute; ./build.sh; cd ../..
 cd src/embedding-management; ./build.sh; cd ../..
+cd src/search; ./build.sh; cd ../..
 
 cdk bootstrap
 
@@ -52,5 +54,6 @@ cdk deploy BioimageSearchProcessPlateStack --require-approval never
 cdk deploy BioimageSearchTrainStack --require-approval never
 cdk deploy BioimageSearchEmbeddingStack --reqiure-approval never
 cdk deploy BioimageSearchResourcePermissionsStack --require-approval never
+cdk deploy BioimageSearchSearchStack --require-approval never
 
 cd scripts; ./fsxl-set-import-policy.sh; cd ..

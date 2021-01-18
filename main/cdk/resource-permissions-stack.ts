@@ -25,6 +25,7 @@ export interface ResourcePermissionsStackProps extends cdk.StackProps {
   trainComputeLambda: lambda.Function;
   plateEmbeddingComputeLambda: lambda.Function;
   embeddingManagementLambda: lambda.Function;
+  searchLambda: lambda.Function;
 }
 
 export class ResourcePermissionsStack extends cdk.Stack {
@@ -157,7 +158,8 @@ export class ResourcePermissionsStack extends cdk.Stack {
                   props.trainBuildLambda.functionArn,
                   props.trainComputeLambda.functionArn,
                   props.plateEmbeddingComputeLambda.functionArn,
-                  props.embeddingManagementLambda.functionArn
+                  props.embeddingManagementLambda.functionArn,
+                  props.searchLambda.functionArn
                 ]
     });
     
@@ -316,7 +318,18 @@ export class ResourcePermissionsStack extends cdk.Stack {
     const embeddingManagementPolicy = new iam.Policy(this, "embeddingManagementPolicy");
     embeddingManagementPolicy.addStatements(invokeStepFunctionsPolicyStatement);
     props.embeddingManagementLambda!.role!.attachInlinePolicy(embeddingManagementPolicy);
-
+    
+    const searchPolicyStatement = new iam.PolicyStatement({
+      actions: ["lambda:InvokeFunction"],
+      effect: iam.Effect.ALLOW,
+      resources: [props.messageLambda.functionArn,
+                  props.trainingConfigurationLambda.functionArn
+                ]
+    });
+    const searchPolicy = new iam.Policy(this, "searchPolicy");
+    searchPolicy.addStatements(searchPolicyStatement);
+    searchPolicy.addStatements(invokeStepFunctionsPolicyStatement);
+    props.searchLambda!.role!.attachInlinePolicy(searchPolicy);
 
     //////////////////////////////////////////////////////////////////////////////
     // Batch
