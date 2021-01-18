@@ -117,7 +117,8 @@ const embeddingStack = new EmbeddingStack(app, 'BioimageSearchEmbeddingStack', {
 const searchStack = new SearchStack(app, 'BioimageSearchSearchStack', {
     trainingConfigurationLambda: trainingConfigurationStack.trainingConfigurationLambda,
     messageLambda: messageStack.messageLambda,
-    dynamoTableNames: dynamoTableNames
+    dynamoTableNames: dynamoTableNames,
+    vpc: batchSetupStack.batchVpc
 })
 
 const resourcePermissionsStack = new ResourcePermissionsStack(app, 'BioimageSearchResourcePermissionsStack', {
@@ -142,7 +143,8 @@ const resourcePermissionsStack = new ResourcePermissionsStack(app, 'BioimageSear
     embeddingManagementLambda: embeddingStack.embeddingManagementLambda,
     searchLambda: searchStack.searchLambda,
     searchQueue: searchStack.searchQueue,
-    managementQueue: searchStack.managementQueue
+    managementQueue: searchStack.managementQueue,
+    searchTaskDefinition: searchStack.searchTaskDefinition
 })
 
 })();

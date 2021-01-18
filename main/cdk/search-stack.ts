@@ -12,11 +12,15 @@ import cdk = require("@aws-cdk/core");
 import * as sfn from "@aws-cdk/aws-stepfunctions";
 import * as tasks from "@aws-cdk/aws-stepfunctions-tasks";
 import * as sqs from '@aws-cdk/aws-sqs';
+import ecs = require("@aws-cdk/aws-ecs")
+import ec2 = require("@aws-cdk/aws-ec2");
+
 
 export interface SearchStackProps extends cdk.StackProps {
   trainingConfigurationLambda: lambda.Function;
   messageLambda: lambda.Function;
   dynamoTableNames: any;
+  vpc: ec2.Vpc;
 }
 
 const TABLE_NAME = "BioimsSearch"
@@ -25,6 +29,7 @@ export class SearchStack extends cdk.Stack {
   public searchLambda: lambda.Function;
   public searchQueue: sqs.Queue;
   public managementQueue: sqs.Queue;
+  public searchTaskDefinition: ecs.TaskDefinition;
 
   constructor(app: cdk.App, id: string, props: SearchStackProps) {
     super(app, id, props);
@@ -62,14 +67,14 @@ export class SearchStack extends cdk.Stack {
       ) as Table;
     }
     
-    this.searchQueue = new sqs.Queue(this, 'SearchQueue', {
+    this.searchQueue = new sqs.Queue(this, 'BioimsSearchQueue', {
       fifo: true,
     });
 
-    this.managementQueue = new sqs.Queue(this, 'ManagementQueue', {
+    this.managementQueue = new sqs.Queue(this, 'BioimsManagementQueue', {
       fifo: true,
     });
-
+    
     this.searchLambda = new lambda.Function(
       this,
       "searchFunction",
@@ -104,6 +109,34 @@ export class SearchStack extends cdk.Stack {
     lambdaPolicy.addStatements(searchTableAccessPolicy);
 
     this.searchLambda!.role!.attachInlinePolicy(lambdaPolicy);
+    
+    this.searchTaskDefinition = new ecs.FargateTaskDefinition(this, 'BioimsSearchTaskDef', {
+      memoryLimitMiB: 512,
+      cpu: 256,
+    });
+
+    const searchContainer = this.searchTaskDefinition.addContainer("BioimsSearchContainer", {
+      image: ecs.ContainerImage.fromAsset('src/search'),
+      environment: {
+          TRAINING_CONFIGURATION_LAMBDA_ARN: props.trainingConfigurationLambda.functionArn,
+          MESSAGE_LAMBDA_ARN: props.messageLambda.functionArn,
+          SEARCH_LAMBDA_ARN: this.searchLambda.functionArn,
+          SEARCH_QUEUE_URL: this.searchQueue.queueUrl,
+          MANAGEMENT_QUEUE_URL: this.managementQueue.queueUrl
+      },
+      logging: ecs.LogDrivers.awsLogs({ streamPrefix: 'BioimsSearchContainer' })
+    });
+    
+    const searchCluster = new ecs.Cluster(this, 'BioimsSearchCluster', {
+      vpc: props.vpc
+    });
+
+    const searchService = new ecs.FargateService(this, 'BioimsSearchService', {
+      cluster: searchCluster,
+      taskDefinition: this.searchTaskDefinition,
+      desiredCount: 1
+    });
+
   }
   
 }

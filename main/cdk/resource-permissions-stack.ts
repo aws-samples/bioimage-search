@@ -5,6 +5,7 @@ import lambda = require("@aws-cdk/aws-lambda");
 import * as sfn from '@aws-cdk/aws-stepfunctions';
 import crs = require("crypto-random-string");
 import * as sqs from '@aws-cdk/aws-sqs';
+import ecs = require("@aws-cdk/aws-ecs");
 
 export interface ResourcePermissionsStackProps extends cdk.StackProps {
   dataBucket: s3.Bucket;
@@ -29,6 +30,7 @@ export interface ResourcePermissionsStackProps extends cdk.StackProps {
   searchLambda: lambda.Function;
   searchQueue: sqs.Queue;
   managementQueue: sqs.Queue;
+  searchTaskDefinition: ecs.TaskDefinition;
 }
 
 export class ResourcePermissionsStack extends cdk.Stack {
@@ -355,7 +357,17 @@ export class ResourcePermissionsStack extends cdk.Stack {
     this.addBucketResourceReadOnly("bioimagesearchbbbc021stack-bbbc021bucket544c3e64-10ecnwo51127", batchInstancePolicy);
 
     props.batchInstanceRole.attachInlinePolicy(batchInstancePolicy);
-
+    
+    //////////////////////////////////////////////////////////////////////////////
+    // Search
+    //////////////////////////////////////////////////////////////////////////////
+    
+    const searchTaskPolicy = new iam.Policy(this, "SearchTaskPolicy");
+    searchTaskPolicy.addStatements(cloudFormationPolicyStatement);
+    searchTaskPolicy.addStatements(dataBucketPolicyStatement);
+    searchTaskPolicy.addStatements(invokeLambdaPolicyStatement);
+    searchTaskPolicy.addStatements(searchSQSPolicyStatement);
+    props.searchTaskDefinition.taskRole.attachInlinePolicy(searchTaskPolicy);
 
   }
   
