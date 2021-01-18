@@ -1,13 +1,16 @@
-FROM openjdk:8
+FROM adoptopenjdk/maven-openjdk8
+#FROM openjdk:8
 
 ARG SRCDIR=/usr/src/bioimage-search
 
 RUN mkdir -p ${SRCDIR}
 
-COPY *.java ${SRCDIR}
+COPY ./search ${SRCDIR}
 
-WORKDIR ${SRCDIR}
+WORKDIR ${SRCDIR}/search
 
-RUN javac Main.java
+RUN mvn package
 
-CMD ["java", "Main"]
+#mvn exec:java -Dexec.mainClass="com.example.myapp.App"
+
+CMD mvn exec:java -Dexec.mainClass="com.bioimage.search.App"

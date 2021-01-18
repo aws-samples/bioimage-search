@@ -1,3 +1,5 @@
+package com.bioimage.search;
+
 import java.util.concurrent.*;
 
 public class Main {
@@ -5,7 +7,7 @@ public class Main {
     public static void main(String[] args) {
 		int i=0;
 		while(true) {
-	    	System.out.println("Count v2 =" + i);
+	    	System.out.println("Count v3 =" + i);
 	    	try {
 				TimeUnit.SECONDS.sleep(1);
 	    	} catch (Exception ex) {
@@ -16,3 +18,4 @@ public class Main {
     }
 
 }
+
