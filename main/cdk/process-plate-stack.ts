@@ -501,4 +501,115 @@ export class ProcessPlateStack extends cdk.Stack {
       }
     );
   }
+  
+}
+
+  //////////////////////////////////////////
+  
+export function createTrainPlateVisitor(scope: cdk.Construct, 
+                                        visitorName: string, 
+                                        trainId: string, 
+                                        plateProcessor: any,
+                                        trainingConfigurationLambda: lambda.Function,
+                                        imageManagementLambda: lambda.Function,
+                                        processPlateLambda: lambda.Function) {
+   const trainInfoRequest = new sfn.Pass(scope, (visitorName +"TrainInfoRequest"), {
+      parameters: {
+        method: "getTraining",
+        trainId: sfn.JsonPath.stringAt("$.trainId"),
+      },
+      resultPath: '$.trainInfoRequest'
+    });
+
+    const trainInfo = new tasks.LambdaInvoke(scope, (visitorName+"TrainInfo"), {
+      lambdaFunction: trainingConfigurationLambda,
+      resultPath: '$.trainInfo',
+      inputPath: '$.trainInfoRequest',
+    });
+    
+    const embeddingInfoRequest = new sfn.Pass(scope, (visitorName+"EmbeddingInfoRequest"), {
+      parameters: {
+        method: "getEmbeddingInfo",
+        embeddingName: sfn.JsonPath.stringAt('$.trainInfo.Payload.body.embeddingName')
+      },
+      resultPath: '$.embeddingInfoRequest'
+    });
+    
+    const embeddingInfo = new tasks.LambdaInvoke(scope, (visitorName+"EmbeddingInfo"), {
+      lambdaFunction: trainingConfigurationLambda,
+      resultPath: sfn.JsonPath.stringAt('$.embeddingInfo'),
+      inputPath: '$.embeddingInfoRequest',
+    });
+
+    const plateSurveyRequest = new sfn.Pass(scope, (visitorName+"PlateSurveyRequest"), {
+      parameters: {
+        method: "listCompatiblePlates",
+        width: sfn.JsonPath.stringAt('$.embeddingInfo.Payload.body.Item.inputWidth'),
+        height: sfn.JsonPath.stringAt('$.embeddingInfo.Payload.body.Item.inputHeight'),
+        depth: sfn.JsonPath.stringAt('$.embeddingInfo.Payload.body.Item.inputDepth'),
+        channels: sfn.JsonPath.stringAt('$.embeddingInfo.Payload.body.Item.inputChannels')
+      },
+      resultPath: '$.plateSurveyRequest'
+    });
+    
+    const plateList = new tasks.LambdaInvoke(scope,(visitorName+"PlateList"), {
+      lambdaFunction: imageManagementLambda,
+      resultPath: sfn.JsonPath.stringAt('$.plateList'),
+      inputPath: '$.plateSurveyRequest'
+    });
+
+    // ==Supplied as method parameter==
+    // const plateProcessor = new tasks.LambdaInvoke(this, "Process Plate", {
+    //   lambdaFunction: props.processPlateLambda,
+    //   outputPath: '$.Payload.body'
+    // });
+    
+    const plateWait = new sfn.Wait(scope, (visitorName+"PlateWait"), {
+      time: sfn.WaitTime.duration(cdk.Duration.seconds(30))
+    });
+    
+    const plateStatusInput = new sfn.Pass(scope, (visitorName+"PlateStatusInput"), {
+      parameters: {
+        method: "describeExecution",
+        executionArn: sfn.JsonPath.stringAt('$.executionArn')
+      }
+    });
+    
+    const plateStatus = new tasks.LambdaInvoke(scope, (visitorName+"PlateStatus"), {
+      lambdaFunction: processPlateLambda,
+      outputPath: '$.Payload.body'      
+    });
+    
+    const plateNotRunning = new sfn.Pass(scope, (visitorName+"Plate Not Running"), {
+      parameters: {
+        status: sfn.JsonPath.stringAt('$.status')
+      }
+    });
+    
+    const plateSequence = plateProcessor
+      .next(plateWait)
+      .next(plateStatusInput)
+      .next(plateStatus)
+      .next(new sfn.Choice(scope, (visitorName+"PlateSfnCompleteCheck"))
+        .when(sfn.Condition.stringEquals('$.status', 'RUNNING'), plateWait)
+        .otherwise(plateNotRunning));
+
+    const plateProcessMap = new sfn.Map(scope, (visitorName+"PlateProcessMap"), {
+      maxConcurrency: 10,
+      itemsPath: '$.plateList.Payload.body',
+      resultPath: '$.plateProcessMapResult',
+      parameters: {
+        method: "processPlate",
+        embeddingName: sfn.JsonPath.stringAt('$.trainInfo.Payload.body.embeddingName'),
+        'plateId.$' : "$$.Map.Item.Value.plateId"
+      }
+    });
+    plateProcessMap.iterator(plateSequence);
+    
+    return trainInfoRequest
+      .next(embeddingInfoRequest)
+      .next(embeddingInfo)
+      .next(plateSurveyRequest)
+      .next(plateList)
+      .next(plateProcessMap)
 }

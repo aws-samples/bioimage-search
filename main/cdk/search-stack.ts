@@ -138,6 +138,8 @@ export class SearchStack extends cdk.Stack {
       taskDefinition: this.searchTaskDefinition,
       desiredCount: 1
     });
+    
+    
 
   }
   
