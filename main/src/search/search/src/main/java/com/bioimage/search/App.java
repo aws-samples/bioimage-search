@@ -2,7 +2,7 @@ package com.bioimage.search;
 
 import java.util.concurrent.*;
 
-public class Main {
+public class App {
 
     public static void main(String[] args) {
 		int i=0;
