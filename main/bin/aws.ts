@@ -24,9 +24,11 @@ import { TrainStack } from '../cdk/train-stack';
 import { EmbeddingStack } from '../cdk/embedding-stack';
 import { SearchStack } from '../cdk/search-stack';
 
+const region = process.env.CDK_DEFAULT_REGION || "";
+
 const credentials = new SharedIniFileCredentials({profile: 'default'});
 const dynamodb = new Dynamodb({
-    region: process.env.CDK_DEFAULT_REGION,
+    region: region,
     credentials: credentials
 });
 
@@ -118,7 +120,8 @@ const searchStack = new SearchStack(app, 'BioimageSearchSearchStack', {
     trainingConfigurationLambda: trainingConfigurationStack.trainingConfigurationLambda,
     messageLambda: messageStack.messageLambda,
     dynamoTableNames: dynamoTableNames,
-    vpc: batchSetupStack.batchVpc
+    vpc: batchSetupStack.batchVpc,
+    region: region
 })
 
 const resourcePermissionsStack = new ResourcePermissionsStack(app, 'BioimageSearchResourcePermissionsStack', {

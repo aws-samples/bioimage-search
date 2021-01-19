@@ -21,6 +21,7 @@ export interface SearchStackProps extends cdk.StackProps {
   messageLambda: lambda.Function;
   dynamoTableNames: any;
   vpc: ec2.Vpc;
+  region: string;
 }
 
 const TABLE_NAME = "BioimsSearch"
@@ -122,7 +123,8 @@ export class SearchStack extends cdk.Stack {
           MESSAGE_LAMBDA_ARN: props.messageLambda.functionArn,
           SEARCH_LAMBDA_ARN: this.searchLambda.functionArn,
           SEARCH_QUEUE_URL: this.searchQueue.queueUrl,
-          MANAGEMENT_QUEUE_URL: this.managementQueue.queueUrl
+          MANAGEMENT_QUEUE_URL: this.managementQueue.queueUrl,
+          REGION: props.region
       },
       logging: ecs.LogDrivers.awsLogs({ streamPrefix: 'BioimsSearchContainer' })
     });
