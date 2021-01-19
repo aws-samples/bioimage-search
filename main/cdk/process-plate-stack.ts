@@ -504,12 +504,17 @@ export class ProcessPlateStack extends cdk.Stack {
   
 }
 
-  //////////////////////////////////////////
-  
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+// PlateProcessor assumes these inputs. It is not limited to lambda, could also be sfn, for example.
+//        method: "processPlate",
+//.       trainId: <trainId>,
+//        embeddingName: sfn.JsonPath.stringAt('$.trainInfo.Payload.body.embeddingName'),
+//        'plateId.$' : "$$.Map.Item.Value.plateId"
+
 export function createTrainPlateVisitor(scope: cdk.Construct, 
                                         visitorName: string, 
-                                        trainId: string, 
                                         plateProcessor: any,
+                                        maxConcurrency: any,
                                         trainingConfigurationLambda: lambda.Function,
                                         imageManagementLambda: lambda.Function,
                                         processPlateLambda: lambda.Function) {
@@ -595,11 +600,12 @@ export function createTrainPlateVisitor(scope: cdk.Construct,
         .otherwise(plateNotRunning));
 
     const plateProcessMap = new sfn.Map(scope, (visitorName+"PlateProcessMap"), {
-      maxConcurrency: 10,
+      maxConcurrency: maxConcurrency,
       itemsPath: '$.plateList.Payload.body',
       resultPath: '$.plateProcessMapResult',
       parameters: {
         method: "processPlate",
+        trainId: '$.trainId',
         embeddingName: sfn.JsonPath.stringAt('$.trainInfo.Payload.body.embeddingName'),
         'plateId.$' : "$$.Map.Item.Value.plateId"
       }

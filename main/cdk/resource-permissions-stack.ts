@@ -31,6 +31,7 @@ export interface ResourcePermissionsStackProps extends cdk.StackProps {
   searchQueue: sqs.Queue;
   managementQueue: sqs.Queue;
   searchTaskDefinition: ecs.TaskDefinition;
+  searchLoaderStateMachine: sfn.StateMachine;
 }
 
 export class ResourcePermissionsStack extends cdk.Stack {

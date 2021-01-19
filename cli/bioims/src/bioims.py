@@ -839,6 +839,18 @@ class ImageManagementClient(BioimageSearchClient):
             )
         jbody = getResponseBodyAsJson(response)
         return jbody
+
+    def getImagesByPlateIdAndTrainId(self, plateId, trainId):
+        request = '{{ "method": "getImagesByPlateIdAndTrainId", "plateId": "{}", "trainId": "{}" }}'.format(plateId, trainId)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self.getLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        jbody = getResponseBodyAsJson(response)
+        return jbody
         
     def getImageIdsByPlateId(self, plateId):
         request = '{{ "method": "getImageIdsByPlateId", "plateId": "{}" }}'.format(plateId)

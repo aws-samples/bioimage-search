@@ -109,6 +109,13 @@ async function submitSearch(search: any) {
   return response
 }
 
+// Reads embeddings for all images on the plate, then send SQS message
+// with contents to search service.
+
+async function processPlate(trainId: any, plateId: any, embeddingName: any) {
+  return;
+}
+
 /////////////////////////////////////////////////
 
 export const handler = async (event: any = {}): Promise<any> => {
@@ -121,6 +128,22 @@ export const handler = async (event: any = {}): Promise<any> => {
     if (event.search && event.search.trainId && (event.search.queryOrigin || event.search.queryImageId)) {
       try {
         const response = await submitSearch(event.search);      
+        return { statusCode: 200, body: response };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
+    } else {
+      return {
+        statusCode: 400,
+        body: `Error: trainId and either queryOrigin or queryImageId required`,
+      };
+    }
+  } else if (event.method == "processPlate") {
+    if (event.trainId &&
+        event.plateId &&
+        event.embeddingName) {
+      try {
+        const response = await processPlate(event.trainId, event.plateId, event.embeddingName);      
         return { statusCode: 200, body: response };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };

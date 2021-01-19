@@ -14,10 +14,13 @@ import * as tasks from "@aws-cdk/aws-stepfunctions-tasks";
 import * as sqs from '@aws-cdk/aws-sqs';
 import ecs = require("@aws-cdk/aws-ecs")
 import ec2 = require("@aws-cdk/aws-ec2");
+import { createTrainPlateVisitor } from '../cdk/process-plate-stack';
 
 
 export interface SearchStackProps extends cdk.StackProps {
   trainingConfigurationLambda: lambda.Function;
+  imageManagementLambda: lambda.Function;
+  processPlateLambda: lambda.Function;
   messageLambda: lambda.Function;
   dynamoTableNames: any;
   vpc: ec2.Vpc;
@@ -31,6 +34,7 @@ export class SearchStack extends cdk.Stack {
   public searchQueue: sqs.Queue;
   public managementQueue: sqs.Queue;
   public searchTaskDefinition: ecs.TaskDefinition;
+  public searchLoaderStateMachine: sfn.StateMachine;
 
   constructor(app: cdk.App, id: string, props: SearchStackProps) {
     super(app, id, props);
@@ -139,7 +143,19 @@ export class SearchStack extends cdk.Stack {
       desiredCount: 1
     });
     
+    const searchLoaderPlateProcessor = new tasks.LambdaInvoke(this, "SearchLoaderPlateProcessor", {
+      lambdaFunction: this.searchLambda,
+      outputPath: '$.Payload.body'
+    });
     
+    const searchLoader = createTrainPlateVisitor(this, "SearchLoader", searchLoaderPlateProcessor, 10, 
+      props.trainingConfigurationLambda, props.imageManagementLambda, props.processPlateLambda);
+      
+    this.searchLoaderStateMachine = new sfn.StateMachine(this, "SearchLoaderStateMachine",
+      {
+        definition: searchLoader,
+        timeout: cdk.Duration.hours(24),
+      });
 
   }
   

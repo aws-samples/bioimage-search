@@ -298,6 +298,10 @@ async function getImageRow(imageId: any, trainId: any) {
 }
 
 async function getImagesByPlateId(plateId: any) {
+ return getImagesByPlateIdAndTrainId(plateId, ORIGIN);
+}
+
+async function getImagesByPlateIdAndTrainId(plateId: any, trainId: any) {
   const keyConditionExpression =
     [PLATE_ID_ATTRIBUTE] + " = :" + [PLATE_ID_ATTRIBUTE];
   const expressionAttributeValues =
@@ -314,12 +318,14 @@ async function getImagesByPlateId(plateId: any) {
   let rows: any[] = [];
   const p: any[] = [];
   for (let ir of imageRowInfo) {
-    p.push(
-      getImageRow(
-        ir[PARTITION_KEY_IMGID],
-        ir[SORT_KEY_TRNID]
-      ).then((result: any) => rows.push(result))
-    );
+    if (ir[SORT_KEY_TRNID]==trainId) {
+      p.push(
+        getImageRow(
+          ir[PARTITION_KEY_IMGID],
+          ir[SORT_KEY_TRNID]
+        ).then((result: any) => rows.push(result))
+      );
+    }
   }
   await Promise.all(p);
   return rows;
@@ -342,12 +348,14 @@ async function getImageIdsByPlateId(plateId: any) {
   let rows: any[] = [];
   const p: any[] = [];
   for (let ir of imageRowInfo) {
-    p.push(
-      getImageRow(
-        ir[PARTITION_KEY_IMGID],
-        ir[SORT_KEY_TRNID]
-      ).then((result: any) => rows.push(result["Item"][PARTITION_KEY_IMGID]))
-    );
+    if (ir[SORT_KEY_TRNID]==ORIGIN) {
+      p.push(
+        getImageRow(
+          ir[PARTITION_KEY_IMGID],
+          ir[SORT_KEY_TRNID]
+        ).then((result: any) => rows.push(result["Item"][PARTITION_KEY_IMGID]))
+      );
+    }
   }
   await Promise.all(p);
   return rows;
@@ -734,6 +742,15 @@ export const handler = async (event: any = {}): Promise<any> => {
     if (event.plateId) {
       try {
         const response = await getImagesByPlateId(event.plateId);
+        return { statusCode: 200, body: response };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
+    }
+  } else if (event.method === "getImagesByPlateIdAndTrainId") {
+    if (event.plateId && event.trainId) {
+      try {
+        const response = await getImagesByPlateIdAndTrainId(event.plateId, event.trainId);
         return { statusCode: 200, body: response };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };
