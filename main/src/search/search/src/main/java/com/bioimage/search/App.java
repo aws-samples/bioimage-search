@@ -6,6 +6,10 @@ import software.amazon.awssdk.services.sqs.model.*;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
+import java.util.Base64;
+import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 import java.util.concurrent.*;
 
 
@@ -19,6 +23,8 @@ public class App {
 
 	private static App theApp = null;
 	private static SqsClient sqsClient = null;
+	
+	private static Map<String, Map<String, float[]>> trainMap = new HashMap<>();
 	
 	private App() {
 		Region region = Region.of(REGION);
@@ -40,17 +46,18 @@ public class App {
     private void start() {
 		int i=0;
 		while(true) {
-	    	System.out.println("Region="+REGION+" search queue="+SEARCH_QUEUE_URL+" Count v5 =" + i);
+			if (i%10==0) {
+		    	System.out.println("Region="+REGION+" Count v7 =" + i);
+			}
 	    	try {
 	    		// Receive messages from the queue
 	            ReceiveMessageRequest receiveRequest = ReceiveMessageRequest.builder()
 	                .queueUrl(SEARCH_QUEUE_URL)
 	                .build();
 	            List<Message> messages = sqsClient.receiveMessage(receiveRequest).messages();
-
-	            // Print out the messages
+	            
 	            for (Message m : messages) {
-	            	System.out.println("\n" +m.body());
+					handleSearchMessage(m);
 	            }
 	            
 	            for (Message message : messages) {
@@ -68,6 +75,43 @@ public class App {
 	    	}
 	    	i+=1;
 		}
+    }
+    
+    private void handleSearchMessage(Message message) {
+    	String[] messageArr = (message.body()).split("\n");
+    	if (messageArr[0].equals("plateEmbedding")) {
+    		addPlateEmbedding(messageArr);
+    	}
+    }
+    
+    private void addPlateEmbedding(String[] messageArr) {
+    	String trainId = messageArr[1];
+    	System.out.println("trainId="+trainId);
+    	String plateId = messageArr[2];
+    	System.out.println("plateId="+plateId);
+    	for (int i=3;i<messageArr.length;i+=2) {
+    		String imageId = messageArr[i];
+    		String e64 = messageArr[i+1];
+    		if (i==3) {
+    			System.out.println("imageId="+imageId);
+    			System.out.println("e64="+e64);
+    			String[] e64Arr = e64.split("\'");
+    			String e64string = e64Arr[1];
+    			byte[] e64b = Base64.getDecoder().decode(e64string);
+    			float[] e64f = bytesToFloats(e64b);
+    			for (int j=0;j<e64f.length;j++) {
+    				System.out.println("j="+j+" f="+e64f[j]);
+    			}
+    		}
+    	}
+    }
+    
+    public static float[] bytesToFloats(byte[] bytes) {
+        if (bytes.length % Float.BYTES != 0)
+            throw new RuntimeException("Illegal length");
+        float floats[] = new float[bytes.length / Float.BYTES];
+        ByteBuffer.wrap(bytes).asFloatBuffer().get(floats);
+        return floats;
     }
 
 }
