@@ -2,15 +2,7 @@ package com.bioimage.search;
 
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sqs.SqsClient;
-import software.amazon.awssdk.services.sqs.model.CreateQueueRequest;
-import software.amazon.awssdk.services.sqs.model.CreateQueueResponse;
-import software.amazon.awssdk.services.sqs.model.GetQueueUrlRequest;
-import software.amazon.awssdk.services.sqs.model.Message;
-import software.amazon.awssdk.services.sqs.model.QueueNameExistsException;
-import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
-import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequest;
-import software.amazon.awssdk.services.sqs.model.SendMessageBatchRequestEntry;
-import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
+import software.amazon.awssdk.services.sqs.model.*;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -59,6 +51,14 @@ public class App {
 	            // Print out the messages
 	            for (Message m : messages) {
 	            	System.out.println("\n" +m.body());
+	            }
+	            
+	            for (Message message : messages) {
+	                DeleteMessageRequest deleteMessageRequest = DeleteMessageRequest.builder()
+	                    .queueUrl(SEARCH_QUEUE_URL)
+	                    .receiptHandle(message.receiptHandle())
+	                    .build();
+	                sqsClient.deleteMessage(deleteMessageRequest);
 	            }
                 
 				TimeUnit.SECONDS.sleep(1);

@@ -143,7 +143,26 @@ async function processPlate(trainId: any, plateId: any) {
     }
     embeddingInfo.push(entry)
   }
-  return embeddingInfo;
+  const plateEmbedding = {
+    trainId: trainId,
+    plateId: plateId,
+    data: embeddingInfo
+  }
+  const messageId = su.generate()  
+  const sqsParams = {
+    MessageAttributes: {
+      "messageType": {
+        DataType: "String",
+        StringValue: "plateEmbedding"
+      }
+    },
+    MessageBody: JSON.stringify(plateEmbedding),
+    MessageGroupId: "BioimsSearch",
+    MessageDeduplicationId: messageId,
+    QueueUrl: SEARCH_QUEUE_URL
+  };
+  await sqs.sendMessage(sqsParams).promise();
+  return messageId;
 }
 
 /////////////////////////////////////////////////
