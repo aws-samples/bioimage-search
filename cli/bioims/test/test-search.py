@@ -15,6 +15,10 @@ search = {
     "queryImageId" : imageId
 }
 
-r = searchClient.submitSearch(search)
+#r = searchClient.submitSearch(search)
+
+#r = imageManagementClient.getImagesByPlateIdAndTrainId('gXc3iRxAi4rs5AdwQpYeiZ','r6KEudzQCuUtDwCzziiMZT')
+
+r = searchClient.processPlate('r6KEudzQCuUtDwCzziiMZT','gXc3iRxAi4rs5AdwQpYeiZ')
 
 print(r)

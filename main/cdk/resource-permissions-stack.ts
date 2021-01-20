@@ -312,7 +312,7 @@ export class ResourcePermissionsStack extends cdk.Stack {
                   props.trainingConfigurationLambda.functionArn,
                   props.artifactLambda.functionArn
                 ]
-    })
+    });
     const embeddingComputePolicy = new iam.Policy(this, "embeddingComputePolicy");
     embeddingComputePolicy.addStatements(embeddingComputePolicyStatement);
     embeddingComputePolicy.addStatements(cloudFormationPolicyStatement);
@@ -329,7 +329,9 @@ export class ResourcePermissionsStack extends cdk.Stack {
       actions: ["lambda:InvokeFunction"],
       effect: iam.Effect.ALLOW,
       resources: [props.messageLambda.functionArn,
-                  props.trainingConfigurationLambda.functionArn
+                  props.trainingConfigurationLambda.functionArn,
+                  props.imageManagementLambda.functionArn,
+                  props.processPlateLambda.functionArn
                 ]
     });
     
@@ -340,7 +342,7 @@ export class ResourcePermissionsStack extends cdk.Stack {
                   props.managementQueue.queueArn
                 ]
     });
-
+    
     const searchPolicy = new iam.Policy(this, "searchPolicy");
     searchPolicy.addStatements(searchLambdaPolicyStatement);
     searchPolicy.addStatements(searchSQSPolicyStatement);

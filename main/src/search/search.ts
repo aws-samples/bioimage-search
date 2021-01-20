@@ -11,6 +11,8 @@ const TABLE_NAME = process.env.TABLE_NAME || "";
 const PARTITION_KEY_SRTID = process.env.PARTITION_KEY || "";
 const SORT_KEY_IMGID = process.env.SORT_KEY || "";
 const TRAINING_CONFIGURATION_LAMBDA_ARN = process.env.TRAINING_CONFIGURATION_LAMBDA_ARN || "";
+const IMAGE_MANGEMENT_LAMBDA_ARN = process.env.IMAGE_MANAGEMENT_LAMBDA_ARN || "";
+const PROCESS_PLATE_LAMBDA_ARN = process.env.PROCESS_PLATE_LAMBDA_ARN || "";
 const MESSAGE_LAMBDA_ARN = process.env.MESSAGE_LAMBDA_ARN || "";
 const SEARCH_QUEUE_URL = process.env.SEARCH_QUEUE_URL || "";
 const MANAGEMENT_QUEUE_URL = process.env.MANAGEMENT_QUEUE_URL || "";
@@ -112,8 +114,25 @@ async function submitSearch(search: any) {
 // Reads embeddings for all images on the plate, then send SQS message
 // with contents to search service.
 
-async function processPlate(trainId: any, plateId: any, embeddingName: any) {
-  return;
+async function processPlate(trainId: any, plateId: any) {
+  var params = {
+    FunctionName: IMAGE_MANGEMENT_LAMBDA_ARN,
+    InvocationType: "RequestResponse",
+    Payload: JSON.stringify({ method: "getImagesByPlateIdAndTrainId", plateId: plateId, trainId: trainId }),
+  };
+  const data = await lambda.invoke(params).promise();
+  const imagesResponse = la.getResponseBody(data);
+  // imagesResponse is an array of Items:
+  // {
+  //   Item: {
+  //     imageId: '1ajWe94c5g6Ud5acDHfKwS',
+  //     embedding: "b'7s/RPJ/sR74ntj++Fc0EvcFMMb7faKm8nK3cvXGv+T0KyYO9qDYEvup/gL68tye+P1oEvksfxD3mdgi+o900PipMj71ag+o8aJrpPVyRfT0u88C82pRHPuj/FD4xJQI+eUcdPjIgv73L4Ba+UwKVu+49tT0YUoQ7cvcmO8j6Yj0='",
+  //     roiEmbeddingKey: 'artifact/train/r6KEudzQCuUtDwCzziiMZT/plate/gXc3iRxAi4rs5AdwQpYeiZ/1ajWe94c5g6Ud5acDHfKwS-roi-embedding.npy',
+  //     trainId: 'r6KEudzQCuUtDwCzziiMZT'
+  //   }
+  // },
+
+  return imagesResponse;
 }
 
 /////////////////////////////////////////////////
@@ -140,10 +159,9 @@ export const handler = async (event: any = {}): Promise<any> => {
     }
   } else if (event.method == "processPlate") {
     if (event.trainId &&
-        event.plateId &&
-        event.embeddingName) {
+        event.plateId) {
       try {
-        const response = await processPlate(event.trainId, event.plateId, event.embeddingName);      
+        const response = await processPlate(event.trainId, event.plateId);      
         return { statusCode: 200, body: response };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };

@@ -92,6 +92,8 @@ export class SearchStack extends cdk.Stack {
           PARTITION_KEY: "searchId",
           SORT_KEY: "imageId",
           TRAINING_CONFIGURATION_LAMBDA_ARN: props.trainingConfigurationLambda.functionArn,
+          IMAGE_MANAGEMENT_LAMBDA_ARN: props.imageManagementLambda.functionArn,
+          PROCESS_PLATE_LAMBDA_ARN: props.processPlateLambda.functionArn,
           MESSAGE_LAMBDA_ARN: props.messageLambda.functionArn,
           SEARCH_QUEUE_URL: this.searchQueue.queueUrl,
           MANAGEMENT_QUEUE_URL: this.managementQueue.queueUrl

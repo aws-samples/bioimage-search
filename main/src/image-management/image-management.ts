@@ -298,9 +298,8 @@ async function getImageRow(imageId: any, trainId: any) {
 }
 
 async function getImagesByPlateId(plateId: any) {
- return getImagesByPlateIdAndTrainId(plateId, ORIGIN);
-}
-
+  
+  
 async function getImagesByPlateIdAndTrainId(plateId: any, trainId: any) {
   const keyConditionExpression =
     [PLATE_ID_ATTRIBUTE] + " = :" + [PLATE_ID_ATTRIBUTE];
@@ -348,14 +347,12 @@ async function getImageIdsByPlateId(plateId: any) {
   let rows: any[] = [];
   const p: any[] = [];
   for (let ir of imageRowInfo) {
-    if (ir[SORT_KEY_TRNID]==ORIGIN) {
-      p.push(
-        getImageRow(
-          ir[PARTITION_KEY_IMGID],
-          ir[SORT_KEY_TRNID]
-        ).then((result: any) => rows.push(result["Item"][PARTITION_KEY_IMGID]))
-      );
-    }
+    p.push(
+      getImageRow(
+        ir[PARTITION_KEY_IMGID],
+        ir[SORT_KEY_TRNID]
+      ).then((result: any) => rows.push(result["Item"][PARTITION_KEY_IMGID]))
+    );
   }
   await Promise.all(p);
   return rows;
@@ -742,15 +739,6 @@ export const handler = async (event: any = {}): Promise<any> => {
     if (event.plateId) {
       try {
         const response = await getImagesByPlateId(event.plateId);
-        return { statusCode: 200, body: response };
-      } catch (dbError) {
-        return { statusCode: 500, body: JSON.stringify(dbError) };
-      }
-    }
-  } else if (event.method === "getImagesByPlateIdAndTrainId") {
-    if (event.plateId && event.trainId) {
-      try {
-        const response = await getImagesByPlateIdAndTrainId(event.plateId, event.trainId);
         return { statusCode: 200, body: response };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };

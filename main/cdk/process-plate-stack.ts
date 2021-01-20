@@ -506,6 +506,8 @@ export class ProcessPlateStack extends cdk.Stack {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 // PlateProcessor assumes these inputs. It is not limited to lambda, could also be sfn, for example.
+//     Note that a PlateProcessor does necessarily need to use all of these inputs.
+//
 //        method: "processPlate",
 //.       trainId: <trainId>,
 //        embeddingName: sfn.JsonPath.stringAt('$.trainInfo.Payload.body.embeddingName'),

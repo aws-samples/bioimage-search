@@ -1162,3 +1162,16 @@ class SearchClient(BioimageSearchClient):
             )
         jbody = getResponseBodyAsJson(response)
         return jbody
+        
+    def processPlate(self, trainId, plateId):
+        request = '{{ "method": "processPlate", "trainId": "{}", "plateId": "{}" }}'.format(trainId, plateId)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self.getLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        jbody = getResponseBodyAsJson(response)
+        return jbody
+        
