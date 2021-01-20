@@ -131,8 +131,19 @@ async function processPlate(trainId: any, plateId: any) {
   //     trainId: 'r6KEudzQCuUtDwCzziiMZT'
   //   }
   // },
-
-  return imagesResponse;
+  const embeddingInfo: any[] = [];
+  for (let o1 of imagesResponse) {
+    const item = o1.Item
+    const imageId = item.imageId
+    const embedding = item.embedding
+    const trainId = item.trainId
+    const entry = {
+      imageId: imageId,
+      embedding: embedding
+    }
+    embeddingInfo.push(entry)
+  }
+  return embeddingInfo;
 }
 
 /////////////////////////////////////////////////

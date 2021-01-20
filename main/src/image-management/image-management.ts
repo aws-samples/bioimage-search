@@ -298,8 +298,9 @@ async function getImageRow(imageId: any, trainId: any) {
 }
 
 async function getImagesByPlateId(plateId: any) {
-  
-  
+  return getImagesByPlateIdAndTrainId(plateId, ORIGIN);
+}
+
 async function getImagesByPlateIdAndTrainId(plateId: any, trainId: any) {
   const keyConditionExpression =
     [PLATE_ID_ATTRIBUTE] + " = :" + [PLATE_ID_ATTRIBUTE];
