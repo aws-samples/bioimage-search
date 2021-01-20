@@ -120,6 +120,7 @@ async function processPlate(trainId: any, plateId: any) {
     InvocationType: "RequestResponse",
     Payload: JSON.stringify({ method: "getImagesByPlateIdAndTrainId", plateId: plateId, trainId: trainId }),
   };
+  console.log(params)
   const data = await lambda.invoke(params).promise();
   const imagesResponse = la.getResponseBody(data);
   // imagesResponse is an array of Items:

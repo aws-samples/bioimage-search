@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Base64;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.concurrent.*;
 
@@ -47,7 +48,7 @@ public class App {
 		int i=0;
 		while(true) {
 			if (i%10==0) {
-		    	System.out.println("Region="+REGION+" Count v7 =" + i);
+		    	System.out.println("Region="+REGION+" Count v8 =" + i);
 			}
 	    	try {
 	    		// Receive messages from the queue
@@ -85,24 +86,18 @@ public class App {
     }
     
     private void addPlateEmbedding(String[] messageArr) {
+    	System.out.println("Adding plateEmbedding");
     	String trainId = messageArr[1];
-    	System.out.println("trainId="+trainId);
+    	System.out.println(">trainId="+trainId);
     	String plateId = messageArr[2];
-    	System.out.println("plateId="+plateId);
+    	System.out.println(">plateId="+plateId);
     	for (int i=3;i<messageArr.length;i+=2) {
     		String imageId = messageArr[i];
     		String e64 = messageArr[i+1];
-    		if (i==3) {
-    			System.out.println("imageId="+imageId);
-    			System.out.println("e64="+e64);
-    			String[] e64Arr = e64.split("\'");
-    			String e64string = e64Arr[1];
-    			byte[] e64b = Base64.getDecoder().decode(e64string);
-    			float[] e64f = bytesToFloats(e64b);
-    			for (int j=0;j<e64f.length;j++) {
-    				System.out.println("j="+j+" f="+e64f[j]);
-    			}
-    		}
+   			String[] e64Arr = e64.split("\'");
+   			String e64string = e64Arr[1];
+   			byte[] e64b = Base64.getDecoder().decode(e64string);
+   			float[] e64f = bytesToFloats(e64b);
     	}
     }
     
@@ -110,7 +105,7 @@ public class App {
         if (bytes.length % Float.BYTES != 0)
             throw new RuntimeException("Illegal length");
         float floats[] = new float[bytes.length / Float.BYTES];
-        ByteBuffer.wrap(bytes).asFloatBuffer().get(floats);
+        ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer().get(floats);
         return floats;
     }
 
