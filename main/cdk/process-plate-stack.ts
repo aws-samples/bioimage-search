@@ -607,7 +607,7 @@ export function createTrainPlateVisitor(scope: cdk.Construct,
       resultPath: '$.plateProcessMapResult',
       parameters: {
         method: "processPlate",
-        trainId: '$.trainId',
+        trainId: sfn.JsonPath.stringAt('$.trainId'),
         embeddingName: sfn.JsonPath.stringAt('$.trainInfo.Payload.body.embeddingName'),
         'plateId.$' : "$$.Map.Item.Value.plateId"
       }
@@ -615,6 +615,7 @@ export function createTrainPlateVisitor(scope: cdk.Construct,
     plateProcessMap.iterator(plateSequence);
     
     return trainInfoRequest
+      .next(trainInfo)
       .next(embeddingInfoRequest)
       .next(embeddingInfo)
       .next(plateSurveyRequest)

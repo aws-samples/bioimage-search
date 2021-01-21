@@ -745,6 +745,15 @@ export const handler = async (event: any = {}): Promise<any> => {
         return { statusCode: 500, body: JSON.stringify(dbError) };
       }
     }
+  } else if (event.method === "getImagesByPlateIdAndTrainId") {	
+    if (event.plateId && event.trainId) {	
+      try {	
+        const response = await getImagesByPlateIdAndTrainId(event.plateId, event.trainId);	
+        return { statusCode: 200, body: response };	
+      } catch (dbError) {	
+        return { statusCode: 500, body: JSON.stringify(dbError) };	
+      }	
+    }
   } else if (event.method === "getImageIdsByPlateId") {
     if (event.plateId) {
       try {

@@ -1175,3 +1175,29 @@ class SearchClient(BioimageSearchClient):
         jbody = getResponseBodyAsJson(response)
         return jbody
         
+    def startTrainingLoad(self, trainId):
+        request = '{{ "method": "startTrainingLoad", "trainId": "{}" }}'.format(trainId)
+        payload = bytes(request, encoding='utf-8')
+        sfn = boto3.client('stepfunctions')
+        listResponse = sfn.list_state_machines(
+            maxResults=1000
+        )
+        stateMachines = listResponse['stateMachines']
+        searchLoaderSfn=None
+        for sfnEntry in stateMachines:
+            if sfnEntry['name'].startswith('SearchLoader'):
+                searchLoaderSfn=sfnEntry
+                break
+        if searchLoaderSfn==None:
+            print("SearchLoader stateMachine not found")
+            return "Error - no search loader stateMachine found"
+        else:
+            jobName = trainId + "-" + shortuuid.uuid()
+            response = sfn.start_execution(
+                stateMachineArn=searchLoaderSfn['stateMachineArn'],
+                name=jobName,
+                input=request,
+            )
+            return jobName
+
+        

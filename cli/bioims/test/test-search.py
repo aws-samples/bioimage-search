@@ -50,5 +50,9 @@ print(e2)
 
 # print(isOk)
 
-r = searchClient.processPlate('r6KEudzQCuUtDwCzziiMZT','gXc3iRxAi4rs5AdwQpYeiZ')
+# trainId, plateId
+#r = searchClient.processPlate('r6KEudzQCuUtDwCzziiMZT','gXc3iRxAi4rs5AdwQpYeiZ')
+#print(r)
+
+r = searchClient.startTrainingLoad('r6KEudzQCuUtDwCzziiMZT')
 print(r)
