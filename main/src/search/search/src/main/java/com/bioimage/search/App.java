@@ -85,12 +85,22 @@ public class App {
     	}
     }
     
+    private Map<String, float[]> getImageMap(String trainId) {
+    	Map<String, float[]> imageMap = trainMap.get(trainId);
+    	if (imageMap==null) {
+    		imageMap = new HashMap<String, float[]>();
+    		trainMap.put(trainId, imageMap);
+    	}
+    	return imageMap;
+    }
+    
     private void addPlateEmbedding(String[] messageArr) {
     	System.out.println("Adding plateEmbedding");
     	String trainId = messageArr[1];
     	System.out.println(">trainId="+trainId);
     	String plateId = messageArr[2];
     	System.out.println(">plateId="+plateId);
+		Map<String, float[]> imageMap = getImageMap(trainId);
     	for (int i=3;i<messageArr.length;i+=2) {
     		String imageId = messageArr[i];
     		String e64 = messageArr[i+1];
@@ -98,7 +108,9 @@ public class App {
    			String e64string = e64Arr[1];
    			byte[] e64b = Base64.getDecoder().decode(e64string);
    			float[] e64f = bytesToFloats(e64b);
+			imageMap.put(imageId, e64f);
     	}
+    	System.out.println(">image entries="+imageMap.size());
     }
     
     public static float[] bytesToFloats(byte[] bytes) {
