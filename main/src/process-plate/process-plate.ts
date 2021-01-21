@@ -59,6 +59,8 @@ async function describeExecution(executionArn: any) {
     "executionArn" : executionArn
   }
   const response = await sfn.describeExecution(params).promise();
+  // Adapter to compensate for different keys between SFN runtime and 'describeExecution' method
+  response['ExecutionArn']=response['executionArn']
   return response
 }
 
