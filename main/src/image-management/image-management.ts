@@ -315,19 +315,25 @@ async function getImagesByPlateIdAndTrainId(plateId: any, trainId: any) {
     ),
   };
   const imageRowInfo: any[] = await dy.getAllQueryData(db, params);
+  console.log("plate "+plateId+" returned "+imageRowInfo.length+" rows");
   let rows: any[] = [];
   const p: any[] = [];
+  var trainRowCount=0;
   for (let ir of imageRowInfo) {
     if (ir[SORT_KEY_TRNID]==ORIGIN) {
       p.push(
         getImageRow(
           ir[PARTITION_KEY_IMGID],
           trainId
-        ).then((result: any) => rows.push(result))
-      );
+        ).then((result: any) => { 
+          rows.push(result);
+          trainRowCount+=1;
+        }
+      ));
     }
   }
   await Promise.all(p);
+  console.log("Retrieved "+trainRowCount+" rows for trainId="+trainId+" and plateId="+plateId);
   return rows;
 }
 

@@ -133,17 +133,23 @@ async function processPlate(trainId: any, plateId: any) {
   //   }
   // },
   const embeddingInfo: any[] = [];
+  console.log("trainId="+trainId+" plateId="+plateId+" imageResponseCount="+imagesResponse.length);
   for (let o1 of imagesResponse) {
-    const item = o1.Item
-    const imageId = item.imageId
-    const embedding = item.embedding
-    const trainId = item.trainId
-    const entry = {
-      imageId: imageId,
-      embedding: embedding
+    if (o1.Item) {
+      const item = o1.Item
+      if (item.embedding) {
+        const imageId = item.imageId
+        const embedding = item.embedding
+        const trainId = item.trainId
+        const entry = {
+          imageId: imageId,
+          embedding: embedding
+        }
+        embeddingInfo.push(entry)
+      }
     }
-    embeddingInfo.push(entry)
   }
+  console.log("embeddingInfo count="+embeddingInfo.length);
   const plateEmbedding = {
     trainId: trainId,
     plateId: plateId,
