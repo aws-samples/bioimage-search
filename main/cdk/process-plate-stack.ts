@@ -578,7 +578,7 @@ export function createTrainPlateVisitor(scope: cdk.Construct,
     const plateStatusInput = new sfn.Pass(scope, (visitorName+"PlateStatusInput"), {
       parameters: {
         method: "describeExecution",
-        executionArn: sfn.JsonPath.stringAt('$.executionArn')
+        ExecutionArn: sfn.JsonPath.stringAt('$.ExecutionArn')
       }
     });
     

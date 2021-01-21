@@ -145,12 +145,22 @@ export class SearchStack extends cdk.Stack {
       desiredCount: 1
     });
     
-    const searchLoaderPlateProcessor = new tasks.LambdaInvoke(this, "SearchLoaderPlateProcessor", {
+    const searchLoaderPlateFunction = new tasks.LambdaInvoke(this, "SearchLoaderPlateProcessor", {
       lambdaFunction: this.searchLambda,
       outputPath: '$.Payload.body'
     });
+
+    const searchPlateStateMachine = new sfn.StateMachine(this, "SearchPlateStateMachine",
+    {
+      definition: searchLoaderPlateFunction,
+      timeout: cdk.Duration.hours(1)
+    });
     
-    const searchLoader = createTrainPlateVisitor(this, "SearchLoader", searchLoaderPlateProcessor, 10, 
+    const plateProcessor = new tasks.StepFunctionsStartExecution(this, "SearchPlateSFN", {
+      stateMachine: searchPlateStateMachine,
+    });    
+
+    const searchLoader = createTrainPlateVisitor(this, "SearchLoader", plateProcessor, 10, 
       props.trainingConfigurationLambda, props.imageManagementLambda, props.processPlateLambda);
       
     this.searchLoaderStateMachine = new sfn.StateMachine(this, "SearchLoaderStateMachine",

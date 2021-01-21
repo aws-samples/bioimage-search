@@ -157,7 +157,10 @@ async function processPlate(trainId: any, plateId: any) {
     QueueUrl: SEARCH_QUEUE_URL
   };
   await sqs.sendMessage(sqsParams).promise();
-  return messageId;
+  const response = {
+    sqsMessageDeduplicationId: messageId
+  }
+  return response;
 }
 
 function createPlateEmbeddingStringMessage(plateEmbedding: any) {

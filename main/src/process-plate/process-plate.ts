@@ -104,9 +104,15 @@ export const handler = async (event: any = {}): Promise<any> => {
       };
     }
   } else if (event.method === "describeExecution") {
-    if (event.executionArn) {
+    if (event.executionArn || event.ExecutionArn) {
       try {
-        const response = await describeExecution(event.executionArn);
+        var executionArn=""
+        if (event.executionArn) {
+          executionArn=event.executionArn
+        } else {
+          executionArn=event.ExecutionArn
+        }
+        const response = await describeExecution(executionArn);
         return { statusCode: 200, body: response };
       } catch (error) {
         return { statusCode: 500, body: JSON.stringify(error) };
@@ -114,7 +120,7 @@ export const handler = async (event: any = {}): Promise<any> => {
     } else {
       return {
         statusCode: 400,
-        body: `Error: plateId and embeddingName required`,
+        body: `Error: executionArn required`,
       };
     }
   } else {

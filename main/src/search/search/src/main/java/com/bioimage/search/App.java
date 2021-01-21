@@ -48,7 +48,7 @@ public class App {
 		int i=0;
 		while(true) {
 			if (i%10==0) {
-		    	System.out.println("Region="+REGION+" Count v8 =" + i);
+		    	System.out.println("Region="+REGION+" Count v9 =" + i);
 			}
 	    	try {
 	    		// Receive messages from the queue

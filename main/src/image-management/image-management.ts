@@ -318,11 +318,11 @@ async function getImagesByPlateIdAndTrainId(plateId: any, trainId: any) {
   let rows: any[] = [];
   const p: any[] = [];
   for (let ir of imageRowInfo) {
-    if (ir[SORT_KEY_TRNID]==trainId) {
+    if (ir[SORT_KEY_TRNID]==ORIGIN) {
       p.push(
         getImageRow(
           ir[PARTITION_KEY_IMGID],
-          ir[SORT_KEY_TRNID]
+          trainId
         ).then((result: any) => rows.push(result))
       );
     }
@@ -348,12 +348,14 @@ async function getImageIdsByPlateId(plateId: any) {
   let rows: any[] = [];
   const p: any[] = [];
   for (let ir of imageRowInfo) {
-    p.push(
-      getImageRow(
-        ir[PARTITION_KEY_IMGID],
-        ir[SORT_KEY_TRNID]
-      ).then((result: any) => rows.push(result["Item"][PARTITION_KEY_IMGID]))
-    );
+    if (ir[SORT_KEY_TRNID]==ORIGIN) {
+      p.push(
+        getImageRow(
+          ir[PARTITION_KEY_IMGID],
+          ir[SORT_KEY_TRNID]
+        ).then((result: any) => rows.push(result["Item"][PARTITION_KEY_IMGID]))
+      );
+    }
   }
   await Promise.all(p);
   return rows;
