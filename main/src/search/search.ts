@@ -186,6 +186,26 @@ function createPlateEmbeddingStringMessage(plateEmbedding: any) {
   return message;
 }
 
+async function searchByImageId(trainId: any, imageId: any) {
+  var messageBody="searchByImageId";
+  messageBody += "\n";
+  messageBody += trainId + "\n";
+  messageBody += imageId + "\n";
+
+  const messageId = su.generate()
+  const sqsParams = {
+    MessageBody: messageBody,
+    MessageGroupId: "BioimsSearch",
+    MessageDeduplicationId: messageId,
+    QueueUrl: SEARCH_QUEUE_URL
+  };
+  await sqs.sendMessage(sqsParams).promise();
+  const response = {
+    sqsMessageDeduplicationId: messageId
+  }
+  return response;
+}
+
 /////////////////////////////////////////////////
 
 export const handler = async (event: any = {}): Promise<any> => {
@@ -221,6 +241,21 @@ export const handler = async (event: any = {}): Promise<any> => {
       return {
         statusCode: 400,
         body: `Error: trainId and either queryOrigin or queryImageId required`,
+      };
+    }
+  } else if (event.method == "searchByImageId") {
+    if (event.trainId &&
+        event.imageId) {
+      try {
+        const response = await searchByImageId(event.trainId, event.imageId);      
+        return { statusCode: 200, body: response };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
+    } else {
+      return {
+        statusCode: 400,
+        body: `Error: trainId and imageId are required`,
       };
     }
   } else {

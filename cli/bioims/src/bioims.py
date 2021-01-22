@@ -1200,4 +1200,14 @@ class SearchClient(BioimageSearchClient):
             )
             return jobName
 
-        
+    def searchByImageId(self, trainId, imageId):
+        request = '{{ "method": "searchByImageId", "trainId": "{}", "imageId": "{}" }}'.format(trainId, imageId)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self.getLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        jbody = getResponseBodyAsJson(response)
+        return jbody
