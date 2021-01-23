@@ -84,7 +84,7 @@ public class App {
 		int i=0;
 		while(true) {
 			if (i%100==0) {
-		    	System.out.println("Region="+REGION+" Count v9 =" + i);
+		    	System.out.println("Region="+REGION+" Count v10 =" + i);
 			}
 			List<Message> messages = null;
 	    	try {
@@ -165,7 +165,6 @@ public class App {
     }
     
     private void searchByImageId(String[] messageArr) {
-    	System.out.println("Check0");
     	String trainId=messageArr[1];
     	String imageId=messageArr[2];
     	System.out.println("trainId="+trainId+", imageId="+imageId);

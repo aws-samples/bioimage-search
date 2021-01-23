@@ -23,6 +23,7 @@ import { ProcessPlateStack } from '../cdk/process-plate-stack';
 import { TrainStack } from '../cdk/train-stack';
 import { EmbeddingStack } from '../cdk/embedding-stack';
 import { SearchStack } from '../cdk/search-stack';
+import { SearchServiceStack } from '../cdk/search-service-stack';
 
 const region = process.env.CDK_DEFAULT_REGION || "";
 
@@ -122,6 +123,17 @@ const searchStack = new SearchStack(app, 'BioimageSearchSearchStack', {
     processPlateLambda: processPlateStack.processPlateLambda,
     messageLambda: messageStack.messageLambda,
     dynamoTableNames: dynamoTableNames,
+    region: region
+})
+
+const searchServiceStack = new SearchServiceStack(app, 'BioimageSearchServiceStack', {
+    trainingConfigurationLambda: trainingConfigurationStack.trainingConfigurationLambda,
+    imageManagementLambda: imageManagementStack.imageManagementLambda,
+    processPlateLambda: processPlateStack.processPlateLambda,
+    messageLambda: messageStack.messageLambda,
+    searchLambda: searchStack.searchLambda,
+    searchQueue: searchStack.searchQueue,
+    managementQueue: searchStack.managementQueue,
     vpc: batchSetupStack.batchVpc,
     region: region
 })
@@ -149,7 +161,7 @@ const resourcePermissionsStack = new ResourcePermissionsStack(app, 'BioimageSear
     searchLambda: searchStack.searchLambda,
     searchQueue: searchStack.searchQueue,
     managementQueue: searchStack.managementQueue,
-    searchTaskDefinition: searchStack.searchTaskDefinition,
+    searchTaskDefinition: searchServiceStack.searchTaskDefinition,
     searchLoaderStateMachine: searchStack.searchLoaderStateMachine
 })
 

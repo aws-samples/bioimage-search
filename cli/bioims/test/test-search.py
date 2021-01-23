@@ -54,8 +54,8 @@ print(e2)
 #r = searchClient.processPlate('r6KEudzQCuUtDwCzziiMZT','gXc3iRxAi4rs5AdwQpYeiZ')
 #print(r)
 
-#r = searchClient.startTrainingLoad('r6KEudzQCuUtDwCzziiMZT')
-#print(r)
-
-r = searchClient.searchByImageId('r6KEudzQCuUtDwCzziiMZT', '17Sk8AHeX1idyJDBnMwEhX')
+r = searchClient.startTrainingLoad('r6KEudzQCuUtDwCzziiMZT')
 print(r)
+
+#r = searchClient.searchByImageId('r6KEudzQCuUtDwCzziiMZT', '17Sk8AHeX1idyJDBnMwEhX')
+#print(r)
