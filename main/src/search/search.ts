@@ -24,7 +24,7 @@ const ORIGIN = "origin";
 const EUCLIDEAN_METRIC = "Euclidean";
 const COSINE_METRIC = "Cosine";
 
-const DEFAULT_MAX_HITS = 2;
+const DEFAULT_MAX_HITS = 100;
 
 const STATUS_SUBMITTED = "submitted";
 const STATUS_RUNNING = "running";
@@ -196,41 +196,27 @@ function createPlateEmbeddingStringMessage(plateEmbedding: any) {
 
 async function createSearchResults(searchId: any, hits: any) {
   console.log("searchId="+searchId)
+  const p: any[] = [];
   for (let hit of hits) {
-    console.log(hit)
+    const searchEntry = {
+      [PARTITION_KEY_SRTID]: searchId,
+      [SORT_KEY_IMGID]: hit["imageId"],
+      [RANK]: hit["rank"],
+      [DISTANCE]: hit["distance"]
+    };
+    const dynamoParams = {
+      TableName: TABLE_NAME,
+      Item: searchEntry
+    };
+    p.push(db.put(dynamoParams).promise());
   }
+  await Promise.all(p)
   const response = {
     searchId: searchId,
     hitCount: hits.length
   }
   return response;
 }
-
-// async function searchByImageId(search: any) {
-//   var messageBody="searchByImageId";
-//   messageBody += "\n";
-//   messageBody += search.trainId + "\n";
-//   messageBody += search.imageId + "\n";
-  
-//   if (search.metric && search.metric==COSINE_METRIC) {
-//     messageBody += COSINE_METRIC + "\n";
-//   } else {
-//     messageBody += EUCLIDEAN_METRIC + "\n";
-//   }
-
-//   const messageId = su.generate()
-//   const sqsParams = {
-//     MessageBody: messageBody,
-//     MessageGroupId: "BioimsSearch",
-//     MessageDeduplicationId: messageId,
-//     QueueUrl: SEARCH_QUEUE_URL
-//   };
-//   await sqs.sendMessage(sqsParams).promise();
-//   const response = {
-//     sqsMessageDeduplicationId: messageId
-//   }
-//   return response;
-// }
 
 /////////////////////////////////////////////////
 
