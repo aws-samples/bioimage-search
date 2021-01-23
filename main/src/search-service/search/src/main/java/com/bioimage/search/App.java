@@ -3,6 +3,12 @@ package com.bioimage.search;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.*;
+import software.amazon.awssdk.services.lambda.LambdaClient;
+import software.amazon.awssdk.services.lambda.model.InvokeRequest;
+import software.amazon.awssdk.services.lambda.model.InvokeResponse;
+import software.amazon.awssdk.services.lambda.model.LambdaException;
+import software.amazon.awssdk.core.SdkBytes;
+
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -26,13 +32,16 @@ public class App {
     public static String REGION=System.getenv("REGION");
 
 	private static App theApp = null;
-	private static SqsClient sqsClient = null;
-	
 	private static Map<String, Map<String, ImageEmbedding>> trainMap = new HashMap<>();
 	
+	private SqsClient sqsClient = null;
+	private LambdaClient lambdaClient = null;
+	private ImageEmbedding[] hitArray = null;
+
 	private App() {
 		Region region = Region.of(REGION);
 		sqsClient = SqsClient.builder().region(region).build();
+		lambdaClient = LambdaClient.builder().region(region).build();
 	}
 	
 	public static App getApp() {
@@ -47,6 +56,16 @@ public class App {
     	app.start();
     }
     
+   	public double computeEuclideanDistance(float[] a, float[] b) {
+   		double t=0.0;
+   		for (int i=0;i<a.length;i++) {
+   			double d = a[i]-b[i];
+   			t+= d*d;
+   		}
+   		double ts = Math.sqrt(t);
+   		return ts;
+   	}
+
     private class ImageEmbedding implements Comparator<ImageEmbedding> {
     	public String imageId;
     	public float[] embedding;
@@ -67,17 +86,7 @@ public class App {
 				return 0;
 			}
     	}
-    	
-    	public double computeEuclideanDistance(float[] a, float[] b) {
-    		double t=0.0;
-    		for (int i=0;i<a.length;i++) {
-    			double d = a[i]-b[i];
-    			t+= d*d;
-    		}
-    		double ts = Math.sqrt(t);
-    		return ts;
-    	}
-    	
+
     }
     
     private void start() {
@@ -165,10 +174,14 @@ public class App {
     }
     
     private void searchByImageId(String[] messageArr) {
-    	String trainId=messageArr[1];
-    	String imageId=messageArr[2];
-    	System.out.println("trainId="+trainId+", imageId="+imageId);
-    	long startTimestamp1=new Date().getTime();
+    	String searchId=messageArr[1];
+    	String trainId=messageArr[2];
+    	String imageId=messageArr[3];
+    	String metric=messageArr[4];
+    	int maxHits=new Integer(messageArr[5]);
+    	
+    	System.out.println("trainId="+trainId+", imageId="+imageId+", metric="+metric+", maxHits="+maxHits);
+    	long timestamp1=new Date().getTime();
     	Map<String, ImageEmbedding> imageMap = getImageMap(trainId);
     	System.out.println("imageMap size="+imageMap.size());
     	ImageEmbedding[] arr = new ImageEmbedding[imageMap.size()];
@@ -182,22 +195,71 @@ public class App {
 		ImageEmbedding queryImage=imageMap.get(imageId);
 		if (queryImage==null) {
 			System.out.println("queryImage is null");
-		} else {
-			float[] e = queryImage.embedding;
-			for (i=0;i<e.length;i++) {
-				System.out.println("queryImage i="+i+", e="+e[i]);
-			}
+			return;
 		}
 		System.out.println("pre arr length="+arr.length);
-    	long startTimestamp2=new Date().getTime();
+    	long timestamp2=new Date().getTime();
 		Arrays.parallelSort(arr, queryImage);
-		long endTimestamp=new Date().getTime();
+		long timestamp3=new Date().getTime();
 		System.out.println("post arr length="+arr.length);
-		long stage1Ms=startTimestamp2-startTimestamp1;
-		long sortMs=endTimestamp-startTimestamp2;
+		long createArrayMs=timestamp2-timestamp1;
+		long sortMs=timestamp3-timestamp2;
 		System.out.println("Closest two matches are "+arr[0].imageId+", "+arr[1].imageId);
-		System.out.println("Stage1 ms="+stage1Ms);
+		System.out.println("Create array ms="+createArrayMs);
 		System.out.println("Sort ms="+sortMs);
+
+		if (hitArray==null || hitArray.length!=maxHits) {
+			hitArray = new ImageEmbedding[maxHits];
+		}
+		for (i=0;i<maxHits;i++) {
+			hitArray[i]=arr[i];
+		}
+		
+        createSearchResults(searchId, queryImage, hitArray);
+        long timestamp4=new Date().getTime();
+        long messageMs=timestamp4-timestamp3;
+        System.out.println("Result message ms="+messageMs);
+    }
+    
+    private void createSearchResults(String searchId, ImageEmbedding queryImage, ImageEmbedding[] hitArray) {
+    	float[] queryEmbedding = queryImage.embedding;
+		String payloadString = "{\n";
+		payloadString += "\"method\": \"createSearchResults\",\n";
+		payloadString += "\"searchId\": \""+searchId+"\",\n";
+		payloadString += "\"hits\": [\n";
+		for (int i=0;i<hitArray.length;i++) {
+			String imageId = hitArray[i].imageId;
+			float[] imageEmbedding = hitArray[i].embedding;
+			double distance = computeEuclideanDistance(queryEmbedding, imageEmbedding);
+			payloadString += "{\n";
+			payloadString += "\"imageId\": \""+imageId+"\",\n";
+			payloadString += "\"rank\": \""+i+"\",\n";
+			payloadString += "\"distance\": \""+distance+"\"\n";
+			if (i<(hitArray.length-1)) {
+				payloadString += "},\n";
+			} else {
+				payloadString += "}\n";
+			}
+		}
+		payloadString += "]\n";
+		payloadString += "}\n";
+		
+		InvokeResponse res = null ;
+        try {
+            SdkBytes payload = SdkBytes.fromUtf8String(payloadString);
+
+            InvokeRequest request = InvokeRequest.builder()
+                    .functionName(SEARCH_LAMBDA_ARN)
+                    .payload(payload)
+                    .build();
+
+            res = lambdaClient.invoke(request);
+            String value = res.payload().asUtf8String() ;
+            System.out.println(value);
+
+        } catch(LambdaException e) {
+            System.err.println(e.getMessage());
+        }
     }
 
 }

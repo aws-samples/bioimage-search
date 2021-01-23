@@ -24,7 +24,7 @@ const ORIGIN = "origin";
 const EUCLIDEAN_METRIC = "Euclidean";
 const COSINE_METRIC = "Cosine";
 
-const DEFAULT_MAX_HITS = 100;
+const DEFAULT_MAX_HITS = 2;
 
 const STATUS_SUBMITTED = "submitted";
 const STATUS_RUNNING = "running";
@@ -33,7 +33,6 @@ const STATUS_ERROR = "error";
 
 // ORIGIN row info - required
 const TRAIN_ID = "trainId"
-const QUERY_ORIGIN = "queryOrigin";
 const QUERY_IMAGE_ID = "queryImageId";
 
 // optional
@@ -74,13 +73,18 @@ async function submitSearch(search: any) {
   }
   
   const submitTimestamp = getTimestamp()
+  
   const searchEntry = {
     [PARTITION_KEY_SRTID]: searchId,
     [SORT_KEY_IMGID]: ORIGIN,
+    [TRAIN_ID]: search.trainId,
+    [QUERY_IMAGE_ID]: search.imageId,
     [SEARCH_METRIC]: metric,
     [MAX_HITS]: maxHits,
     [SUBMIT_TIMESTAMP]: submitTimestamp
   }
+  
+  const messageBody = generateSearchMessageBody(searchEntry);
   
   const dynamoParams = {
     TableName: TABLE_NAME,
@@ -88,13 +92,7 @@ async function submitSearch(search: any) {
   };
   
   const sqsParams = {
-    MessageAttributes: {
-      "SearchId": {
-        DataType: "String",
-        StringValue: searchId
-      },
-    },
-    MessageBody: JSON.stringify(searchEntry),
+    MessageBody: messageBody,
     MessageGroupId: "BioimsSearch",
     MessageDeduplicationId: searchId,
     QueueUrl: SEARCH_QUEUE_URL
@@ -109,6 +107,16 @@ async function submitSearch(search: any) {
     searchId: searchId
   }
   return response
+}
+
+function generateSearchMessageBody(search: any) {
+  var messageBody="searchByImageId" + "\n";
+  messageBody += search[PARTITION_KEY_SRTID] + "\n";
+  messageBody += search[TRAIN_ID] + "\n";
+  messageBody += search[QUERY_IMAGE_ID] + "\n";
+  messageBody += search[SEARCH_METRIC] + "\n";
+  messageBody += search[MAX_HITS] + "\n";
+  return messageBody;
 }
 
 // Reads embeddings for all images on the plate, then send SQS message
@@ -186,25 +194,43 @@ function createPlateEmbeddingStringMessage(plateEmbedding: any) {
   return message;
 }
 
-async function searchByImageId(trainId: any, imageId: any) {
-  var messageBody="searchByImageId";
-  messageBody += "\n";
-  messageBody += trainId + "\n";
-  messageBody += imageId + "\n";
-
-  const messageId = su.generate()
-  const sqsParams = {
-    MessageBody: messageBody,
-    MessageGroupId: "BioimsSearch",
-    MessageDeduplicationId: messageId,
-    QueueUrl: SEARCH_QUEUE_URL
-  };
-  await sqs.sendMessage(sqsParams).promise();
+async function createSearchResults(searchId: any, hits: any) {
+  console.log("searchId="+searchId)
+  for (let hit of hits) {
+    console.log(hit)
+  }
   const response = {
-    sqsMessageDeduplicationId: messageId
+    searchId: searchId,
+    hitCount: hits.length
   }
   return response;
 }
+
+// async function searchByImageId(search: any) {
+//   var messageBody="searchByImageId";
+//   messageBody += "\n";
+//   messageBody += search.trainId + "\n";
+//   messageBody += search.imageId + "\n";
+  
+//   if (search.metric && search.metric==COSINE_METRIC) {
+//     messageBody += COSINE_METRIC + "\n";
+//   } else {
+//     messageBody += EUCLIDEAN_METRIC + "\n";
+//   }
+
+//   const messageId = su.generate()
+//   const sqsParams = {
+//     MessageBody: messageBody,
+//     MessageGroupId: "BioimsSearch",
+//     MessageDeduplicationId: messageId,
+//     QueueUrl: SEARCH_QUEUE_URL
+//   };
+//   await sqs.sendMessage(sqsParams).promise();
+//   const response = {
+//     sqsMessageDeduplicationId: messageId
+//   }
+//   return response;
+// }
 
 /////////////////////////////////////////////////
 
@@ -228,6 +254,20 @@ export const handler = async (event: any = {}): Promise<any> => {
         body: `Error: trainId and either queryOrigin or queryImageId required`,
       };
     }
+  } else if (event.method == "createSearchResults") {
+    if (event.searchId && event.hits) {
+      try {
+        const response = await createSearchResults(event.searchId, event.hits);      
+        return { statusCode: 200, body: response };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
+    } else {
+      return {
+        statusCode: 400,
+        body: `Error: searchId and hits are required`,
+      };
+    }
   } else if (event.method == "processPlate") {
     if (event.trainId &&
         event.plateId) {
@@ -247,7 +287,7 @@ export const handler = async (event: any = {}): Promise<any> => {
     if (event.trainId &&
         event.imageId) {
       try {
-        const response = await searchByImageId(event.trainId, event.imageId);      
+        const response = await submitSearch(event);
         return { statusCode: 200, body: response };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };
