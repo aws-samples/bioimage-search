@@ -1211,3 +1211,15 @@ class SearchClient(BioimageSearchClient):
             )
         jbody = getResponseBodyAsJson(response)
         return jbody
+
+    def updateSearchStatus(self, searchId, status):
+        request = '{{ "method": "updateSearchStatus", "searchId": "{}", "status": "{}" }}'.format(searchId, status)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self.getLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        jbody = getResponseBodyAsJson(response)
+        return jbody

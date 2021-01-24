@@ -102,6 +102,7 @@ async function submitSearch(search: any) {
   p.push(db.put(dynamoParams).promise());
   p.push(sqs.sendMessage(sqsParams).promise());
   await Promise.all(p)
+  await updateSearchStatus(searchId, STATUS_SUBMITTED);
 
   const response = {
     searchId: searchId
@@ -211,6 +212,7 @@ async function createSearchResults(searchId: any, hits: any) {
     p.push(db.put(dynamoParams).promise());
   }
   await Promise.all(p)
+  await updateSearchStatus(searchId, STATUS_COMPLETED);
   const response = {
     searchId: searchId,
     hitCount: hits.length
@@ -218,6 +220,85 @@ async function createSearchResults(searchId: any, hits: any) {
   return response;
 }
 
+function statusIsValid(status: any) {
+  if (status==STATUS_SUBMITTED ||
+      status==STATUS_RUNNING ||
+      status==STATUS_COMPLETED ||
+      status==STATUS_ERROR) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+async function updateSearchStatus(searchId: any,  status: any) {
+  const key = {
+    [PARTITION_KEY_SRTID]: searchId,
+    [SORT_KEY_IMGID]: ORIGIN,
+  };
+  const expressionAttributeNames =
+    '"#s" : "' + [STATUS] + '"';
+
+  const expressionAttributeValues =
+    '":s" : "' + status + '"';
+
+  const updateExpression =
+    "set #s = :s";
+
+  const namesParse = "{" + expressionAttributeNames + "}";
+  const valuesParse = "{" + expressionAttributeValues + "}";
+
+  const params = {
+    TableName: TABLE_NAME,
+    Key: key,
+    UpdateExpression: updateExpression,
+    ExpressionAttributeNames: JSON.parse(namesParse),
+    ExpressionAttributeValues: JSON.parse(valuesParse),
+  };
+  console.log(params);
+  return await db.update(params).promise();
+}
+
+async function getSearchOrigin(searchId: any) {
+  const params = {
+    TableName: TABLE_NAME,
+    Key: {
+      [PARTITION_KEY_SRTID]: searchId,
+      [SORT_KEY_IMGID]: ORIGIN
+    }
+  };
+  return db.get(params).promise();
+}
+
+async function waitForSearch(searchId: any, retries: number) {
+  if (retries<0) {
+    return {
+      searchId: searchId,
+      status: "Status timeout"
+    }
+  } else {
+    const searchOrigin = await getSearchOrigin(searchId);
+    var status=""
+    if (searchOrigin.Item) {
+      status=searchOrigin.Item[STATUS]
+    }
+    if (status==STATUS_COMPLETED || status==STATUS_ERROR) {
+      return {
+        searchId: searchId,
+        status: status
+      }
+    } else {
+      console.log("status="+status)
+      const promise = new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(waitForSearch(searchId, retries-1));
+        }, 300)
+      });
+      return promise;
+    }
+  }
+}
+  
 /////////////////////////////////////////////////
 
 export const handler = async (event: any = {}): Promise<any> => {
@@ -254,6 +335,20 @@ export const handler = async (event: any = {}): Promise<any> => {
         body: `Error: searchId and hits are required`,
       };
     }
+  } else if (event.method == "updateSearchStatus") {
+    if ( (event.searchId && event.status) && (statusIsValid(event.status)) ) {
+      try {
+        const response = await updateSearchStatus(event.searchId, event.status);      
+        return { statusCode: 200, body: response };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
+    } else {
+      return {
+        statusCode: 400,
+        body: `Error: searchId and a valid status value are required`,
+      };
+    }
   } else if (event.method == "processPlate") {
     if (event.trainId &&
         event.plateId) {
@@ -273,7 +368,8 @@ export const handler = async (event: any = {}): Promise<any> => {
     if (event.trainId &&
         event.imageId) {
       try {
-        const response = await submitSearch(event);
+        const submitInfo = await submitSearch(event);
+        const response = await waitForSearch(submitInfo.searchId, 100);
         return { statusCode: 200, body: response };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };

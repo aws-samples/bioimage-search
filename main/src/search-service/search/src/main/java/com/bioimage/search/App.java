@@ -103,7 +103,12 @@ public class App {
 	                .build();
 	            messages = sqsClient.receiveMessage(receiveRequest).messages();
 	            for (Message m : messages) {
-					handleSearchMessage(m);
+	            	try {
+						handleSearchMessage(m);
+	            	} catch (Exception ex) {
+	            		ex.printStackTrace();
+	            		updateStatusToError(m);
+	            	}
 	            }
 	    	} catch (Exception ex) {
 				ex.printStackTrace();
@@ -122,6 +127,32 @@ public class App {
 	    	}
 	    	i+=1;
 		}
+    }
+    
+    private void updateStatusToError(Message m) {
+    	String[] messageArr = (m.body()).split("\n");
+    	String type = messageArr[0];
+    	if (type.equals("searchByImageId")) {
+    		String searchId = messageArr[1];
+			InvokeResponse res = null ;
+	        try {
+       			String payloadString = "{\n";
+       			payloadString += "\"method\": \"updateSearchStatus\",\n";
+       			payloadString += "\"searchId\": \""+searchId+"\",\n";
+       			payloadString += "\"status\": \"STATUS_ERROR\"\n";
+       			payloadString += "}";
+            	SdkBytes payload = SdkBytes.fromUtf8String(payloadString);
+            	InvokeRequest request = InvokeRequest.builder()
+                    .functionName(SEARCH_LAMBDA_ARN)
+                    .payload(payload)
+                    .build();
+            	res = lambdaClient.invoke(request);
+	            String value = res.payload().asUtf8String() ;
+	            System.out.println(value);
+        	} catch(LambdaException e) {
+	            System.err.println(e.getMessage());
+	        }
+    	}
     }
     
     private void handleSearchMessage(Message message) {
@@ -242,7 +273,7 @@ public class App {
 			}
 		}
 		payloadString += "]\n";
-		payloadString += "}\n";
+		payloadString += "}";
 		
 		InvokeResponse res = null ;
         try {
