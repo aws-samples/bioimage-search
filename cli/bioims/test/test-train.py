@@ -71,6 +71,11 @@ trainClient = bioims.client('train')
 
 #trainId = "ekNybBbTHtwVsGJRgWznfi"
 #trainId = "a93CYC7ipUDADnxe8V5ZRK"
+#trainId = "r6KEudzQCuUtDwCzziiMZT"
+#r = trainClient.startTrainingCompute(trainId)
+#print(r)
+
+### Re-test of training script
 trainId = "r6KEudzQCuUtDwCzziiMZT"
 r = trainClient.startTrainingCompute(trainId)
 print(r)
