@@ -237,8 +237,8 @@ def _train(args):
             return self.num_batchs
 
         def getitem(self):
-            x = np.empty((2, num_classes*args.batch_size, channels, height_width, height_width), dtype=np.float32)
-            for class_idx in range(num_classes*args.batch_size):
+            x = np.empty((2, num_classes, channels, height_width, height_width), dtype=np.float32)
+            for class_idx in range(num_classes):
                 examples_for_class = class_idx_to_train_idxs[class_idx%num_classes]
                 anchor_idx = random.choice(examples_for_class)
                 positive_idx = random.choice(examples_for_class)
@@ -265,8 +265,8 @@ def _train(args):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 
-    sparse_labels = torch.zeros(num_classes*args.batch_size, dtype=torch.long)
-    for l in range(num_classes*args.batch_size):
+    sparse_labels = torch.zeros(num_classes, dtype=torch.long)
+    for l in range(num_classes):
         c = l%num_classes
         sparse_labels[l] = c
     
