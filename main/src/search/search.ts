@@ -298,6 +298,39 @@ async function waitForSearch(searchId: any, retries: number) {
     }
   }
 }
+
+async function getSearchResults(searchId: any) {
+  const keyConditionExpression =
+    [PARTITION_KEY_SRTID] + " = :" + [PARTITION_KEY_SRTID];
+  const expressionAttributeValues =
+    '":' + [PARTITION_KEY_SRTID] + '" : "' + searchId + '"';
+  const params = {
+    TableName: TABLE_NAME,
+    KeyConditionExpression: keyConditionExpression,
+    ExpressionAttributeValues: JSON.parse(
+      "{" + expressionAttributeValues + "}"
+    ),
+  };
+  const searchRows: any[] = await dy.getAllQueryData(db, params);
+  console.log("search "+searchId+" returned "+searchRows.length+" rows");
+  const resultMap: Map<string, any> = new Map();
+  var rowCount=0;
+  for (let sr of searchRows) {
+    if (sr[SORT_KEY_IMGID]==ORIGIN) {
+      resultMap.set(ORIGIN, sr);      
+    } else {
+      resultMap.set(sr[RANK], sr);
+    }
+    rowCount+=1
+  }
+  const searchArray: any[] = [];
+  searchArray.push(resultMap.get(ORIGIN));
+  for (var i=0; i<(rowCount-1); i++) {
+    const key=""+i;
+    searchArray.push(resultMap.get(key));
+  }
+  return searchArray;
+}
   
 /////////////////////////////////////////////////
 
@@ -347,6 +380,20 @@ export const handler = async (event: any = {}): Promise<any> => {
       return {
         statusCode: 400,
         body: `Error: searchId and a valid status value are required`,
+      };
+    }
+  } else if (event.method == "getSearchResults") {
+    if (event.searchId) {
+      try {
+        const response = await getSearchResults(event.searchId);
+        return { statusCode: 200, body: response };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
+    } else {
+      return {
+        statusCode: 400,
+        body: `Error: searchId is required`,
       };
     }
   } else if (event.method == "processPlate") {

@@ -22,10 +22,10 @@ search = {
 #r = imageManagementClient.getImagesByPlateIdAndTrainId('gXc3iRxAi4rs5AdwQpYeiZ','r6KEudzQCuUtDwCzziiMZT')
 #print(r)
 
-e64 = b'7s/RPJ/sR74ntj++Fc0EvcFMMb7faKm8nK3cvXGv+T0KyYO9qDYEvup/gL68tye+P1oEvksfxD3mdgi+o900PipMj71ag+o8aJrpPVyRfT0u88C82pRHPuj/FD4xJQI+eUcdPjIgv73L4Ba+UwKVu+49tT0YUoQ7cvcmO8j6Yj0='
-e64d = base64.decodebytes(e64)
-e2 = np.frombuffer(e64d, dtype=np.float32)
-print(e2)
+# e64 = b'7s/RPJ/sR74ntj++Fc0EvcFMMb7faKm8nK3cvXGv+T0KyYO9qDYEvup/gL68tye+P1oEvksfxD3mdgi+o900PipMj71ag+o8aJrpPVyRfT0u88C82pRHPuj/FD4xJQI+eUcdPjIgv73L4Ba+UwKVu+49tT0YUoQ7cvcmO8j6Yj0='
+# e64d = base64.decodebytes(e64)
+# e2 = np.frombuffer(e64d, dtype=np.float32)
+# print(e2)
 
 # np1 = np.zeros( (4), dtype=np.float32)
 
@@ -57,5 +57,8 @@ print(e2)
 #r = searchClient.startTrainingLoad('r6KEudzQCuUtDwCzziiMZT')
 #print(r)
 
-r = searchClient.searchByImageId('r6KEudzQCuUtDwCzziiMZT', '17Sk8AHeX1idyJDBnMwEhX')
+#r = searchClient.searchByImageId('r6KEudzQCuUtDwCzziiMZT', '17Sk8AHeX1idyJDBnMwEhX')
+#print(r)
+
+r = searchClient.getSearchResults('jjzorvoCTfEqKGBSziyFVm')
 print(r)
