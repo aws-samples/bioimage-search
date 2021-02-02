@@ -6,16 +6,16 @@ import boto3
 sys.path.insert(0, "../src")
 import bioims
 
-DATA_BUCKET = "bioimagesearchbasestack-bioimagesearchdatabucketa-16h77xh6oyxmm"
-DESCRIBE_STACKS_KEY = "artifact/plate/123456/describe-stacks/stacks-tXcFUi7BR6ksHLPQuvQXuj.json"
+# DATA_BUCKET = "bioimagesearchbasestack-bioimagesearchdatabucketa-16h77xh6oyxmm"
+# DESCRIBE_STACKS_KEY = "artifact/plate/123456/describe-stacks/stacks-tXcFUi7BR6ksHLPQuvQXuj.json"
 
-params = {
-    "bucket" : DATA_BUCKET,
-    "key" : DESCRIBE_STACKS_KEY
-}
+# params = {
+#     "bucket" : DATA_BUCKET,
+#     "key" : DESCRIBE_STACKS_KEY
+# }
 
-artifactClient = bioims.client('artifact', params)
-#artifactClient = bioims.client('artifact')
+#artifactClient = bioims.client('artifact', params)
+artifactClient = bioims.client('artifact')
 
 # print(artifactClient.getLambdaArn())
 
@@ -57,6 +57,8 @@ artifactClient = bioims.client('artifact', params)
 #     r = artifactClient.deleteArtifacts('plate-'+str(i), 'train-id-'+str(i))
 #     print(r)
 
-r = artifactClient.createDescribeStacksArtifact("context-id-123456", "train-id-123456")
+#r = artifactClient.createDescribeStacksArtifact("context-id-123456", "train-id-123456")
+#print(r)
 
+r = artifactClient.getArtifacts('1xDNMw2ZFhpSGDTppgyeMU', 'origin')
 print(r)

@@ -741,9 +741,7 @@ class ArtifactClient(BioimageSearchClient):
             InvocationType='RequestResponse',
             Payload=payload
             )
-        jbody = getResponseBodyAsJson(response)
-        jvalue = json.loads(jbody)
-        return jvalue
+        return getResponseBodyAsJson(response)
 
     def createArtifact(self, artifact):
         artifactStr = json.dumps(artifact)
