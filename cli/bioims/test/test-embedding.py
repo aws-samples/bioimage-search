@@ -29,9 +29,9 @@ print(embeddingInfo)
 print(imageOrigin)
 print(plateId)
 
-r = embeddingClient.executeImageEmbeddingCompute(trainInfo, embeddingInfo, plateId, imageId)
+#r = embeddingClient.executeImageEmbeddingCompute(trainInfo, embeddingInfo, plateId, imageId)
 
 #r = embeddingClient.startComputePlateEmbedding(trainId, plateId)
 
-#r = embeddingClient.startComputeEmbedding(trainId)
-#print(r)
+r = embeddingClient.startComputeEmbedding(trainId)
+print(r)

@@ -155,15 +155,7 @@ def handler(event, context):
     
     roiTrainKey = bp.getTrainKey(embeddingName, plateId, imageId)
     data = getNumpyArrayFromS3(BUCKET, roiTrainKey).astype(np.float32)
-    min=np.min(data)
-    max=np.max(data)
-    print(data.shape)
-    print("pre roi min={} max={}".format(min, max))
-    data /= 65535.0
-    min=np.min(data)
-    max=np.max(data)
-    print("post roi min={} max={}".format(min, max))
-    
+
     ##########################################################################
     # TODO: Handle 3D data 
     #
@@ -175,23 +167,31 @@ def handler(event, context):
     # However, actual input is 3D and will be <#>, 3, 1, 128, 128
     #
     ##########################################################################
-    
-    #dataDimArr = [data.shape[0], 3, 128, 128]
-    print("v4")
-    bufferSize=data.shape[0]
-    bufferRemainder=bufferSize%8
-    if bufferRemainder>0:
-        bufferSize += (8-bufferRemainder)
-    dataDimArr = [bufferSize, 3, 128, 128]
-    dimTuple = tuple(dataDimArr)
-    model_data = np.zeros(dimTuple, dtype=np.float32)
-    for i in range(data.shape[0]):
-        model_data[i][0]=data[i][0][0]
-        model_data[i][1]=data[i][1][0]
-        model_data[i][2]=data[i][2][0]
-    
-    print(model_data.shape)
+
+    print("v5")
+
     if data.shape[0] > 0:
+        min=np.min(data)
+        max=np.max(data)
+        print(data.shape)
+        print("pre roi min={} max={}".format(min, max))
+        data /= 65535.0
+        min=np.min(data)
+        max=np.max(data)
+        print("post roi min={} max={}".format(min, max))
+        bufferSize=data.shape[0]
+        bufferRemainder=bufferSize%8
+        if bufferRemainder>0:
+            bufferSize += (8-bufferRemainder)
+        dataDimArr = [bufferSize, 3, 128, 128]
+        dimTuple = tuple(dataDimArr)
+        model_data = np.zeros(dimTuple, dtype=np.float32)
+        for i in range(data.shape[0]):
+            model_data[i][0]=data[i][0][0]
+            model_data[i][1]=data[i][1][0]
+            model_data[i][2]=data[i][2][0]
+    
+        print(model_data.shape)
         t1 = torch.tensor(model_data)
         print(t1.shape)
         embeddingDataTensor = model(t1)
