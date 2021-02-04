@@ -117,11 +117,11 @@ def handler(event, context):
     print(trainingScriptBucket)
     print(trainingScriptKey)
     print(trainingJobName)
- 
-    # trainingJobInfo = smc.describe_training_job(
-    #     TrainingJobName=trainingJobName
-    # )
-    trainingJobInfo = event['trainingJobInfo']
+
+    if 'trainingJobInfo' not in event: 
+        trainingJobInfo = smc.describe_training_job(TrainingJobName=trainingJobName)
+    else:
+        trainingJobInfo = event['trainingJobInfo']
     
     modelArtifacts=trainingJobInfo['ModelArtifacts']
     s3ModelPath=modelArtifacts['S3ModelArtifacts']
@@ -155,7 +155,14 @@ def handler(event, context):
     
     roiTrainKey = bp.getTrainKey(embeddingName, plateId, imageId)
     data = getNumpyArrayFromS3(BUCKET, roiTrainKey).astype(np.float32)
+    min=np.min(data)
+    max=np.max(data)
     print(data.shape)
+    print("pre roi min={} max={}".format(min, max))
+    data /= 65535.0
+    min=np.min(data)
+    max=np.max(data)
+    print("post roi min={} max={}".format(min, max))
     
     ##########################################################################
     # TODO: Handle 3D data 
@@ -170,8 +177,12 @@ def handler(event, context):
     ##########################################################################
     
     #dataDimArr = [data.shape[0], 3, 128, 128]
-    print("v3")
-    dataDimArr = [600, 3, 128, 128]
+    print("v4")
+    bufferSize=data.shape[0]
+    bufferRemainder=bufferSize%8
+    if bufferRemainder>0:
+        bufferSize += (8-bufferRemainder)
+    dataDimArr = [bufferSize, 3, 128, 128]
     dimTuple = tuple(dataDimArr)
     model_data = np.zeros(dimTuple, dtype=np.float32)
     for i in range(data.shape[0]):
