@@ -34,5 +34,4 @@ print(plateId)
 #r = embeddingClient.startComputePlateEmbedding(trainId, plateId)
 
 r = embeddingClient.startComputeEmbedding(trainId)
-
 print(r)

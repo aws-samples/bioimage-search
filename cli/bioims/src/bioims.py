@@ -139,7 +139,7 @@ class BioimageSearchResources:
         return self.getStackOutputByPrefix(self.getEmbeddingStack(), 'ExportsOutputFnGetAttembeddingComputeFunction')
         
     def getEmbeddingComputeLambdaArn(self):
-        return self.getStackOutputByPrefix(self.getEmbeddingStack(), 'ExportsOutputFnGetAttembeddingComputeFunction')
+        return self.getStackOutputByPrefix(self.getEmbeddingStack(), 'ExportsOutputFnGetAttplateEmbeddingComputeFunction')
         
     def getSearchLambdaArn(self):
         return self.getStackOutputByPrefix(self.getSearchStack(), 'ExportsOutputFnGetAttsearchFunction')
