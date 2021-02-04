@@ -63,4 +63,4 @@ Once deployed, this system can be used in a variety of ways concurrently:
 ## Notes
 
 * The amplify section is just a stub that may be developed for future use. If not, it will be removed.
-* A notebook has been added for baseline bbbc-021 model check, under dataasets/bbbc-021/notebooks
+* A notebook has been added for baseline bbbc-021 model check, under datasets/bbbc-021/notebooks
