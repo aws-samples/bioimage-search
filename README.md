@@ -59,3 +59,8 @@ Once deployed, this system can be used in a variety of ways concurrently:
 * By a user on the command line using the bioims cli
 * By calling the Lambda function methods for the various microservices
 * By writing new AWS functions that interact with the project components
+
+## Notes
+
+* The amplify section is just a stub that may be developed for future use. If not, it will be removed.
+* A notebook has been added for baseline bbbc-021 model check, under dataasets/bbbc-021/notebooks
