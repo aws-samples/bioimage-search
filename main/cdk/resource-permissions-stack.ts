@@ -32,6 +32,7 @@ export interface ResourcePermissionsStackProps extends cdk.StackProps {
   managementQueue: sqs.Queue;
   searchTaskDefinition: ecs.TaskDefinition;
   searchLoaderStateMachine: sfn.StateMachine;
+  tagLambda: lambda.Function;
 }
 
 export class ResourcePermissionsStack extends cdk.Stack {
@@ -165,7 +166,8 @@ export class ResourcePermissionsStack extends cdk.Stack {
                   props.trainComputeLambda.functionArn,
                   props.plateEmbeddingComputeLambda.functionArn,
                   props.embeddingManagementLambda.functionArn,
-                  props.searchLambda.functionArn
+                  props.searchLambda.functionArn,
+                  props.tagLambda.functionArn
                 ]
     });
     

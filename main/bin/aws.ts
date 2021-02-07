@@ -24,6 +24,7 @@ import { TrainStack } from '../cdk/train-stack';
 import { EmbeddingStack } from '../cdk/embedding-stack';
 import { SearchStack } from '../cdk/search-stack';
 import { SearchServiceStack } from '../cdk/search-service-stack';
+import { TagStack } from '../cdk/tag-stack';
 
 const region = process.env.CDK_DEFAULT_REGION || "";
 
@@ -138,6 +139,10 @@ const searchServiceStack = new SearchServiceStack(app, 'BioimageSearchServiceSta
     region: region
 })
 
+const tagStack = new TagStack(app, 'BioimageSearchTagStack', {
+    dynamoTableNames: dynamoTableNames
+})
+
 const resourcePermissionsStack = new ResourcePermissionsStack(app, 'BioimageSearchResourcePermissionsStack', {
     dataBucket: baseStack.dataBucket,
     batchInstanceRole: batchSetupStack.batchInstanceRole,
@@ -162,7 +167,8 @@ const resourcePermissionsStack = new ResourcePermissionsStack(app, 'BioimageSear
     searchQueue: searchStack.searchQueue,
     managementQueue: searchStack.managementQueue,
     searchTaskDefinition: searchServiceStack.searchTaskDefinition,
-    searchLoaderStateMachine: searchStack.searchLoaderStateMachine
+    searchLoaderStateMachine: searchStack.searchLoaderStateMachine,
+    tagLambda: tagStack.tagLambda
 })
 
 })();

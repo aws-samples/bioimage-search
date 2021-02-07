@@ -35,6 +35,7 @@ cd src/train; ./build.sh; cd ../..
 cd src/embedding-compute; ./build.sh; cd ../..
 cd src/embedding-management; ./build.sh; cd ../..
 cd src/search; ./build.sh; cd ../..
+cd src/tag; ./build.sh; cd ../..
 
 cdk bootstrap
 
@@ -55,6 +56,7 @@ cdk deploy BioimageSearchTrainStack --require-approval never
 cdk deploy BioimageSearchEmbeddingStack --reqiure-approval never
 cdk deploy BioimageSearchSearchStack --require-approval never
 cdk deploy BioimageSearchServiceStack --require-approval never
+cdk deploy BioimageSearchTagStack --require-approval never
 cdk deploy BioimageSearchResourcePermissionsStack --require-approval never
 
 cd scripts; ./fsxl-set-import-policy.sh; cd ..

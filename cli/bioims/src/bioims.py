@@ -84,6 +84,9 @@ class BioimageSearchResources:
     def getSearchStack(self):
         return self.getStackByName('BioimageSearchSearchStack')
         
+    def getTagStack(self):
+        return self.getStackByName('BioimageSearchTagStack')
+        
 ##### FUNCTIONS
 
     def getStackOutputByPrefix(self, stack, prefix):
@@ -144,6 +147,9 @@ class BioimageSearchResources:
     def getSearchLambdaArn(self):
         return self.getStackOutputByPrefix(self.getSearchStack(), 'ExportsOutputFnGetAttsearchFunction')
         
+    def getTagLambdaArn(self):
+        return self.getStackOutputByPrefix(self.getTagStack(), 'ExportsOutputFnGetAtttagFunction')
+        
 ##### BATCH QUEUE
 
     def getBatchOnDemandQueueName(self):
@@ -185,6 +191,8 @@ def client(serviceName, params=None):
         return EmbeddingClient(params)
     elif serviceName == 'search':
         return SearchClient(params)
+    elif serviceName == 'tag':
+        return TagClient(params)
     else:
         print('service type {} not recognized'.format(serviceName))
         return False
@@ -1224,6 +1232,55 @@ class SearchClient(BioimageSearchClient):
         
     def getSearchResults(self, searchId):
         request = '{{ "method": "getSearchResults", "searchId": "{}" }}'.format(searchId)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self.getLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        jbody = getResponseBodyAsJson(response)
+        return jbody
+
+#############################################
+#
+# TAG
+#
+#############################################
+
+class TagClient(BioimageSearchClient):
+    def __init__(self, params=None):
+        super().__init__(params)
+
+    def getLambdaArn(self):
+        return self._resources.getTagLambdaArn()
+    
+    def createTag(self, tagValue):
+        request = '{{ "method": "createTag", "tagValue": "{}" }}'.format(tagValue)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self.getLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        jbody = getResponseBodyAsJson(response)
+        return jbody
+
+    def getTagByValue(self, tagValue):
+        request = '{{ "method": "getTagByValue", "tagValue": "{}" }}'.format(tagValue)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self.getLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        jbody = getResponseBodyAsJson(response)
+        return jbody
+
+    def getTagById(self, tagId):
+        request = '{{ "method": "getTagById", "tagId": "{}" }}'.format(tagId)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
