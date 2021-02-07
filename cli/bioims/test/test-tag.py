@@ -21,3 +21,6 @@ for i in range(10):
     r = tagClient.getTagById(i)
     print(r)
     
+r = tagClient.getAllTags()
+print(r)
+    

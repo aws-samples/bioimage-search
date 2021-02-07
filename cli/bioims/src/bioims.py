@@ -1290,3 +1290,15 @@ class TagClient(BioimageSearchClient):
             )
         jbody = getResponseBodyAsJson(response)
         return jbody
+        
+    def getAllTags(self):
+        request = '{ "method": "getAllTags" }'
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self.getLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        jbody = getResponseBodyAsJson(response)
+        return jbody

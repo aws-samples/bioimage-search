@@ -113,7 +113,17 @@ async function getTagById(tagId: number) {
 }
 
 async function getAllTags() {
-  return {}
+  const filterExpression = [SORT_KEY] + " = :" + [SORT_KEY];
+  const expressionAttributeValues = '":' + [SORT_KEY] + '" : "' + ID_TYPE + '"';
+  const params = {
+    TableName: TABLE_NAME,
+    FilterExpression: filterExpression,
+    ExpressionAttributeValues: JSON.parse(
+      "{" + expressionAttributeValues + "}"
+    ),
+  };
+  const rows = await dy.getAllScanData(db, params);
+  return rows;
 }
 
 //////////////////////////////////////////////////////
@@ -127,9 +137,6 @@ export const handler = async (event: any = {}): Promise<any> => {
     if (event.tagValue) {
       try {
         const response = await createTag(event.tagValue);
-        console.log("Check3")
-        console.log(response)
-        console.log("==")
         return { statusCode: 200, body: response };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };
@@ -168,7 +175,7 @@ export const handler = async (event: any = {}): Promise<any> => {
   if (event.method === "getAllTags") {
     try {
       const rows = await getAllTags();
-      return { statusCode: 200, body: rows };
+      return { statusCode: 200, body: JSON.stringify(rows) };
     } catch (dbError) {
       return { statusCode: 500, body: JSON.stringify(dbError) };
     }
