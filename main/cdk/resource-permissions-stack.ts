@@ -86,6 +86,8 @@ export class ResourcePermissionsStack extends cdk.Stack {
 
 
     this.bioimageSearchManagedPolicy = new iam.ManagedPolicy(this, "biomageSearchManagedPolicy");
+    
+    this.bioimageSearchRole.addManagedPolicy(this.bioimageSearchManagedPolicy);
 
     this.externalResourcesPolicy = new iam.Policy(this, "externalResourcesPolicy");
     

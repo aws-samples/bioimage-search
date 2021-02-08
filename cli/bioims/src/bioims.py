@@ -701,9 +701,7 @@ class TrainingConfigurationClient(BioimageSearchClient):
             Payload=payload
             )
         jbody = getResponseBodyAsJson(response)
-        jvalue = json.loads(jbody)
-        return jvalue
-        
+        return jbody
 
     def deleteEmbedding(self, name):
         request = '{{ "method": "deleteEmbedding", "embeddingName": "{}" }}'.format(name)
@@ -1141,7 +1139,7 @@ class EmbeddingClient(BioimageSearchClient):
                 name=jobName,
                 input=request,
             )
-            return jobName
+            return response
             
 #############################################
 #
