@@ -702,6 +702,39 @@ async function createImageTrainResult(imageId: any, trainId: any, embeddingVecto
     await db.put(params).promise();
 }
 
+async function getImageTags(imageId: any) {
+  const imageInfo = await getImageInfo(imageId, ORIGIN);
+  const tagList = imageInfo[TAG_ARRAY_ATTRIBUTE]
+  if (imageInfo['Item'][TAG_ARRAY_ATTRIBUTE]) {
+    return imageInfo['Item'][TAG_ARRAY_ATTRIBUTE]    
+  } else {
+    return {}
+  }
+}
+
+async function updateImageTags(imageId: any, tagList: any) {
+  const key = {
+    [PARTITION_KEY_IMGID]: imageId,
+    [SORT_KEY_TRNID]: ORIGIN,
+  };
+  const expressionAttributeNames = '"#t" : "' + [TAG_ARRAY_ATTRIBUTE] + '"';
+  const expressionAttributeValues ='":t" : ' + JSON.stringify(tagList);
+  const updateExpression = "set #t = :t";
+
+  const namesParse = "{" + expressionAttributeNames + "}";
+  const valuesParse = "{" + expressionAttributeValues + "}";
+
+  const params = {
+    TableName: TABLE_NAME,
+    Key: key,
+    UpdateExpression: updateExpression,
+    ExpressionAttributeNames: JSON.parse(namesParse),
+    ExpressionAttributeValues: JSON.parse(valuesParse),
+  };
+  console.log(params);
+  return await db.update(params).promise();
+}
+
 /////////////////////////////////////////////////
 
 export const handler = async (event: any = {}): Promise<any> => {
@@ -907,10 +940,35 @@ export const handler = async (event: any = {}): Promise<any> => {
         console.log(dbError);
         return { statusCode: 500, body: JSON.stringify(dbError) };
       }
+    }
+  } else if (event.method === "getImageTags") {
+    if (event.imageId) {
+      try {
+        const response = await getImageTags(event.imageId);
+        return { statusCode: 200, body: response };
+      } catch (dbError) {
+        console.log(dbError);
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
     } else {
       return {
         statusCode: 400,
-        body: `Error: embeddingName, width, height, depth, channels required`,
+        body: `Error: imageId required`,
+      };
+    }
+  } else if (event.method === "updateImageTags") {
+    if (event.imageId && event.tagList) {
+      try {
+        const response = await updateImageTags(event.imageId, event.tagList);
+        return { statusCode: 200, body: response };
+      } catch (dbError) {
+        console.log(dbError);
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
+    } else {
+      return {
+        statusCode: 400,
+        body: `Error: imageId required`,
       };
     }
   } else {

@@ -964,6 +964,30 @@ class ImageManagementClient(BioimageSearchClient):
         jbody = getResponseBodyAsJson(response)
         return jbody
         
+    def getImageTags(self, imageId):
+        request = '{{ "method": "getImageTags", "imageId": "{}" }}'.format(imageId)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self.getLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        jbody = getResponseBodyAsJson(response)
+        return jbody
+        
+    def updateImageTags(self, imageId, tagList):
+        tagListStr = json.dumps(tagList)
+        request = '{{ "method": "updateImageTags", "imageId": "{}", "tagList": {} }}'.format(imageId, tagListStr)
+        payload = bytes(request, encoding='utf-8')
+        lambdaClient = boto3.client('lambda')
+        response = lambdaClient.invoke(
+            FunctionName=self.getLambdaArn(),
+            InvocationType='RequestResponse',
+            Payload=payload
+            )
+        jbody = getResponseBodyAsJson(response)
+        return jbody
         
 #############################################
 #
