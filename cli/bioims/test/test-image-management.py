@@ -134,8 +134,8 @@ imageId = '17Sk8AHeX1idyJDBnMwEhX'
 
 tags = [ 1, 2, 3 ]
 
-r = imageManagementClient.updateImageTags(imageId, tags)
-print(r)
+#r = imageManagementClient.updateImageTags(imageId, tags)
+#print(r)
 
 r = imageManagementClient.getImageTags(imageId)
 print(r)
