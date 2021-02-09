@@ -13,6 +13,7 @@ import * as sfn from "@aws-cdk/aws-stepfunctions";
 import * as tasks from "@aws-cdk/aws-stepfunctions-tasks";
 import * as sqs from '@aws-cdk/aws-sqs';
 import { createTrainPlateVisitor } from '../cdk/process-plate-stack';
+import { createEmbeddingPlateVisitor } from '../cdk/process-plate-stack';
 
 
 export interface SearchStackProps extends cdk.StackProps {
@@ -30,7 +31,8 @@ export class SearchStack extends cdk.Stack {
   public searchLambda: lambda.Function;
   public searchQueue: sqs.Queue;
   public managementQueue: sqs.Queue;
-  public searchLoaderStateMachine: sfn.StateMachine;
+  public searchTrainLoaderStateMachine: sfn.StateMachine;
+  public searchTagLoaderStateMachine: sfn.StateMachine;
 
   constructor(app: cdk.App, id: string, props: SearchStackProps) {
     super(app, id, props);
@@ -112,28 +114,54 @@ export class SearchStack extends cdk.Stack {
     lambdaPolicy.addStatements(searchTableAccessPolicy);
 
     this.searchLambda!.role!.attachInlinePolicy(lambdaPolicy);
-    
-    const searchLoaderPlateFunction = new tasks.LambdaInvoke(this, "SearchLoaderPlateProcessor", {
+
+    // Train Loader
+    const searchTrainLoaderPlateFunction = new tasks.LambdaInvoke(this, "SearchTrainLoaderPlateProcessor", {
       lambdaFunction: this.searchLambda,
       outputPath: '$.Payload.body'
     });
 
-    const searchPlateStateMachine = new sfn.StateMachine(this, "SearchPlateStateMachine",
+    const searchTrainPlateStateMachine = new sfn.StateMachine(this, "SearchTrainPlateStateMachine",
     {
-      definition: searchLoaderPlateFunction,
+      definition: searchTrainLoaderPlateFunction,
       timeout: cdk.Duration.hours(1)
     });
     
-    const plateProcessor = new tasks.StepFunctionsStartExecution(this, "SearchPlateSFN", {
-      stateMachine: searchPlateStateMachine,
+    const trainPlateProcessor = new tasks.StepFunctionsStartExecution(this, "SearchTrainPlateSFN", {
+      stateMachine: searchTrainPlateStateMachine,
     });    
 
-    const searchLoader = createTrainPlateVisitor(this, "SearchLoader", plateProcessor, 0, 
+    const searchTrainLoader = createTrainPlateVisitor(this, "SearchTrainLoader", trainPlateProcessor, 0, 
       props.trainingConfigurationLambda, props.imageManagementLambda, props.processPlateLambda);
       
-    this.searchLoaderStateMachine = new sfn.StateMachine(this, "SearchLoaderStateMachine",
+    this.searchTrainLoaderStateMachine = new sfn.StateMachine(this, "SearchTrainLoaderStateMachine",
       {
-        definition: searchLoader,
+        definition: searchTrainLoader,
+        timeout: cdk.Duration.hours(24),
+      });
+
+    // Tag Loader
+    const searchTagLoaderPlateFunction = new tasks.LambdaInvoke(this, "SearchTagLoaderPlateProcessor", {
+      lambdaFunction: this.searchLambda,
+      outputPath: '$.Payload.body'
+    });
+
+    const searchTagPlateStateMachine = new sfn.StateMachine(this, "SearchTagPlateStateMachine",
+    {
+      definition: searchTagLoaderPlateFunction,
+      timeout: cdk.Duration.hours(1)
+    });
+    
+    const tagPlateProcessor = new tasks.StepFunctionsStartExecution(this, "SearchTagPlateSFN", {
+      stateMachine: searchTagPlateStateMachine,
+    });    
+
+    const searchTagLoader = createEmbeddingPlateVisitor(this, "SearchTagLoader", tagPlateProcessor, 0, 
+      props.trainingConfigurationLambda, props.imageManagementLambda, props.processPlateLambda);
+      
+    this.searchTagLoaderStateMachine = new sfn.StateMachine(this, "SearchTagLoaderStateMachine",
+      {
+        definition: searchTagLoader,
         timeout: cdk.Duration.hours(24),
       });
 

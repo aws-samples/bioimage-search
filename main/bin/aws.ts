@@ -167,7 +167,8 @@ const resourcePermissionsStack = new ResourcePermissionsStack(app, 'BioimageSear
     searchQueue: searchStack.searchQueue,
     managementQueue: searchStack.managementQueue,
     searchTaskDefinition: searchServiceStack.searchTaskDefinition,
-    searchLoaderStateMachine: searchStack.searchLoaderStateMachine,
+    searchTrainLoaderStateMachine: searchStack.searchTrainLoaderStateMachine,
+    searchTagLoaderStateMachine: searchStack.searchTagLoaderStateMachine,
     tagLambda: tagStack.tagLambda
 })
 

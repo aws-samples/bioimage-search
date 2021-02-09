@@ -1228,6 +1228,31 @@ class SearchClient(BioimageSearchClient):
             )
             return jobName
 
+    def startTagLoad(self, embeddingName):
+        request = '{{ "method": "startTagLoad", "embeddingName": "{}" }}'.format(embeddingName)
+        payload = bytes(request, encoding='utf-8')
+        sfn = boto3.client('stepfunctions')
+        listResponse = sfn.list_state_machines(
+            maxResults=1000
+        )
+        stateMachines = listResponse['stateMachines']
+        searchLoaderSfn=None
+        for sfnEntry in stateMachines:
+            if sfnEntry['name'].startswith('SearchLoader'):
+                searchLoaderSfn=sfnEntry
+                break
+        if searchLoaderSfn==None:
+            print("SearchLoader stateMachine not found")
+            return "Error - no search loader stateMachine found"
+        else:
+            jobName = embeddingName + "-" + shortuuid.uuid()
+            response = sfn.start_execution(
+                stateMachineArn=searchLoaderSfn['stateMachineArn'],
+                name=jobName,
+                input=request,
+            )
+            return jobName
+
     def searchByImageId(self, trainId, imageId):
         request = '{{ "method": "searchByImageId", "trainId": "{}", "imageId": "{}" }}'.format(trainId, imageId)
         payload = bytes(request, encoding='utf-8')

@@ -146,7 +146,7 @@ export const handler = async (event: any = {}): Promise<any> => {
     }
   }
 
-  if (event.method === "getTagByValue") {
+  else if (event.method === "getTagByValue") {
     if (event.tagValue) {
       try {
         const response = await getTagByValue(event.tagValue);
@@ -159,7 +159,7 @@ export const handler = async (event: any = {}): Promise<any> => {
     }
   }
   
-  if (event.method === "getTagById") {
+  else if (event.method === "getTagById") {
     if (event.tagId) {
       try {
         const response = await getTagById(event.tagId);
@@ -172,7 +172,7 @@ export const handler = async (event: any = {}): Promise<any> => {
     }
   }
   
-  if (event.method === "getAllTags") {
+  else if (event.method === "getAllTags") {
     try {
       const rows = await getAllTags();
       return { statusCode: 200, body: JSON.stringify(rows) };
@@ -180,6 +180,6 @@ export const handler = async (event: any = {}): Promise<any> => {
       return { statusCode: 500, body: JSON.stringify(dbError) };
     }
   }
-
+  
   return { statusCode: 400, body: `Error: valid method parameter required` };
 };

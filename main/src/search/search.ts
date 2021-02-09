@@ -52,6 +52,10 @@ const STATUS = "status";
 const RANK = "rank";
 const DISTANCE = "distance";
 
+// Image Table attributes
+const IMT_EMBEDDING = "embedding";
+const IMT_TAGARR = "tagArr;"
+
 
 /////////////////////////////////////////////////
 
@@ -123,7 +127,17 @@ function generateSearchMessageBody(search: any) {
 // Reads embeddings for all images on the plate, then send SQS message
 // with contents to search service.
 
-async function processPlate(trainId: any, plateId: any) {
+async function processPlate(event: any) {
+  if (event.trainId) {
+    return await processTrainPlate(event.trainId, event.plateId);
+  } else if (event.embeddingName) {
+    return await processEmbeddingPlate(event.embeddingName, event.plateId);
+  }
+  return {}
+}
+  
+async function processTrainPlate(trainId: any, plateId: any) {
+  
   var params = {
     FunctionName: IMAGE_MANGEMENT_LAMBDA_ARN,
     InvocationType: "RequestResponse",
@@ -146,10 +160,9 @@ async function processPlate(trainId: any, plateId: any) {
   for (let o1 of imagesResponse) {
     if (o1.Item) {
       const item = o1.Item
-      if (item.embedding) {
+      if (item[IMT_EMBEDDING]) {
         const imageId = item.imageId
-        const embedding = item.embedding
-        const trainId = item.trainId
+        const embedding = item[IMT_EMBEDDING]
         const entry = {
           imageId: imageId,
           embedding: embedding
@@ -178,6 +191,52 @@ async function processPlate(trainId: any, plateId: any) {
   return response;
 }
 
+async function processEmbeddingPlate(embeddingName: any, plateId: any) {
+  var params = {
+    FunctionName: IMAGE_MANGEMENT_LAMBDA_ARN,
+    InvocationType: "RequestResponse",
+    Payload: JSON.stringify({ method: "getImagesByPlateId", plateId: plateId }),
+  };
+  console.log(params)
+  const data = await lambda.invoke(params).promise();
+  const imagesResponse = la.getResponseBody(data);
+
+  const tagInfo: any[] = [];
+  console.log("embeddingName="+embeddingName+" plateId="+plateId+" imageResponseCount="+imagesResponse.length);
+  for (let o1 of imagesResponse) {
+    if (o1.Item) {
+      const item = o1.Item
+      if (item[IMT_TAGARR]) {
+        const imageId = item.imageId
+        const tagArr = item[IMT_TAGARR]
+        const entry = {
+          imageId: imageId,
+          tagArr: tagArr
+        }
+        tagInfo.push(entry)
+      }
+    }
+  }
+  console.log("tagInfo count="+tagInfo.length);
+  const plateTags = {
+    embeddingName: embeddingName,
+    plateId: plateId,
+    data: tagInfo
+  }
+  const messageId = su.generate()
+  const sqsParams = {
+    MessageBody: createPlateTagStringMessage(plateTags),
+    MessageGroupId: "BioimsSearch",
+    MessageDeduplicationId: messageId,
+    QueueUrl: SEARCH_QUEUE_URL
+  };
+  await sqs.sendMessage(sqsParams).promise();
+  const response = {
+    sqsMessageDeduplicationId: messageId
+  }
+  return response;
+}
+
 function createPlateEmbeddingStringMessage(plateEmbedding: any) {
   var message="";
   message += "plateEmbedding";
@@ -190,6 +249,23 @@ function createPlateEmbeddingStringMessage(plateEmbedding: any) {
     message += entry.imageId;
     message += "\n";
     message += entry.embedding;
+    message += "\n";
+  }
+  return message;
+}
+
+function createPlateTagStringMessage(plateTags: any) {
+  var message="";
+  message += "plateTags";
+  message += "\n";
+  message += plateTags.embeddingName;
+  message += "\n";
+  message += plateTags.plateId;
+  message += "\n";
+  for (let entry of plateTags.data) {
+    message += entry.imageId;
+    message += "\n";
+    message += entry.tagArr;
     message += "\n";
   }
   return message;
@@ -397,10 +473,10 @@ export const handler = async (event: any = {}): Promise<any> => {
       };
     }
   } else if (event.method == "processPlate") {
-    if (event.trainId &&
-        event.plateId) {
+    if ( (event.trainId && event.plateId) ||
+         (event.embeddingName && event.plateId) ) {
       try {
-        const response = await processPlate(event.trainId, event.plateId);      
+        const response = await processPlate(event);
         return { statusCode: 200, body: response };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };
@@ -408,7 +484,7 @@ export const handler = async (event: any = {}): Promise<any> => {
     } else {
       return {
         statusCode: 400,
-        body: `Error: trainId and either queryOrigin or queryImageId required`,
+        body: `Error: trainId and plateId required`,
       };
     }
   } else if (event.method == "searchByImageId") {
