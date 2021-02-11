@@ -1213,11 +1213,11 @@ class SearchClient(BioimageSearchClient):
         stateMachines = listResponse['stateMachines']
         searchLoaderSfn=None
         for sfnEntry in stateMachines:
-            if sfnEntry['name'].startswith('SearchLoader'):
+            if sfnEntry['name'].startswith('SearchTrainLoader'):
                 searchLoaderSfn=sfnEntry
                 break
         if searchLoaderSfn==None:
-            print("SearchLoader stateMachine not found")
+            print("SearchTrainLoader stateMachine not found")
             return "Error - no search loader stateMachine found"
         else:
             jobName = trainId + "-" + shortuuid.uuid()
@@ -1238,11 +1238,11 @@ class SearchClient(BioimageSearchClient):
         stateMachines = listResponse['stateMachines']
         searchLoaderSfn=None
         for sfnEntry in stateMachines:
-            if sfnEntry['name'].startswith('SearchLoader'):
+            if sfnEntry['name'].startswith('SearchTagLoader'):
                 searchLoaderSfn=sfnEntry
                 break
         if searchLoaderSfn==None:
-            print("SearchLoader stateMachine not found")
+            print("SearchTagLoader stateMachine not found")
             return "Error - no search loader stateMachine found"
         else:
             jobName = embeddingName + "-" + shortuuid.uuid()
