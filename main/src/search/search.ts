@@ -85,7 +85,13 @@ async function submitSearch(search: any) {
     [QUERY_IMAGE_ID]: search.imageId,
     [SEARCH_METRIC]: metric,
     [MAX_HITS]: maxHits,
-    [SUBMIT_TIMESTAMP]: submitTimestamp
+    [SUBMIT_TIMESTAMP]: submitTimestamp,
+     ...(INCLUSION_TAG_LIST in search && {
+        [INCLUSION_TAG_LIST]: search[INCLUSION_TAG_LIST],
+      }),
+     ...(EXCLUSION_TAG_LIST in search && {
+        [EXCLUSION_TAG_LIST]: search[EXCLUSION_TAG_LIST],
+      }),
   }
   
   const messageBody = generateSearchMessageBody(searchEntry);
@@ -121,6 +127,28 @@ function generateSearchMessageBody(search: any) {
   messageBody += search[QUERY_IMAGE_ID] + "\n";
   messageBody += search[SEARCH_METRIC] + "\n";
   messageBody += search[MAX_HITS] + "\n";
+  if (INCLUSION_TAG_LIST in search) {
+    const inclusionTags = search[INCLUSION_TAG_LIST];
+    const inclusionTagCount = inclusionTags.length
+    messageBody += inclusionTagCount + "\n";
+    for (let t of inclusionTags) {
+      const tagStr: string = t + "\n";
+      messageBody += tagStr;
+    }
+  } else {
+    messageBody += "0\n";
+  }
+  if (EXCLUSION_TAG_LIST in search) {
+    const exclusionTags = search[EXCLUSION_TAG_LIST];
+    const exclusionTagCount = exclusionTags.length;
+    messageBody += exclusionTagCount + "\n";
+    for (let t of exclusionTags) {
+      const tagStr: string = t + "\n";
+      messageBody += tagStr;
+    }
+  } else {
+    messageBody += "0\n";
+  }
   return messageBody;
 }
 
@@ -263,10 +291,15 @@ function createPlateTagStringMessage(plateTags: any) {
   message += plateTags.plateId;
   message += "\n";
   for (let entry of plateTags.data) {
+    const tagArr = entry.tagArr;
     message += entry.imageId;
     message += "\n";
-    message += entry.tagArr;
+    message += tagArr.length;
     message += "\n";
+    for (let t of tagArr) {
+      message += t;
+      message += "\n"
+    }    
   }
   return message;
 }

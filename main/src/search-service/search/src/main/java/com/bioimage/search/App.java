@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Base64;
 import java.util.Comparator;
 import java.util.Set;
+import java.util.HashSet;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -33,6 +34,7 @@ public class App {
 
 	private static App theApp = null;
 	private static Map<String, Map<String, ImageEmbedding>> trainMap = new HashMap<>();
+	private static Map<String, int[]> tagMap = new HashMap<>();
 	
 	private SqsClient sqsClient = null;
 	private LambdaClient lambdaClient = null;
@@ -89,20 +91,44 @@ public class App {
 
     }
     
+    private void deleteMessages(List<Message> messages, queueUrl) {
+        for (Message message : messages) {
+            DeleteMessageRequest deleteMessageRequest = DeleteMessageRequest.builder()
+                .queueUrl(queueUrl)
+                .receiptHandle(message.receiptHandle())
+                .build();
+            sqsClient.deleteMessage(deleteMessageRequest);
+        }
+    }
+    
     private void start() {
 		int i=0;
 		while(true) {
 			if (i%100==0) {
 		    	System.out.println("Region="+REGION+" Count v10 =" + i);
 			}
-			List<Message> messages = null;
+			List<Message> managementMessages = null;
+			List<Message> searchMessages = null;
 	    	try {
-	    		// Receive messages from the queue
-	            ReceiveMessageRequest receiveRequest = ReceiveMessageRequest.builder()
+
+	            ReceiveMessageRequest receiveManagementRequest = ReceiveMessageRequest.builder()
+	                .queueUrl(MANAGEMENT_QUEUE_URL)
+	                .build();
+	            managementMessages = sqsClient.receiveMessage(receiveManagementRequest).messages();
+	            for (Message m : managementMessages) {
+	            	try {
+						handleManagementMessage(m);
+	            	} catch (Exception ex) {
+	            		ex.printStackTrace();
+	            		updateStatusToError(m);
+	            	}
+	            }
+
+	            ReceiveMessageRequest receiveSearchRequest = ReceiveMessageRequest.builder()
 	                .queueUrl(SEARCH_QUEUE_URL)
 	                .build();
-	            messages = sqsClient.receiveMessage(receiveRequest).messages();
-	            for (Message m : messages) {
+	            searchMessages = sqsClient.receiveMessage(receiveSearchRequest).messages();
+	            for (Message m : searchMessages) {
 	            	try {
 						handleSearchMessage(m);
 	            	} catch (Exception ex) {
@@ -110,17 +136,13 @@ public class App {
 	            		updateStatusToError(m);
 	            	}
 	            }
+	            
 	    	} catch (Exception ex) {
 				ex.printStackTrace();
 	    	}
 	    	try {
-	            for (Message message : messages) {
-	                DeleteMessageRequest deleteMessageRequest = DeleteMessageRequest.builder()
-	                    .queueUrl(SEARCH_QUEUE_URL)
-	                    .receiptHandle(message.receiptHandle())
-	                    .build();
-	                sqsClient.deleteMessage(deleteMessageRequest);
-	            }
+	            deleteMessages(managementMessages, MANAGEMENT_QUEUE_URL);
+	            deleteMessages(searchMessages, SEARCH_QUEUE_URL);
 	            TimeUnit.SECONDS.sleep(1);
 	    	} catch (Exception ex) {
 	    		ex.printStackTrace();
@@ -155,11 +177,18 @@ public class App {
     	}
     }
     
-    private void handleSearchMessage(Message message) {
+    private void handleManagementMessage(Message message) {
     	String[] messageArr = (message.body()).split("\n");
     	if (messageArr[0].equals("plateEmbedding")) {
     		addPlateEmbedding(messageArr);
-    	} else if (messageArr[0].equals("searchByImageId")) {
+    	} else if (messageArr[0].equals("plateTags")) {
+    		setPlateTags(messageArr);
+    	}
+    }
+    
+    private void handleSearchMessage(Message message) {
+    	String[] messageArr = (message.body()).split("\n");
+		if (messageArr[0].equals("searchByImageId")) {
     		searchByImageId(messageArr);
     	}
     }
@@ -205,16 +234,51 @@ public class App {
     }
     
     private void searchByImageId(String[] messageArr) {
-    	String searchId=messageArr[1];
-    	String trainId=messageArr[2];
-    	String imageId=messageArr[3];
-    	String metric=messageArr[4];
-    	int maxHits=new Integer(messageArr[5]);
-    	
+    	int i=1;
+    	String searchId=messageArr[i++];
+    	String trainId=messageArr[i++];
+    	String imageId=messageArr[i++];
+    	String metric=messageArr[i++];
+    	int maxHits=new Integer(messageArr[i++]);
+		int inclusionTagCount = new Integer(messageArr[i++]);
+		Set<Integer> inclusionTags = new HashSet<>();
+		int j=0;
+		for (;j<inclusionTagCount;j++) {
+			inclusionTags.add(new Integer(messageArr[i++]));
+		}
+		int exclusionTagCount = new Integer(messageArr[i++]);
+		Set<Integer> exclusionTags = new HashSet<>();
+		for (j=0;j<exclusionTagCount;j++) {
+			exclusionTags.add(new Integer(messageArr[i++]));
+		}
     	System.out.println("trainId="+trainId+", imageId="+imageId+", metric="+metric+", maxHits="+maxHits);
     	long timestamp1=new Date().getTime();
-    	Map<String, ImageEmbedding> imageMap = getImageMap(trainId);
-    	System.out.println("imageMap size="+imageMap.size());
+    	Map<String, ImageEmbedding> trainImageMap = getImageMap(trainId);
+    	System.out.println("trainImageMap size="+trainImageMap.size());
+    	
+    	// We apply inclusion filter first, then exclusion filter.
+    	// If there are no inclusion entries, then everything is included.
+    	// If there are no exclusion entries, then nothing is excluded.
+		Map<String, ImageEmbedding> imageMap = null;
+		if (inclusionTagCount==0 && exclusionTagCount==0) {
+			imageMap = trainImageMap;
+		} else {
+			if (inclusionTagCount>0) {
+				imageMap = new HashMap<String, ImageEmbedding>();
+				inclusionTags.stream().forEach(tag) -> {
+					imageMap.put(tag, trainImageMap.get(tag));
+				}
+			} else {
+				imageMap = trainImageMap.clone();
+			}
+			if (exclusionTagCount>0) {
+				exclusionTags.stream().forEach(tag) -> {
+					imageMap.remove(tag);
+				}
+			}
+		}
+		System.out.println("imageMap size="+imageMap.size());
+    	
     	ImageEmbedding[] arr = new ImageEmbedding[imageMap.size()];
     	Set<Map.Entry<String, ImageEmbedding>> entrySet = imageMap.entrySet();
     	int i=0;
@@ -291,6 +355,48 @@ public class App {
         } catch(LambdaException e) {
             System.err.println(e.getMessage());
         }
+    }
+    
+// function createPlateTagStringMessage(plateTags: any) {
+//   var message="";
+//   message += "plateTags";
+//   message += "\n";
+//   message += plateTags.embeddingName;
+//   message += "\n";
+//   message += plateTags.plateId;
+//   message += "\n";
+//   for (let entry of plateTags.data) {
+//     const tagArr = entry.tagArr;
+//     message += entry.imageId;
+//     message += "\n";
+//     message += tagArr.length;
+//     message += "\n";
+//     for (let t of tagArr) {
+//       message += t;
+//       message += "\n"
+//     }    
+//   }
+//   return message;
+// }
+
+    private void setPlateTags(String[] messageArr) {
+    	System.out.println("Adding plateTags");
+    	String embeddingName = messageArr[1];
+    	System.out.println(">embeddingName="+embeddingName);
+    	String plateId = messageArr[2];
+    	System.out.println(">plateId="+plateId);
+    	int imageCount=0;
+    	for (int i=3;i<messageArr.length;) {
+    		String imageId = messageArr[i++];
+			int tagCount = new Integer(messageArr[i++]);
+			int[] tagArr = new int[tagCount];
+			for (int t=0;t<tagCount;t++) {
+				tagArr[t] = new Integer(messageArr[i++]);
+			}
+			tagMap.put(imageId, tagArr);
+			imageCount++;
+    	}
+    	System.out.println(">image entries="+imageCount);
     }
 
 }
