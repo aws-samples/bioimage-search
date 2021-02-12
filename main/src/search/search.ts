@@ -82,7 +82,7 @@ async function submitSearch(search: any) {
     [PARTITION_KEY_SRTID]: searchId,
     [SORT_KEY_IMGID]: ORIGIN,
     [TRAIN_ID]: search.trainId,
-    [QUERY_IMAGE_ID]: search.imageId,
+    [QUERY_IMAGE_ID]: search[QUERY_IMAGE_ID],
     [SEARCH_METRIC]: metric,
     [MAX_HITS]: maxHits,
     [SUBMIT_TIMESTAMP]: submitTimestamp,
@@ -432,7 +432,8 @@ async function getSearchResults(searchId: any) {
     rowCount+=1
   }
   const searchArray: any[] = [];
-  searchArray.push(resultMap.get(ORIGIN));
+  // This can be obtained by specific method
+  //searchArray.push(resultMap.get(ORIGIN));
   for (var i=0; i<(rowCount-1); i++) {
     const key=""+i;
     searchArray.push(resultMap.get(key));

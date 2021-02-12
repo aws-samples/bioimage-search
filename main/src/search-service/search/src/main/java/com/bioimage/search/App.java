@@ -253,6 +253,22 @@ public class App {
 			exclusionTags.add(new Integer(messageArr[i++]));
 		}
     	System.out.println("trainId="+trainId+", imageId="+imageId+", metric="+metric+", maxHits="+maxHits);
+    	if (inclusionTagCount==0) {
+    		System.out.println("inclusionTags=none");
+    	} else {
+    		System.out.println("inclusionTags=");
+	    	for (Integer tag : inclusionTags) {
+				System.out.println(tag);
+	    	}
+    	}
+    	if (exclusionTagCount==0) {
+    		System.out.println("exclusionTags=none");
+    	} else {
+    		System.out.println("exclusionTags=");
+	    	for (Integer tag : exclusionTags) {
+				System.out.println(tag);
+	    	}
+    	}
     	long timestamp1=new Date().getTime();
     	Map<String, ImageEmbedding> trainImageMap = getImageMap(trainId);
     	System.out.println("trainImageMap size="+trainImageMap.size());
@@ -269,6 +285,9 @@ public class App {
 				filteredImages = trainImageMap.values().stream().
 					filter(e -> {
 						int[] imageTags = tagMap.get(e.imageId);
+						if (imageTags==null) {
+							return false;
+						}
 						for (Integer tag : imageTags) {
 							if (inclusionTags.contains(tag)) {
 								return true;
@@ -279,11 +298,15 @@ public class App {
 			} else {
 				filteredImages = trainImageMap.values().stream().collect(Collectors.toList());
 			}
+			System.out.println("Post inclusion pass, filteredImages size="+filteredImages.size());
 			// Then exclusion pass
 			if (exclusionTagCount>0) {
 				filteredImages = filteredImages.stream().
 					filter(e -> {
 						int[] imageTags = tagMap.get(e.imageId);
+						if (imageTags==null) {
+							return true;
+						}
 						for (Integer tag : imageTags) {
 							if (exclusionTags.contains(tag)) {
 								return false;

@@ -63,5 +63,29 @@ search = {
 # r = searchClient.getSearchResults('jjzorvoCTfEqKGBSziyFVm')
 # print(r)
 
-r = searchClient.startTagLoad('bbbc021')
+
+# test
+# label='Microtubule destabilizers'
+# tag = 20
+
+###########
+trainId_nofilter = 'r6KEudzQCuUtDwCzziiMZT'
+
+# r = searchClient.startTagLoad('bbbc021')
+# print(r)
+
+# r = searchClient.startTrainingLoad(trainId_nofilter)
+# print(r)
+
+# imageId='17Sk8AHeX1idyJDBnMwEhX'
+# search1 = {
+#     "trainId" : trainId_nofilter,
+#     "queryImageId" : imageId,
+#     "exclusionTags" : [ 20]
+# }
+# r = searchClient.submitSearch(search1)
+# search1_id = r['searchId']
+# print(search1_id)
+
+r = searchClient.getSearchResults('6dcDoK7QCriMq2ovWHTmUz')
 print(r)
