@@ -22,6 +22,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.concurrent.*;
+import java.util.stream.*;
 
 
 public class App {
@@ -91,7 +92,7 @@ public class App {
 
     }
     
-    private void deleteMessages(List<Message> messages, queueUrl) {
+    private void deleteMessages(List<Message> messages, String queueUrl) {
         for (Message message : messages) {
             DeleteMessageRequest deleteMessageRequest = DeleteMessageRequest.builder()
                 .queueUrl(queueUrl)
@@ -259,35 +260,43 @@ public class App {
     	// We apply inclusion filter first, then exclusion filter.
     	// If there are no inclusion entries, then everything is included.
     	// If there are no exclusion entries, then nothing is excluded.
-		Map<String, ImageEmbedding> imageMap = null;
+		List<ImageEmbedding> filteredImages = null;
 		if (inclusionTagCount==0 && exclusionTagCount==0) {
-			imageMap = trainImageMap;
+			filteredImages = trainImageMap.values().stream().collect(Collectors.toList());
 		} else {
+			// First inclusion pass
 			if (inclusionTagCount>0) {
-				imageMap = new HashMap<String, ImageEmbedding>();
-				inclusionTags.stream().forEach(tag) -> {
-					imageMap.put(tag, trainImageMap.get(tag));
-				}
+				filteredImages = trainImageMap.values().stream().
+					filter(e -> {
+						int[] imageTags = tagMap.get(e.imageId);
+						for (Integer tag : imageTags) {
+							if (inclusionTags.contains(tag)) {
+								return true;
+							}
+						}
+						return false;
+					}).collect(Collectors.toList());
 			} else {
-				imageMap = trainImageMap.clone();
+				filteredImages = trainImageMap.values().stream().collect(Collectors.toList());
 			}
+			// Then exclusion pass
 			if (exclusionTagCount>0) {
-				exclusionTags.stream().forEach(tag) -> {
-					imageMap.remove(tag);
-				}
+				filteredImages = filteredImages.stream().
+					filter(e -> {
+						int[] imageTags = tagMap.get(e.imageId);
+						for (Integer tag : imageTags) {
+							if (exclusionTags.contains(tag)) {
+								return false;
+							}
+						}
+						return true;
+					}).collect(Collectors.toList());
 			}
 		}
-		System.out.println("imageMap size="+imageMap.size());
-    	
-    	ImageEmbedding[] arr = new ImageEmbedding[imageMap.size()];
-    	Set<Map.Entry<String, ImageEmbedding>> entrySet = imageMap.entrySet();
-    	int i=0;
-		for (Map.Entry<String, ImageEmbedding> im : entrySet) {
-			arr[i]=im.getValue();
-			i+=1;
-		}
-		System.out.println("Added "+i+" array entries");
-		ImageEmbedding queryImage=imageMap.get(imageId);
+		System.out.println("filteredImages size="+filteredImages.size());
+		ImageEmbedding[] arr = new ImageEmbedding[filteredImages.size()];
+    	arr = filteredImages.toArray(arr);
+		ImageEmbedding queryImage=trainImageMap.get(imageId);
 		if (queryImage==null) {
 			System.out.println("queryImage is null");
 			return;
