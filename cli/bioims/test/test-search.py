@@ -60,5 +60,8 @@ search = {
 #r = searchClient.searchByImageId('r6KEudzQCuUtDwCzziiMZT', '17Sk8AHeX1idyJDBnMwEhX')
 #print(r)
 
-r = searchClient.getSearchResults('jjzorvoCTfEqKGBSziyFVm')
+# r = searchClient.getSearchResults('jjzorvoCTfEqKGBSziyFVm')
+# print(r)
+
+r = searchClient.startTagLoad('bbbc021')
 print(r)

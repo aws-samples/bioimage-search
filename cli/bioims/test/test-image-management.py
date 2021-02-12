@@ -126,16 +126,16 @@ imageManagementClient = bioims.client('image-management')
 
 #r = imageManagementClient.getImagesByPlateIdAndTrainId('gXc3iRxAi4rs5AdwQpYeiZ','r6KEudzQCuUtDwCzziiMZT')
 
-imageId = '17Sk8AHeX1idyJDBnMwEhX'
+# imageId = '17Sk8AHeX1idyJDBnMwEhX'
 
 # tags = {
 #     "tags": ["1", "2", "3"]
 #     }
 
-tags = [ 1, 2, 3 ]
+# tags = [ 1, 2, 3 ]
 
 #r = imageManagementClient.updateImageTags(imageId, tags)
 #print(r)
 
-r = imageManagementClient.getImageTags(imageId)
-print(r)
+# r = imageManagementClient.getImageTags(imageId)
+#print(r)

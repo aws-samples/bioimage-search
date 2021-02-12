@@ -88,7 +88,9 @@ trainingJobName = "bioims-r6KEudzQCuUtDwCzziiMZT-gk34gTVUw8RiCd6MXaTWqC"
 
 #r = trainingConfigurationClient.updateTraining(trainId, 'sagemakerJobName', 'testJobName1')
 
-r = trainingConfigurationClient.getTrainingJobInfo(trainingJobName)
+# r = trainingConfigurationClient.getTrainingJobInfo(trainingJobName)
+# print(r)
 
+r = trainingConfigurationClient.getEmbeddingInfo('bbbc021')
 print(r)
 

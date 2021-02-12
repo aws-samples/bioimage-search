@@ -54,7 +54,7 @@ const DISTANCE = "distance";
 
 // Image Table attributes
 const IMT_EMBEDDING = "embedding";
-const IMT_TAGARR = "tagArr;"
+const IMT_TAGARR = "tagArr";
 
 
 /////////////////////////////////////////////////
@@ -210,7 +210,7 @@ async function processTrainPlate(trainId: any, plateId: any) {
     MessageBody: createPlateEmbeddingStringMessage(plateEmbedding),
     MessageGroupId: "BioimsSearch",
     MessageDeduplicationId: messageId,
-    QueueUrl: SEARCH_QUEUE_URL
+    QueueUrl: MANAGEMENT_QUEUE_URL,
   };
   await sqs.sendMessage(sqsParams).promise();
   const response = {
@@ -228,7 +228,6 @@ async function processEmbeddingPlate(embeddingName: any, plateId: any) {
   console.log(params)
   const data = await lambda.invoke(params).promise();
   const imagesResponse = la.getResponseBody(data);
-
   const tagInfo: any[] = [];
   console.log("embeddingName="+embeddingName+" plateId="+plateId+" imageResponseCount="+imagesResponse.length);
   for (let o1 of imagesResponse) {
@@ -256,7 +255,7 @@ async function processEmbeddingPlate(embeddingName: any, plateId: any) {
     MessageBody: createPlateTagStringMessage(plateTags),
     MessageGroupId: "BioimsSearch",
     MessageDeduplicationId: messageId,
-    QueueUrl: SEARCH_QUEUE_URL
+    QueueUrl: MANAGEMENT_QUEUE_URL,
   };
   await sqs.sendMessage(sqsParams).promise();
   const response = {

@@ -633,7 +633,7 @@ export function createEmbeddingPlateVisitor(scope: cdk.Construct,
     const embeddingInfoRequest = new sfn.Pass(scope, (visitorName+"EmbeddingInfoRequest"), {
       parameters: {
         method: "getEmbeddingInfo",
-        embeddingName: '$.embeddingName'
+        embeddingName: sfn.JsonPath.stringAt('$.embeddingName'),
       },
       resultPath: '$.embeddingInfoRequest'
     });

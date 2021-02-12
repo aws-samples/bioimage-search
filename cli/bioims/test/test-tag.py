@@ -6,21 +6,23 @@ import bioims
 
 tagClient = bioims.client('tag')
 
-for i in range(10):
-    tag = 'testTag_{}'.format(i)
-    r = tagClient.createTag(tag)
-    print(r)
+# for i in range(10):
+#     tag = 'testTag_{}'.format(i)
+#     r = tagClient.createTag(tag)
+#     print(r)
     
-for i in range(10):
-    tag = 'testTag_{}'.format(i)
-    r = tagClient.getTagByValue(tag)
-    print(r)
+# for i in range(10):
+#     tag = 'testTag_{}'.format(i)
+#     r = tagClient.getTagByValue(tag)
+#     print(r)
     
-for i in range(10):
-    tag = 'testTag_{}'.format(i)
-    r = tagClient.getTagById(i)
-    print(r)
+# for i in range(10):
+#     tag = 'testTag_{}'.format(i)
+#     r = tagClient.getTagById(i)
+#     print(r)
     
 r = tagClient.getAllTags()
 print(r)
+
+
     
