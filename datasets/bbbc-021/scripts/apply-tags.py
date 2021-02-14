@@ -60,6 +60,10 @@ def cleanLabel(label):
     c1 = "".join(label.split())
     c2 = c1.replace('/','-')
     return c2
+    
+def getBatchTagFromPlateSourceId(psi):
+    ca = psi.split('_')
+    return "batch:" + ca[0]
 
 for i, pi in enumerate(plateList):
     plateId = pi['plateId']
@@ -69,10 +73,15 @@ for i, pi in enumerate(plateList):
         image = imageItem['Item']
         imageId = image['imageId']
         imageSourceId = image['imageSourceId']
+        tagList = []
+        if 'plateSourceId' in image:
+            plateSourceId = image['plateSourceId']
+            batchTag = getBatchTagFromPlateSourceId(plateSourceId)
+            batchTagId = tagIdMap[batchTag]
+            tagList.append(batchTagId)
         if imageSourceId in sourceCompoundMap:
             imageCompound = cleanLabel(sourceCompoundMap[imageSourceId])
             compoundTag = "compound:" + imageCompound
-            tagList = []
             if compoundTag in tagIdMap:
                 compoundId = tagIdMap[compoundTag]
                 print("{} {} {}".format(imageId, compoundTag, compoundId))
@@ -86,5 +95,5 @@ for i, pi in enumerate(plateList):
                         moaId = tagIdMap[moaTag]
                         print("{} {} {}".format(imageId, moaTag, moaId))
                         tagList.append(moaId)
-            if len(tagList)>0:
-                imageClient.updateImageTags(imageId, tagList)
+        if len(tagList)>0:
+            imageClient.updateImageTags(imageId, tagList)

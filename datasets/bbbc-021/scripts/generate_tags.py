@@ -18,11 +18,20 @@ compound_moa_map = bb.Bbbc021PlateInfoByDF.getCompoundMoaMapFromDf(moa_df)
 # We need to go from imageId->ImageSourceId->compound->moa
 # 'Image_FileName_DAPI[:-4]' serves as the ImageSourceId
 sourceCompoundMap={}
+batchDict={}
 for i in range(len(image_df.index)):
     r = image_df.iloc[i]
     imageSourceId = r['Image_FileName_DAPI'][:-4]
     compound = r['Image_Metadata_Compound']
+    batch_plate = r['Image_Metadata_Plate_DAPI']
+    bpa = batch_plate.split('_')
+    batchDict[bpa[0]]=True
     sourceCompoundMap[imageSourceId]=compound
+    
+batchArr=[]
+for k, v in batchDict.items():
+    batchArr.append(k)
+batchArr.sort()
 
 compoundDict={}
 compoundArr=[]
@@ -60,3 +69,11 @@ for compound in compoundArr:
     tag = "compound:"+compound
     tagClient.createTag(tag)
     i+=1
+    
+i=0
+for batch in batchArr:
+    print("{} {}".format(i, batch))
+    tag = "batch:"+batch
+    tagClient.createTag(tag)
+    i+=1
+    
