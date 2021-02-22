@@ -69,7 +69,7 @@ search = {
 # tag = 20
 
 ###########
-trainId_nofilter = 'r6KEudzQCuUtDwCzziiMZT'
+#trainId_nofilter = 'r6KEudzQCuUtDwCzziiMZT'
 
 # r = searchClient.startTagLoad('bbbc021')
 # print(r)
@@ -87,5 +87,8 @@ trainId_nofilter = 'r6KEudzQCuUtDwCzziiMZT'
 # search1_id = r['searchId']
 # print(search1_id)
 
-r = searchClient.getSearchResults('6dcDoK7QCriMq2ovWHTmUz')
+# r = searchClient.getSearchResults('6dcDoK7QCriMq2ovWHTmUz')
+# print(r)
+
+r = searchClient.getSearchStatus('eXcngwxBjxFgBmRqaWYrCo')
 print(r)

@@ -505,6 +505,20 @@ export const handler = async (event: any = {}): Promise<any> => {
         body: `Error: searchId is required`,
       };
     }
+  } else if (event.method == "getSearchStatus") {
+    if (event.searchId) {
+      try {
+        const response = await getSearchOrigin(event.searchId);
+        return { statusCode: 200, body: response };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
+    } else {
+      return {
+        statusCode: 400,
+        body: `Error: searchId is required`,
+      };
+    }
   } else if (event.method == "processPlate") {
     if ( (event.trainId && event.plateId) ||
          (event.embeddingName && event.plateId) ) {
