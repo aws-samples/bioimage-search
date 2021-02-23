@@ -104,6 +104,7 @@ public class App {
     
     private void start() {
 		int i=0;
+		int receiveCount=0;
 		while(true) {
 			if (i%100==0) {
 		    	System.out.println("Region="+REGION+" Count v10 =" + i);
@@ -111,13 +112,13 @@ public class App {
 			List<Message> managementMessages = null;
 			List<Message> searchMessages = null;
 	    	try {
-
 	            ReceiveMessageRequest receiveManagementRequest = ReceiveMessageRequest.builder()
 	                .queueUrl(MANAGEMENT_QUEUE_URL)
 	                .build();
 	            managementMessages = sqsClient.receiveMessage(receiveManagementRequest).messages();
 	            for (Message m : managementMessages) {
 	            	try {
+	            		receiveCount++;
 						handleManagementMessage(m);
 	            	} catch (Exception ex) {
 	            		ex.printStackTrace();
@@ -131,6 +132,7 @@ public class App {
 	            searchMessages = sqsClient.receiveMessage(receiveSearchRequest).messages();
 	            for (Message m : searchMessages) {
 	            	try {
+	            		receiveCount++;
 						handleSearchMessage(m);
 	            	} catch (Exception ex) {
 	            		ex.printStackTrace();
@@ -144,10 +146,15 @@ public class App {
 	    	try {
 	            deleteMessages(managementMessages, MANAGEMENT_QUEUE_URL);
 	            deleteMessages(searchMessages, SEARCH_QUEUE_URL);
-	            TimeUnit.SECONDS.sleep(1);
+	            if (receiveCount==0) {
+		            TimeUnit.SECONDS.sleep(1);
+	            } else {
+					System.out.println("ReceiveCount="+receiveCount);
+	            }
 	    	} catch (Exception ex) {
 	    		ex.printStackTrace();
 	    	}
+	    	receiveCount=0;
 	    	i+=1;
 		}
     }
@@ -157,27 +164,31 @@ public class App {
     	String type = messageArr[0];
     	if (type.equals("searchByImageId")) {
     		String searchId = messageArr[1];
-			InvokeResponse res = null ;
-	        try {
-       			String payloadString = "{\n";
-       			payloadString += "\"method\": \"updateSearchStatus\",\n";
-       			payloadString += "\"searchId\": \""+searchId+"\",\n";
-       			payloadString += "\"status\": \"STATUS_ERROR\"\n";
-       			payloadString += "}";
-            	SdkBytes payload = SdkBytes.fromUtf8String(payloadString);
-            	InvokeRequest request = InvokeRequest.builder()
-                    .functionName(SEARCH_LAMBDA_ARN)
-                    .payload(payload)
-                    .build();
-            	res = lambdaClient.invoke(request);
-	            String value = res.payload().asUtf8String() ;
-	            System.out.println(value);
-        	} catch(LambdaException e) {
-	            System.err.println(e.getMessage());
-	        }
+    		updateSearchStatus(searchId, "error");
     	}
     }
     
+    private void updateSearchStatus(String searchId, String statusCode) {
+		InvokeResponse res = null ;
+        try {
+   			String payloadString = "{\n";
+   			payloadString += "\"method\": \"updateSearchStatus\",\n";
+   			payloadString += "\"searchId\": \"" + searchId + "\",\n";
+   			payloadString += "\"status\": \"" + statusCode + "\"\n";
+   			payloadString += "}";
+          	SdkBytes payload = SdkBytes.fromUtf8String(payloadString);
+           	InvokeRequest request = InvokeRequest.builder()
+	            .functionName(SEARCH_LAMBDA_ARN)
+                .payload(payload)
+                .build();
+           	res = lambdaClient.invoke(request);
+            String value = res.payload().asUtf8String() ;
+            System.out.println(value);
+       	} catch(LambdaException e) {
+            System.err.println(e.getMessage());
+        }
+   	}
+
     private void handleManagementMessage(Message message) {
     	String[] messageArr = (message.body()).split("\n");
     	if (messageArr[0].equals("plateEmbedding")) {
@@ -322,6 +333,7 @@ public class App {
 		ImageEmbedding queryImage=trainImageMap.get(imageId);
 		if (queryImage==null) {
 			System.out.println("queryImage is null");
+			updateSearchStatus(searchId, "error");
 			return;
 		}
 		System.out.println("pre arr length="+arr.length);

@@ -71,8 +71,8 @@ search = {
 ###########
 #trainId_nofilter = 'r6KEudzQCuUtDwCzziiMZT'
 
-# r = searchClient.startTagLoad('bbbc021')
-# print(r)
+r = searchClient.startTagLoad('bbbc021')
+print(r)
 
 # r = searchClient.startTrainingLoad(trainId_nofilter)
 # print(r)
@@ -90,5 +90,5 @@ search = {
 # r = searchClient.getSearchResults('6dcDoK7QCriMq2ovWHTmUz')
 # print(r)
 
-r = searchClient.getSearchStatus('eXcngwxBjxFgBmRqaWYrCo')
-print(r)
+# r = searchClient.getSearchStatus('eXcngwxBjxFgBmRqaWYrCo')
+# print(r)
