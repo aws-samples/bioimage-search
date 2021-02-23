@@ -1226,7 +1226,7 @@ class SearchClient(BioimageSearchClient):
                 name=jobName,
                 input=request,
             )
-            return jobName
+            return response
 
     def startTagLoad(self, embeddingName):
         request = '{{ "method": "startTagLoad", "embeddingName": "{}" }}'.format(embeddingName)
@@ -1251,7 +1251,7 @@ class SearchClient(BioimageSearchClient):
                 name=jobName,
                 input=request,
             )
-            return jobName
+            return response
 
     def searchByImageId(self, trainId, imageId):
         request = '{{ "method": "searchByImageId", "trainId": "{}", "imageId": "{}" }}'.format(trainId, imageId)
