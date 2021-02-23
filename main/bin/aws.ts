@@ -127,20 +127,21 @@ const searchStack = new SearchStack(app, 'BioimageSearchSearchStack', {
     region: region
 })
 
+const tagStack = new TagStack(app, 'BioimageSearchTagStack', {
+    dynamoTableNames: dynamoTableNames
+})
+
 const searchServiceStack = new SearchServiceStack(app, 'BioimageSearchServiceStack', {
     trainingConfigurationLambda: trainingConfigurationStack.trainingConfigurationLambda,
     imageManagementLambda: imageManagementStack.imageManagementLambda,
     processPlateLambda: processPlateStack.processPlateLambda,
     messageLambda: messageStack.messageLambda,
     searchLambda: searchStack.searchLambda,
+    tagLambda: tagStack.tagLambda,
     searchQueue: searchStack.searchQueue,
     managementQueue: searchStack.managementQueue,
     vpc: batchSetupStack.batchVpc,
     region: region
-})
-
-const tagStack = new TagStack(app, 'BioimageSearchTagStack', {
-    dynamoTableNames: dynamoTableNames
 })
 
 const resourcePermissionsStack = new ResourcePermissionsStack(app, 'BioimageSearchResourcePermissionsStack', {

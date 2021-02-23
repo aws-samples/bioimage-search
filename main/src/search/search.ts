@@ -40,6 +40,7 @@ const INCLUSION_TAG_LIST = "inclusionTags";
 const EXCLUSION_TAG_LIST = "exclusionTags";
 const SEARCH_METRIC = "searchMetric";
 const MAX_HITS = "maxHits";
+const REQUIRE_MOA = "requireMoa";
 
 // report only
 const SUBMIT_TIMESTAMP = "submitTimestamp";
@@ -63,6 +64,21 @@ function getTimestamp() {
   return Date.now().toString()
 }
 
+async function loadTagLabelMap() {
+  const messageBody = "loadTagLabelMap\n";
+  
+  const dedupeId = su.generate();
+
+  const sqsParams = {
+    MessageBody: messageBody,
+    MessageGroupId: "BioimsSearch",
+    MessageDeduplicationId: dedupeId,
+    QueueUrl: MANAGEMENT_QUEUE_URL
+  };
+  
+  await sqs.sendMessage(sqsParams).promise();
+}
+
 async function submitSearch(search: any) {
   const searchId = su.generate()
 
@@ -76,7 +92,14 @@ async function submitSearch(search: any) {
     maxHits = search[MAX_HITS]    
   }
   
-  const submitTimestamp = getTimestamp()
+  const submitTimestamp = getTimestamp
+  
+  var requireMoa = "false";
+  if (search[REQUIRE_MOA]) {
+    if (search[REQUIRE_MOA].toLowerCase()=="true") {
+      requireMoa = "true";
+    }
+  }
   
   const searchEntry = {
     [PARTITION_KEY_SRTID]: searchId,
@@ -85,6 +108,7 @@ async function submitSearch(search: any) {
     [QUERY_IMAGE_ID]: search[QUERY_IMAGE_ID],
     [SEARCH_METRIC]: metric,
     [MAX_HITS]: maxHits,
+    [REQUIRE_MOA]: requireMoa,
     [SUBMIT_TIMESTAMP]: submitTimestamp,
      ...(INCLUSION_TAG_LIST in search && {
         [INCLUSION_TAG_LIST]: search[INCLUSION_TAG_LIST],
@@ -127,6 +151,7 @@ function generateSearchMessageBody(search: any) {
   messageBody += search[QUERY_IMAGE_ID] + "\n";
   messageBody += search[SEARCH_METRIC] + "\n";
   messageBody += search[MAX_HITS] + "\n";
+  messageBody += search[REQUIRE_MOA] + "\n";
   if (INCLUSION_TAG_LIST in search) {
     const inclusionTags = search[INCLUSION_TAG_LIST];
     const inclusionTagCount = inclusionTags.length
@@ -518,6 +543,13 @@ export const handler = async (event: any = {}): Promise<any> => {
         statusCode: 400,
         body: `Error: searchId is required`,
       };
+    }
+  } else if (event.method == "loadTagLabelMap") {
+    try {
+      const response = await loadTagLabelMap();
+      return { statusCode: 200, body: "success" };
+    } catch (dbError) {
+      return { statusCode: 500, body: JSON.stringify(dbError) };
     }
   } else if (event.method == "processPlate") {
     if ( (event.trainId && event.plateId) ||

@@ -29,6 +29,7 @@ public class App {
 	public static String TRAINING_CONFIGURATION_LAMBDA_ARN=System.getenv("TRAINING_CONFIGURATION_LAMBDA_ARN");
     public static String MESSAGE_LAMBDA_ARN=System.getenv("MESSAGE_LAMBDA_ARN");
     public static String SEARCH_LAMBDA_ARN=System.getenv("SEARCH_LAMBDA_ARN");
+    public static String TAG_LAMBDA_ARN=System.getenv("TAG_LAMBDA_ARN");
     public static String SEARCH_QUEUE_URL=System.getenv("SEARCH_QUEUE_URL");
     public static String MANAGEMENT_QUEUE_URL=System.getenv("MANAGEMENT_QUEUE_URL");
     public static String REGION=System.getenv("REGION");
@@ -36,6 +37,7 @@ public class App {
 	private static App theApp = null;
 	private static Map<String, Map<String, ImageEmbedding>> trainMap = new HashMap<>();
 	private static Map<String, int[]> tagMap = new HashMap<>();
+	private static Map<Integer, String> tagLabelMap = new HashMap<>();
 	
 	private SqsClient sqsClient = null;
 	private LambdaClient lambdaClient = null;
@@ -190,16 +192,22 @@ public class App {
    	}
 
     private void handleManagementMessage(Message message) {
+    	System.out.println("managementMessage");
     	String[] messageArr = (message.body()).split("\n");
+    	System.out.println(messageArr[0]);
     	if (messageArr[0].equals("plateEmbedding")) {
     		addPlateEmbedding(messageArr);
     	} else if (messageArr[0].equals("plateTags")) {
     		setPlateTags(messageArr);
+    	} else if (messageArr[0].equals("loadTagLabelMap")) {
+    		tagLabelMap = getTagLabelMap();
     	}
     }
     
     private void handleSearchMessage(Message message) {
+    	System.out.println("searchMessage");
     	String[] messageArr = (message.body()).split("\n");
+    	System.out.println(messageArr[0]);
 		if (messageArr[0].equals("searchByImageId")) {
     		searchByImageId(messageArr);
     	}
@@ -252,6 +260,7 @@ public class App {
     	String imageId=messageArr[i++];
     	String metric=messageArr[i++];
     	int maxHits=new Integer(messageArr[i++]);
+    	Boolean requireMoa=messageArr[i++].equals("true");
 		int inclusionTagCount = new Integer(messageArr[i++]);
 		Set<Integer> inclusionTags = new HashSet<>();
 		int j=0;
@@ -288,7 +297,7 @@ public class App {
     	// If there are no inclusion entries, then everything is included.
     	// If there are no exclusion entries, then nothing is excluded.
 		List<ImageEmbedding> filteredImages = null;
-		if (inclusionTagCount==0 && exclusionTagCount==0) {
+		if (inclusionTagCount==0 && exclusionTagCount==0 && (!requireMoa)) {
 			filteredImages = trainImageMap.values().stream().collect(Collectors.toList());
 		} else {
 			// First inclusion pass
@@ -311,19 +320,32 @@ public class App {
 			}
 			System.out.println("Post inclusion pass, filteredImages size="+filteredImages.size());
 			// Then exclusion pass
-			if (exclusionTagCount>0) {
+			if (exclusionTagCount>0 || requireMoa) {
 				filteredImages = filteredImages.stream().
 					filter(e -> {
 						int[] imageTags = tagMap.get(e.imageId);
-						if (imageTags==null) {
+						if (imageTags==null && (!requireMoa)) {
 							return true;
 						}
+						boolean hasMoaLabel=false;
 						for (Integer tag : imageTags) {
 							if (exclusionTags.contains(tag)) {
 								return false;
 							}
+							String label = tagLabelMap.get(tag);
+							if (label.startsWith("moa:")) {
+								hasMoaLabel=true;
+							}
 						}
-						return true;
+						if (requireMoa) {
+							if (hasMoaLabel) {
+								return true;
+							} else {
+								return false;
+							}
+						} else {
+							return true;
+						}
 					}).collect(Collectors.toList());
 			}
 		}
@@ -398,6 +420,41 @@ public class App {
 
         } catch(LambdaException e) {
             System.err.println(e.getMessage());
+        }
+    }
+    
+    private Map<Integer, String> getTagLabelMap() {
+    	Map<Integer, String> tagLabelMap = new HashMap<>();
+		String payloadString = "{ \"method\": \"getAllTags\" }";
+		InvokeResponse res = null ;
+        try {
+            SdkBytes payload = SdkBytes.fromUtf8String(payloadString);
+            InvokeRequest request = InvokeRequest.builder()
+                    .functionName(TAG_LAMBDA_ARN)
+                    .payload(payload)
+                    .build();
+            res = lambdaClient.invoke(request);
+            String value = res.payload().asUtf8String();
+			String[] a1 = value.split("\\{");
+			int i=0;
+			for (String a : a1) {
+				if (a.contains("tagValue")) {
+					String[] a2 = a.split("\":");
+					String s1 = a2[1];
+					String[] a3 = s1.split(",");
+					Integer id = new Integer(a3[0]);
+					String s2 = a2[2];
+					String[] a4 = s2.split(",");
+					String s3 = a4[0];
+					String label = s3.substring(2,s3.length()-2);
+					System.out.println("Loading tag id="+id+" label="+label);
+					tagLabelMap.put(id, label);
+				}
+			}
+            return tagLabelMap;
+        } catch(LambdaException e) {
+            System.err.println(e.getMessage());
+            return null;
         }
     }
     

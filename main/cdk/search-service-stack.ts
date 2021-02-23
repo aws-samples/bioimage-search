@@ -12,6 +12,7 @@ export interface SearchStackProps extends cdk.StackProps {
   processPlateLambda: lambda.Function;
   messageLambda: lambda.Function;
   searchLambda: lambda.Function;
+  tagLambda: lambda.Function;
   searchQueue: sqs.Queue;
   managementQueue: sqs.Queue;
   vpc: ec2.Vpc;
@@ -35,6 +36,7 @@ export class SearchServiceStack extends cdk.Stack {
           TRAINING_CONFIGURATION_LAMBDA_ARN: props.trainingConfigurationLambda.functionArn,
           MESSAGE_LAMBDA_ARN: props.messageLambda.functionArn,
           SEARCH_LAMBDA_ARN: props.searchLambda.functionArn,
+          TAG_LAMBDA_ARN: props.tagLambda.functionArn,
           SEARCH_QUEUE_URL: props.searchQueue.queueUrl,
           MANAGEMENT_QUEUE_URL: props.managementQueue.queueUrl,
           REGION: props.region

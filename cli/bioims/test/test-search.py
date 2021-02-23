@@ -71,6 +71,7 @@ search = {
 ###########
 #trainId_nofilter = 'r6KEudzQCuUtDwCzziiMZT'
 
+## FOR LOADING ALL TAGS
 r = searchClient.startTagLoad('bbbc021')
 print(r)
 
@@ -92,3 +93,7 @@ print(r)
 
 # r = searchClient.getSearchStatus('eXcngwxBjxFgBmRqaWYrCo')
 # print(r)
+
+### TO LOAD TAG LABEL MAP
+#r = searchClient.loadTagLabelMap();
+#print(r)
