@@ -42,6 +42,11 @@ public class App {
 	private SqsClient sqsClient = null;
 	private LambdaClient lambdaClient = null;
 	private ImageEmbedding[] hitArray = null;
+	
+	private static int EUCLIDEAN_TYPE = 1;
+	private static int COSINE_TYPE = 2;
+	
+	private int distanceType=COSINE_TYPE;
 
 	private App() {
 		Region region = Region.of(REGION);
@@ -70,6 +75,28 @@ public class App {
    		double ts = Math.sqrt(t);
    		return ts;
    	}
+   	
+   	public double computeDistance(float[] a, float[] b) {
+   		if (distanceType==EUCLIDEAN_TYPE) {
+   			return computeEuclideanDistance(a, b);
+   		} else if (distanceType==COSINE_TYPE) {
+   			return -1.0 * cosine(a, b);
+   		} else {
+   			return 0.0;
+   		}
+   	}
+   	
+   	public double dot(float[] a, float[] b) {
+   		double t=0.0;
+   		for (int i=0;i<a.length;i++) {
+   			t += a[i]*b[i];
+   		}
+		return t;
+   	}
+   	
+   	public double cosine(float[] a, float[] b) {
+   		return dot(a,b) / (Math.sqrt(dot(a,a)) * Math.sqrt(dot(b,b)));
+   	}
 
     private class ImageEmbedding implements Comparator<ImageEmbedding> {
     	public String imageId;
@@ -81,8 +108,8 @@ public class App {
     	}
     	
     	public int compare(ImageEmbedding o1, ImageEmbedding o2) {
-			double d1=computeEuclideanDistance(this.embedding, o1.embedding);
-			double d2=computeEuclideanDistance(this.embedding, o2.embedding);
+			double d1=computeDistance(this.embedding, o1.embedding);
+			double d2=computeDistance(this.embedding, o2.embedding);
 			if (d1>d2) {
 				return 1;
 			} else if (d2>d1) {
