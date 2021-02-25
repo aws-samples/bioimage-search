@@ -350,22 +350,22 @@ trainClient = bioims.client('train')
 # print(r)
 
 # Redo <<<
-filterBucket = 'bioimage-search-input'
-filterKey = 'train-filter/nocodazole-filter.txt'
-r = trainClient.train('bbbc021', filterBucket, filterKey)
-print(r)
+# filterBucket = 'bioimage-search-input'
+# filterKey = 'train-filter/nocodazole-filter.txt'
+# r = trainClient.train('bbbc021', filterBucket, filterKey)
+# print(r)
 
 # Redo <<<
-filterBucket = 'bioimage-search-input'
-filterKey = 'train-filter/proteasomeinhibitorI-filter.txt'
-r = trainClient.train('bbbc021', filterBucket, filterKey)
-print(r)
+# filterBucket = 'bioimage-search-input'
+# filterKey = 'train-filter/proteasomeinhibitorI-filter.txt'
+# r = trainClient.train('bbbc021', filterBucket, filterKey)
+# print(r)
 
 # Redo <<<
-filterBucket = 'bioimage-search-input'
-filterKey = 'train-filter/simvastatin-filter.txt'
-r = trainClient.train('bbbc021', filterBucket, filterKey)
-print(r)
+# filterBucket = 'bioimage-search-input'
+# filterKey = 'train-filter/simvastatin-filter.txt'
+# r = trainClient.train('bbbc021', filterBucket, filterKey)
+# print(r)
 
 # Running ***
 # filterBucket = 'bioimage-search-input'
@@ -379,5 +379,9 @@ print(r)
 # r = trainClient.train('bbbc021', filterBucket, filterKey)
 # print(r)
 
+#############################################################################################
+## bbbc012-128
 
+r = trainClient.train('bbbc021-128', '', '', 'false')
+print(r)
 

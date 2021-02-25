@@ -6,15 +6,44 @@ import bioims
 
 trainingConfigurationClient = bioims.client('training-configuration')
 
-embedding = {
-    "embeddingName" : "bbbc021",
+# embedding = {
+#     "embeddingName" : "bbbc021",
+#     "plateMethodArn" : "arn:aws:batch:us-east-1:580829821648:job-definition/platepreprocessingjobde-586209612f00161:18",
+#     "wellMethodArn" : "wellMethodArn-placeholder",
+#     "imageMethodArn" : "arn:aws:batch:us-east-1:580829821648:job-definition/imagepreprocessingjobde-af308e24979dc7d:15",
+#     "imagePostMethodArn" : "imagePostMethodArn-placeholder",
+#     "modelTrainingScriptBucket" : "bioimage-search-input",
+#     "modelTrainingScriptKey" : "bbbc021-train-script.py",
+#     "trainingInstanceType" : "ml.p2.xlarge",
+#     "trainingHyperparameters" : {
+#         'epochs': 15,
+#         'backend': 'gloo',
+#         'seed': 1,
+#         'batch_size': 1
+#     },
+#     "inputHeight" : 1024,
+#     "inputWidth" : 1280,
+#     "inputDepth" : 1,
+#     "inputChannels" : 3,
+#     "roiHeight" : 128,
+#     "roiWidth" : 128,
+#     "roiDepth" : 1,
+#     "embeddingVectorLength" : 32,
+#     "comments" : ""
+# }
+
+# r = trainingConfigurationClient.createEmbedding(embedding)
+# print(r)
+
+embedding128 = {
+    "embeddingName" : "bbbc021-128",
     "plateMethodArn" : "arn:aws:batch:us-east-1:580829821648:job-definition/platepreprocessingjobde-586209612f00161:18",
     "wellMethodArn" : "wellMethodArn-placeholder",
     "imageMethodArn" : "arn:aws:batch:us-east-1:580829821648:job-definition/imagepreprocessingjobde-af308e24979dc7d:15",
     "imagePostMethodArn" : "imagePostMethodArn-placeholder",
     "modelTrainingScriptBucket" : "bioimage-search-input",
-    "modelTrainingScriptKey" : "bbbc021-train-script.py",
-    "trainingInstanceType" : "ml.p2.xlarge",
+    "modelTrainingScriptKey" : "bbbc021-128-train-script.py",
+    "trainingInstanceType" : "ml.m5.4xlarge",
     "trainingHyperparameters" : {
         'epochs': 15,
         'backend': 'gloo',
@@ -28,10 +57,10 @@ embedding = {
     "roiHeight" : 128,
     "roiWidth" : 128,
     "roiDepth" : 1,
-    "embeddingVectorLength" : 32,
+    "embeddingVectorLength" : 128,
     "comments" : ""
 }
 
-r = trainingConfigurationClient.createEmbedding(embedding)
-
+r = trainingConfigurationClient.createEmbedding(embedding128)
 print(r)
+

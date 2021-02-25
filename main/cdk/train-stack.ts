@@ -157,7 +157,7 @@ export class TrainStack extends cdk.Stack {
         .otherwise(plateNotRunning));
 
     const plateProcessMap = new sfn.Map(this, "Plate Process Map", {
-      maxConcurrency: 10,
+      maxConcurrency: 5,
       itemsPath: '$.plateList.Payload.body',
       resultPath: '$.plateProcessMapResult',
       parameters: {
@@ -189,6 +189,9 @@ export class TrainStack extends cdk.Stack {
       lambdaFunction: this.trainComputeLambda,
       resultPath: '$.trainComputeOutput'
     });
+    
+    const skipProcessPlate = new sfn.Pass(this, "Skip Process Plate", {
+    });
 
     const trainStepFunctionDef = trainInfoRequest
       .next(trainInfo)
@@ -196,7 +199,10 @@ export class TrainStack extends cdk.Stack {
       .next(embeddingInfo)
       .next(plateSurveyRequest)
       .next(plateList)
-      .next(plateProcessMap)
+      .next(new sfn.Choice(this, 'Skip ProcessPlate?')
+        .when(sfn.Condition.stringEquals('$.trainInfo.Payload.body.executeProcessPlate', 'true'), plateProcessMap)
+        .otherwise(skipProcessPlate)
+        .afterwards())
       .next(trainBuildInput)
       .next(trainBuild)
       .next(trainComputeInput)
