@@ -45,8 +45,9 @@ public class App {
 	
 	private static int EUCLIDEAN_TYPE = 1;
 	private static int COSINE_TYPE = 2;
+	private static int DEFAULT_METRIC = COSINE_TYPE;
 	
-	private int distanceType=COSINE_TYPE;
+	private int distanceType=DEFAULT_METRIC;
 
 	private App() {
 		Region region = Region.of(REGION);
@@ -228,6 +229,28 @@ public class App {
     		setPlateTags(messageArr);
     	} else if (messageArr[0].equals("loadTagLabelMap")) {
     		tagLabelMap = getTagLabelMap();
+    	} else if (messageArr[0].equals("logEmbeddingList")) {
+    		logEmbeddingList();
+    	} else if (messageArr[0].equals("deleteEmbedding")) {
+    		deleteEmbedding(messageArr);
+    	}
+    }
+    
+    private void logEmbeddingList() {
+    	System.out.println("logEmbeddingList:");
+    	for (String embeddingName : trainMap.keySet()) {
+			System.out.println(embeddingName);
+    	}
+    	System.out.println("==");
+    }
+    
+    private void deleteEmbedding(String[] messageArr) {
+    	String embeddingName = messageArr[1];
+    	System.out.println("Deleting embedding "+embeddingName);
+    	if (trainMap.containsKey(embeddingName)) {
+    		trainMap.remove(embeddingName);
+    	} else {
+    		System.out.println("Embedding key "+embeddingName+" not found");
     	}
     }
     
@@ -300,6 +323,12 @@ public class App {
 			exclusionTags.add(new Integer(messageArr[i++]));
 		}
     	System.out.println("trainId="+trainId+", imageId="+imageId+", metric="+metric+", maxHits="+maxHits);
+    	distanceType=DEFAULT_METRIC;
+    	if (metric.equals("Euclidean")) {
+    		distanceType=EUCLIDEAN_TYPE;
+    	} else if (metric.equals("Cosine")) {
+    		distanceType=COSINE_TYPE;
+    	}
     	if (inclusionTagCount==0) {
     		System.out.println("inclusionTags=none");
     	} else {

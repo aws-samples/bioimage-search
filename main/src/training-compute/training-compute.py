@@ -103,7 +103,8 @@ def handler(event, context):
     sgIds=[]
     sgIds.append(fsxInfo['securityGroup'])
     jobName = 'bioims-' + trainId + '-' + uniqueId
-    
+    checkpoint_s3_uri = "s3://" + sagemaker_bucket + "/checkpoints/" + jobName
+
     file_system_input = FileSystemInput(file_system_id=fsxInfo['fsxId'],
                                     file_system_type='FSxLustre',
                                     directory_path=directory_path,
@@ -130,7 +131,9 @@ def handler(event, context):
                     hyperparameters = trainingHyperparameters,
                     train_use_spot_instances=True,
                     train_max_wait=100000,
-                    train_max_run=100000
+                    train_max_run=100000,
+                    checkpoint_s3_uri = checkpoint_s3_uri,
+                    debugger_hook_config=False
                 )
                 
     trainingConfigurationClient.updateTraining(trainId, 'sagemakerJobName', jobName)

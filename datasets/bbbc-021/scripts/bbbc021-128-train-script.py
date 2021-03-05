@@ -29,6 +29,38 @@ minibatches = 100000
 channels = 3
 height_width = 128
 
+# 128 Original
+#
+# class Net(nn.Module): 
+#     def __init__(self):
+#         super(Net, self).__init__()
+#         self.conv1 = nn.Conv2d(channels, 16, 3, stride=2)
+#         self.conv2 = nn.Conv2d(16, 32, 3, stride=2)
+#         self.conv3 = nn.Conv2d(32, 64, 3, stride=2)
+#         self.conv4 = nn.Conv2d(64, 128, 3, stride=2)
+#         self.conv5 = nn.Conv2d(128, 256, 3, stride=2)
+#         self.pool1 = nn.AvgPool2d(kernel_size = 2, padding=0, ceil_mode=False, count_include_pad=True)
+#         self.fc1 = nn.Linear(256, 128)
+
+#     def forward(self, x):
+#         x = self.conv1(x)
+#         x = F.relu(x)
+#         x = self.conv2(x)
+#         x = F.relu(x)
+#         x = self.conv3(x)
+#         x = F.relu(x)
+#         x = self.conv4(x)
+#         x = F.relu(x)
+#         x = self.conv5(x)
+#         x = F.relu(x)
+#         x = self.pool1(x)
+#         x = x.view(-1, 256)
+#         x = self.fc1(x)
+#         n = x.norm(p=2, dim=1, keepdim=True)
+#         x = x.div(n)
+#         return x
+
+
 class Net(nn.Module): 
     def __init__(self):
         super(Net, self).__init__()
@@ -37,8 +69,9 @@ class Net(nn.Module):
         self.conv3 = nn.Conv2d(32, 64, 3, stride=2)
         self.conv4 = nn.Conv2d(64, 128, 3, stride=2)
         self.conv5 = nn.Conv2d(128, 256, 3, stride=2)
-        self.pool1 = nn.AvgPool2d(kernel_size = 2, padding=0, ceil_mode=False, count_include_pad=True)
-        self.fc1 = nn.Linear(256, 128)
+        self.conv6 = nn.Conv2d(256, 512, 3, stride=2)
+        # self.pool1 = nn.AvgPool2d(kernel_size = 2, padding=0, ceil_mode=False, count_include_pad=True)
+        self.fc1 = nn.Linear(512, 128)
 
     def forward(self, x):
         x = self.conv1(x)
@@ -51,8 +84,10 @@ class Net(nn.Module):
         x = F.relu(x)
         x = self.conv5(x)
         x = F.relu(x)
-        x = self.pool1(x)
-        x = x.view(-1, 256)
+        x = self.conv6(x)
+        x = F.relu(x)
+        # x = self.pool1(x)
+        x = x.view(-1, 512)
         x = self.fc1(x)
         n = x.norm(p=2, dim=1, keepdim=True)
         x = x.div(n)
@@ -225,9 +260,13 @@ def _train(args):
     
     pairGenerator=AnchorPositivePairs(1000)
     
-    # NOT WORKING: model = model_fn(args.model_dir)
-
-    model = Net()
+    checkpointModelPath = os.path.join("/opt/ml/checkpoints", 'model.pth')
+    if (os.path.exists(checkpointModelPath)):
+        print("Reading checkpoint model")
+        model = model_fn("/opt/ml/checkpoints")
+    else:
+        print("No checkpoint model found")
+        model = Net()
 
     if torch.cuda.device_count() > 1:
         logger.info("Gpu count: {}".format(torch.cuda.device_count()))
@@ -248,11 +287,13 @@ def _train(args):
     #sparse_label_batch = torch.zeros(10, 10)
     #for j in range(10):
     #   sparse_label_batch[j]=sparse_labels
-    
+
+    best_loss = -1.0
+    best_epoch = 0
     for epoch in range(0, args.epochs):
-        
         i=0
         running_loss = 0.0
+        epoch_loss = 0.0
         for minibatch in range(minibatches):
 
             data = pairGenerator.getitem()
@@ -291,15 +332,28 @@ def _train(args):
             optimizer.step()
 
             # print statistics
-            running_loss += loss.item()
+            item_loss = loss.item()
+            running_loss += item_loss
+            epoch_loss += item_loss
+            if i==0:
+                be1 = best_epoch+1
+                print("Best epoch={}".format(be1))
             if i % 200 == 199:    # print every 2000 mini-batches
                 print('v2 [%d, %5d] loss: %.6f' %
                       (epoch + 1, i + 1, running_loss / 200))
                 running_loss = 0.0
             i+=1
+        
+        if best_loss < 0.0 or epoch_loss < best_loss:
+            print("Best loss={} Epoch loss={}".format(best_loss, epoch_loss))
+            print("Saving checkpoint to ", args.model_dir)
+            _save_model(model, args.model_dir)
+            best_loss = epoch_loss
+            best_epoch = epoch
+        else:
+            print("Stopping due to lack of improvement in prior epoch")
+            break
             
-        print("Saving checkpoint to ", args.model_dir)
-        _save_model(model, args.model_dir)
         model = model.to(device)
 
     print('Finished Training')
@@ -309,8 +363,10 @@ def _train(args):
 def _save_model(model, model_dir):
     logger.info("Saving the model.")
     path = os.path.join(model_dir, 'model.pth')
+    checkpoint_path = os.path.join("/opt/ml/checkpoints", 'model.pth')
     # recommended way from http://pytorch.org/docs/master/notes/serialization.html
     torch.save(model.cpu().state_dict(), path)
+    torch.save(model.cpu().state_dict(), checkpoint_path)
     
 
 def model_fn(model_dir):

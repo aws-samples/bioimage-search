@@ -192,6 +192,45 @@ export class TrainStack extends cdk.Stack {
     
     const skipProcessPlate = new sfn.Pass(this, "Skip Process Plate", {
     });
+    
+    /////////////////////////////////
+    
+    const trainWait = new sfn.Wait(this, "Train Wait", {
+      time: sfn.WaitTime.duration(cdk.Duration.seconds(30))
+    });
+    
+    const trainStatusInput = new sfn.Pass(this, "Train Status Input", {
+      parameters: {
+        method: "getTrainingJobInfo",
+        trainingJobName: sfn.JsonPath.stringAt('$.trainComputeOutput.Payload.body.trainingJobName')
+      }
+    });
+    
+    const trainStatus = new tasks.LambdaInvoke(this, "Train Status", {
+      lambdaFunction: props.trainingConfigurationLambda,
+      resultPath: '$.trainStatus'
+    });
+    
+    const trainNotRunning = new sfn.Pass(this, "Train Not Running", {
+      parameters: {
+        status: sfn.JsonPath.stringAt('$.trainStatus')
+      }
+    });
+
+//    'TrainingJobStatus': 'InProgress'|'Completed'|'Failed'|'Stopping'|'Stopped',
+    
+    const trainSequence = trainComputeInput
+      .next(trainCompute)
+      .next(trainStatusInput)
+      .next(trainWait)
+      .next(trainStatus)
+      .next(new sfn.Choice(this, 'Train Complete?')
+        .when(sfn.Condition.stringEquals('$.trainStatus.Payload.body.TrainingJobStatus', 'Completed'), trainNotRunning)
+        .when(sfn.Condition.stringEquals('$.trainStatus.Payload.body.TrainingJobStatus', 'Stopped'), trainNotRunning)
+        .when(sfn.Condition.stringEquals('$.trainStatus.Payload.body.TrainingJobStatus', 'Failed'), trainNotRunning)
+        .otherwise(trainWait));
+    
+    /////////////////////////////////
 
     const trainStepFunctionDef = trainInfoRequest
       .next(trainInfo)
@@ -205,8 +244,7 @@ export class TrainStack extends cdk.Stack {
         .afterwards())
       .next(trainBuildInput)
       .next(trainBuild)
-      .next(trainComputeInput)
-      .next(trainCompute)
+      .next(trainSequence)
 
     const trainLogGroup = new logs.LogGroup(this, "TrainLogGroup");
 

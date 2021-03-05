@@ -64,6 +64,37 @@ function getTimestamp() {
   return Date.now().toString()
 }
 
+async function deleteEmbedding(embeddingName: any) {
+  var messageBody = "deleteEmbedding\n";
+  messageBody += embeddingName + "\n";
+  
+  const dedupeId = su.generate();
+
+  const sqsParams = {
+    MessageBody: messageBody,
+    MessageGroupId: "BioimsSearch",
+    MessageDeduplicationId: dedupeId,
+    QueueUrl: MANAGEMENT_QUEUE_URL
+  };
+  
+  await sqs.sendMessage(sqsParams).promise();
+}
+
+async function logEmbeddingList() {
+  const messageBody = "logEmbeddingList\n";
+  
+  const dedupeId = su.generate();
+
+  const sqsParams = {
+    MessageBody: messageBody,
+    MessageGroupId: "BioimsSearch",
+    MessageDeduplicationId: dedupeId,
+    QueueUrl: MANAGEMENT_QUEUE_URL
+  };
+  
+  await sqs.sendMessage(sqsParams).promise();
+}
+
 async function loadTagLabelMap() {
   const messageBody = "loadTagLabelMap\n";
   
@@ -551,6 +582,13 @@ export const handler = async (event: any = {}): Promise<any> => {
     } catch (dbError) {
       return { statusCode: 500, body: JSON.stringify(dbError) };
     }
+  } else if (event.method == "logEmbeddingList") {
+    try {
+      const response = await logEmbeddingList();
+      return { statusCode: 200, body: "success" };
+    } catch (dbError) {
+      return { statusCode: 500, body: JSON.stringify(dbError) };
+    }
   } else if (event.method == "processPlate") {
     if ( (event.trainId && event.plateId) ||
          (event.embeddingName && event.plateId) ) {
@@ -580,6 +618,20 @@ export const handler = async (event: any = {}): Promise<any> => {
       return {
         statusCode: 400,
         body: `Error: trainId and imageId are required`,
+      };
+    }
+  } else if (event.method == "deleteEmbedding") {
+    if (event.embeddingName) {
+      try {
+        const response = await deleteEmbedding(event.embeddingName);
+        return { statusCode: 200, body: response };
+      } catch (dbError) {
+        return { statusCode: 500, body: JSON.stringify(dbError) };
+      }
+    } else {
+      return {
+        statusCode: 400,
+        body: `Error: embeddingName is required`,
       };
     }
   } else {

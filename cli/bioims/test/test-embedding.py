@@ -6,17 +6,19 @@ sys.path.insert(0, "../src")
 import bioims
 
 # Inputs
-trainId = "r6KEudzQCuUtDwCzziiMZT"
-imageId = "17Sk8AHeX1idyJDBnMwEhX"
+#trainId = "r6KEudzQCuUtDwCzziiMZT"
+#imageId = "17Sk8AHeX1idyJDBnMwEhX"
 
-trainingConfigurationClient = bioims.client('training-configuration')
-stacksDescription = trainingConfigurationClient.getStacksDescription()
+# trainingConfigurationClient = bioims.client('training-configuration')
+# stacksDescription = trainingConfigurationClient.getStacksDescription()
 
-params = {
-    'stacksDescription': stacksDescription
-}
-imageManagementClient = bioims.client('image-management', params)
-embeddingClient = bioims.client('embedding', params)
+# params = {
+#     'stacksDescription': stacksDescription
+# }
+# imageManagementClient = bioims.client('image-management', params)
+
+#embeddingClient = bioims.client('embedding', params)
+embeddingClient = bioims.client('embedding')
 
 # trainInfo = trainingConfigurationClient.getTraining(trainId)
 # embeddingName = trainInfo['embeddingName']
@@ -35,5 +37,6 @@ embeddingClient = bioims.client('embedding', params)
 
 #r = embeddingClient.startComputePlateEmbedding(trainId, plateId)
 
+trainId = 'vT44kUtLi7jnSGC7VXG7iT'
 r = embeddingClient.startComputeEmbedding(trainId)
 print(r)
