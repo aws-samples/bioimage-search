@@ -7,7 +7,7 @@ import bioims
 
 trainingConfigurationClient = bioims.client('training-configuration')
 
-trainingList = trainingConfigurationClient.getEmbeddingTrainings('bbbc021-128')
+trainingList = trainingConfigurationClient.getEmbeddingTrainings('bbbc021-2')
 
 filters = {}
 trainIds = []

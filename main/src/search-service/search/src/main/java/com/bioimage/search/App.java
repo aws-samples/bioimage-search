@@ -119,6 +119,13 @@ public class App {
 				return 0;
 			}
     	}
+    	
+    	public String toString() {
+    		String s = "{\n" + 
+    		           "   imageId : " + this.imageId + "\n" +
+    		           "   embedding: "  + Arrays.toString(this.embedding) + "\n}";
+    		return s;
+    	}
 
     }
     
@@ -229,28 +236,28 @@ public class App {
     		setPlateTags(messageArr);
     	} else if (messageArr[0].equals("loadTagLabelMap")) {
     		tagLabelMap = getTagLabelMap();
-    	} else if (messageArr[0].equals("logEmbeddingList")) {
-    		logEmbeddingList();
-    	} else if (messageArr[0].equals("deleteEmbedding")) {
-    		deleteEmbedding(messageArr);
+    	} else if (messageArr[0].equals("logTrainList")) {
+    		logTrainList();
+    	} else if (messageArr[0].equals("deleteTraining")) {
+    		deleteTraining(messageArr);
     	}
     }
     
-    private void logEmbeddingList() {
-    	System.out.println("logEmbeddingList:");
-    	for (String embeddingName : trainMap.keySet()) {
-			System.out.println(embeddingName);
+    private void logTrainList() {
+    	System.out.println("logTrainList:");
+    	for (String trainId : trainMap.keySet()) {
+			System.out.println(trainId);
     	}
     	System.out.println("==");
     }
     
-    private void deleteEmbedding(String[] messageArr) {
-    	String embeddingName = messageArr[1];
-    	System.out.println("Deleting embedding "+embeddingName);
-    	if (trainMap.containsKey(embeddingName)) {
-    		trainMap.remove(embeddingName);
+    private void deleteTraining(String[] messageArr) {
+    	String trainId = messageArr[1];
+    	System.out.println("Deleting trainId "+trainId);
+    	if (trainMap.containsKey(trainId)) {
+    		trainMap.remove(trainId);
     	} else {
-    		System.out.println("Embedding key "+embeddingName+" not found");
+    		System.out.println("TrainId "+trainId+" not found");
     	}
     }
     
@@ -422,6 +429,17 @@ public class App {
 		long createArrayMs=timestamp2-timestamp1;
 		long sortMs=timestamp3-timestamp2;
 		System.out.println("Closest two matches are "+arr[0].imageId+", "+arr[1].imageId);
+		
+		ImageEmbedding queryImageEmbedding = trainImageMap.get(imageId);
+		ImageEmbedding hit0 = trainImageMap.get(arr[0].imageId);
+		ImageEmbedding hit1 = trainImageMap.get(arr[1].imageId);
+		
+		// System.out.println("DEBUG===");
+		// System.out.println(queryImageEmbedding);
+		// System.out.println(hit0);
+		// System.out.println(hit1);
+		// System.out.println("===");
+
 		System.out.println("Create array ms="+createArrayMs);
 		System.out.println("Sort ms="+sortMs);
 

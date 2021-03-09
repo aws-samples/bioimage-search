@@ -1313,8 +1313,8 @@ class SearchClient(BioimageSearchClient):
         jbody = getResponseBodyAsJson(response)
         return jbody
         
-    def logEmbeddingList(self):
-        request = '{ "method": "logEmbeddingList" }'
+    def logTrainList(self):
+        request = '{ "method": "logTrainList" }'
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(
@@ -1325,8 +1325,8 @@ class SearchClient(BioimageSearchClient):
         jbody = getResponseBodyAsJson(response)
         return jbody
         
-    def deleteEmbedding(self, embeddingName):
-        request = '{{ "method": "deleteEmbedding", "embeddingName": "{}" }}'.format(embeddingName)
+    def deleteTraining(self, trainId):
+        request = '{{ "method": "deleteTraining", "trainId": "{}" }}'.format(trainId)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(

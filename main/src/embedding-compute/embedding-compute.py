@@ -134,11 +134,28 @@ def handler(event, context):
     else:
         print("Creating {} and downloading model.tar.gz".format(localModelDir))
         os.mkdir(localModelDir)
-        copyS3ObjectPathToLocalPath(s3ModelPath, localModelGz)
-        os.chdir(localModelDir)
-        tar = tarfile.open("model.tar.gz")
-        tar.extractall()
-        tar.close()
+        try:
+            copyS3ObjectPathToLocalPath(s3ModelPath, localModelGz)
+            os.chdir(localModelDir)
+            tar = tarfile.open("model.tar.gz")
+            tar.extractall()
+            tar.close()
+        except:
+            try:
+                print("Error obtaining model, will try checkpoint location")
+                checkpointConfig = trainingJobInfo['CheckpointConfig']
+                checkpointS3Uri = checkpointConfig['S3Uri']
+                s3CheckpointPath = checkpointS3Uri + '/model.pth'
+                localCheckpointPath = os.path.join(localModelDir, 'model.pth')
+                copyS3ObjectPathToLocalPath(s3CheckpointPath, localCheckpointPath)
+                print("Successfully retrieved checkpoint model")
+            except:
+                print("Error retrieving checkpoint model")
+                response = {
+                    'statusCode': 400,
+                    'body': 'Could not obtain model'
+                }
+                return response
 
     localTrainScript = os.path.join(localModelDir, 'bioimstrain.py')
     if os.path.isfile(localTrainScript):
@@ -152,6 +169,9 @@ def handler(event, context):
     import bioimstrain
     model=bioimstrain.model_fn(localModelDir)
     print(model)
+    for m in model.modules():
+      if isinstance(m, nn.BatchNorm2d):
+        m.eval()
     
     roiTrainKey = bp.getTrainKey(embeddingName, plateId, imageId)
     data = getNumpyArrayFromS3(BUCKET, roiTrainKey).astype(np.float32)

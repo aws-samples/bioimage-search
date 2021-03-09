@@ -23,6 +23,7 @@ const ORIGIN = "origin";
 
 const EUCLIDEAN_METRIC = "Euclidean";
 const COSINE_METRIC = "Cosine";
+const DEFAULT_METRIC = COSINE_METRIC;
 
 const DEFAULT_MAX_HITS = 100;
 
@@ -38,7 +39,7 @@ const QUERY_IMAGE_ID = "queryImageId";
 // optional
 const INCLUSION_TAG_LIST = "inclusionTags";
 const EXCLUSION_TAG_LIST = "exclusionTags";
-const SEARCH_METRIC = "searchMetric";
+const METRIC = "metric";
 const MAX_HITS = "maxHits";
 const REQUIRE_MOA = "requireMoa";
 
@@ -64,9 +65,9 @@ function getTimestamp() {
   return Date.now().toString()
 }
 
-async function deleteEmbedding(embeddingName: any) {
-  var messageBody = "deleteEmbedding\n";
-  messageBody += embeddingName + "\n";
+async function deleteTraining(trainId: any) {
+  var messageBody = "deleteTraining\n";
+  messageBody += trainId + "\n";
   
   const dedupeId = su.generate();
 
@@ -80,8 +81,8 @@ async function deleteEmbedding(embeddingName: any) {
   await sqs.sendMessage(sqsParams).promise();
 }
 
-async function logEmbeddingList() {
-  const messageBody = "logEmbeddingList\n";
+async function logTrainList() {
+  const messageBody = "logTrainList\n";
   
   const dedupeId = su.generate();
 
@@ -113,11 +114,16 @@ async function loadTagLabelMap() {
 async function submitSearch(search: any) {
   const searchId = su.generate()
 
-  var metric = EUCLIDEAN_METRIC
-  if (search[SEARCH_METRIC] && search[SEARCH_METRIC]==COSINE_METRIC) {
-    metric = COSINE_METRIC
+  var metric = DEFAULT_METRIC;
+
+  if (search[METRIC]) {
+    if (search[METRIC]==EUCLIDEAN_METRIC) {
+      metric = EUCLIDEAN_METRIC;
+    } else if (search[METRIC]==COSINE_METRIC) {
+      metric = COSINE_METRIC;
+    }
   }
-  
+
   var maxHits = DEFAULT_MAX_HITS
   if (search[MAX_HITS]) {
     maxHits = search[MAX_HITS]    
@@ -137,7 +143,7 @@ async function submitSearch(search: any) {
     [SORT_KEY_IMGID]: ORIGIN,
     [TRAIN_ID]: search.trainId,
     [QUERY_IMAGE_ID]: search[QUERY_IMAGE_ID],
-    [SEARCH_METRIC]: metric,
+    [METRIC]: metric,
     [MAX_HITS]: maxHits,
     [REQUIRE_MOA]: requireMoa,
     [SUBMIT_TIMESTAMP]: submitTimestamp,
@@ -180,7 +186,7 @@ function generateSearchMessageBody(search: any) {
   messageBody += search[PARTITION_KEY_SRTID] + "\n";
   messageBody += search[TRAIN_ID] + "\n";
   messageBody += search[QUERY_IMAGE_ID] + "\n";
-  messageBody += search[SEARCH_METRIC] + "\n";
+  messageBody += search[METRIC] + "\n";
   messageBody += search[MAX_HITS] + "\n";
   messageBody += search[REQUIRE_MOA] + "\n";
   if (INCLUSION_TAG_LIST in search) {
@@ -504,7 +510,6 @@ export const handler = async (event: any = {}): Promise<any> => {
     console.log("Error: method parameter required - returning status code 400");
     return { statusCode: 400, body: `Error: method parameter required` };
   }
-  
   if (event.method == "submitSearch") {
     if (event.search && event.search.trainId && (event.search.queryOrigin || event.search.queryImageId)) {
       try {
@@ -582,9 +587,9 @@ export const handler = async (event: any = {}): Promise<any> => {
     } catch (dbError) {
       return { statusCode: 500, body: JSON.stringify(dbError) };
     }
-  } else if (event.method == "logEmbeddingList") {
+  } else if (event.method == "logTrainList") {
     try {
-      const response = await logEmbeddingList();
+      const response = await logTrainList();
       return { statusCode: 200, body: "success" };
     } catch (dbError) {
       return { statusCode: 500, body: JSON.stringify(dbError) };
@@ -620,10 +625,10 @@ export const handler = async (event: any = {}): Promise<any> => {
         body: `Error: trainId and imageId are required`,
       };
     }
-  } else if (event.method == "deleteEmbedding") {
-    if (event.embeddingName) {
+  } else if (event.method == "deleteTraining") {
+    if (event.trainId) {
       try {
-        const response = await deleteEmbedding(event.embeddingName);
+        const response = await deleteTraining(event.trainId);
         return { statusCode: 200, body: response };
       } catch (dbError) {
         return { statusCode: 500, body: JSON.stringify(dbError) };
