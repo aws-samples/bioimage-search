@@ -9,6 +9,7 @@ import software.amazon.awssdk.services.lambda.model.InvokeResponse;
 import software.amazon.awssdk.services.lambda.model.LambdaException;
 import software.amazon.awssdk.core.SdkBytes;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -48,7 +49,7 @@ public class App {
 	private static int DEFAULT_METRIC = COSINE_TYPE;
 	
 	private int distanceType=DEFAULT_METRIC;
-
+	
 	private App() {
 		Region region = Region.of(REGION);
 		sqsClient = SqsClient.builder().region(region).build();
@@ -142,9 +143,24 @@ public class App {
     private void start() {
 		int i=0;
 		int receiveCount=0;
+		long ts0 = 0;
+		long ts1 = 0;
+		long ts2 = 0;
+		long ts3 = 0;
+		List<Long> ts0gapList = new ArrayList<>();
 		while(true) {
+			long ts0new = new Date().getTime();
+			long ts0gap = ts0new - ts0;
+			ts0 = ts0new;
+			ts0gapList.add(ts0gap);
 			if (i%100==0) {
-		    	System.out.println("Region="+REGION+" Count v10 =" + i);
+				String logEntry="";
+		    	logEntry += "Region="+REGION+" Count v10 =" + i + "\n";
+		    	for (long g : ts0gapList) {
+		    		logEntry += "ts0gap: " + g + "\n";
+		    	}
+		    	ts0gapList.clear();
+		    	System.out.println(logEntry);
 			}
 			List<Message> managementMessages = null;
 			List<Message> searchMessages = null;

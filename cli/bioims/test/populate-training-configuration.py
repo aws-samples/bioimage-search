@@ -64,17 +64,46 @@ trainingConfigurationClient = bioims.client('training-configuration')
 # r = trainingConfigurationClient.createEmbedding(embedding128)
 # print(r)
 
-embedding2 = {
-    "embeddingName" : "bbbc021-2",
+# embedding2 = {
+#     "embeddingName" : "bbbc021-2",
+#     "plateMethodArn" : "arn:aws:batch:us-east-1:580829821648:job-definition/platepreprocessingjobde-88682c862ac6a33:18",
+#     "wellMethodArn" : "wellMethodArn-placeholder",
+#     "imageMethodArn" : "arn:aws:batch:us-east-1:580829821648:job-definition/imagepreprocessingjobde-d267d186dc16884:21",
+#     "imagePostMethodArn" : "imagePostMethodArn-placeholder",
+#     "modelTrainingScriptBucket" : "bioimage-search-input",
+#     "modelTrainingScriptKey" : "bbbc021-2-train-script.py",
+#     "trainingInstanceType" : "ml.m5.4xlarge",
+#     "trainingHyperparameters" : {
+#         'epochs': 30,
+#         'backend': 'gloo',
+#         'seed': 1,
+#         'batch_size': 1
+#     },
+#     "inputHeight" : 1024,
+#     "inputWidth" : 1280,
+#     "inputDepth" : 1,
+#     "inputChannels" : 3,
+#     "roiHeight" : 128,
+#     "roiWidth" : 128,
+#     "roiDepth" : 1,
+#     "embeddingVectorLength" : 128,
+#     "comments" : ""
+# }
+
+# r = trainingConfigurationClient.createEmbedding(embedding2)
+# print(r)
+
+embedding3 = {
+    "embeddingName" : "bbbc021-3",
     "plateMethodArn" : "arn:aws:batch:us-east-1:580829821648:job-definition/platepreprocessingjobde-88682c862ac6a33:18",
     "wellMethodArn" : "wellMethodArn-placeholder",
     "imageMethodArn" : "arn:aws:batch:us-east-1:580829821648:job-definition/imagepreprocessingjobde-d267d186dc16884:21",
     "imagePostMethodArn" : "imagePostMethodArn-placeholder",
     "modelTrainingScriptBucket" : "bioimage-search-input",
-    "modelTrainingScriptKey" : "bbbc021-2-train-script.py",
+    "modelTrainingScriptKey" : "bbbc021-3-train-script.py",
     "trainingInstanceType" : "ml.m5.4xlarge",
     "trainingHyperparameters" : {
-        'epochs': 30,
+        'epochs': 20,
         'backend': 'gloo',
         'seed': 1,
         'batch_size': 1
@@ -90,6 +119,6 @@ embedding2 = {
     "comments" : ""
 }
 
-r = trainingConfigurationClient.createEmbedding(embedding2)
+r = trainingConfigurationClient.createEmbedding(embedding3)
 print(r)
 

@@ -238,6 +238,8 @@ def getResponseBodyAsJson(response):
             errMsg = "Error: " + jresponse['body']
             print(errMsg)
             raise Exception(errMsg)
+        if 'body' not in jresponse:
+            jresponse['body']=''
         jbody = jresponse['body']
         if type(jbody) is str:
             try:

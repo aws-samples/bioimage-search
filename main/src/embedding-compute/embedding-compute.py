@@ -123,10 +123,6 @@ def handler(event, context):
     else:
         trainingJobInfo = event['trainingJobInfo']
     
-    modelArtifacts=trainingJobInfo['ModelArtifacts']
-    s3ModelPath=modelArtifacts['S3ModelArtifacts']
-    print(s3ModelPath)
-    
     localModelDir = os.path.join('/tmp/',trainingJobName)
     localModelGz = os.path.join(localModelDir, 'model.tar.gz')
     if os.path.isdir(localModelDir):
@@ -134,15 +130,18 @@ def handler(event, context):
     else:
         print("Creating {} and downloading model.tar.gz".format(localModelDir))
         os.mkdir(localModelDir)
-        try:
+        if 'ModelArtifacts' in trainingJobInfo:
+            modelArtifacts=trainingJobInfo['ModelArtifacts']
+            s3ModelPath=modelArtifacts['S3ModelArtifacts']
+            print(s3ModelPath)
             copyS3ObjectPathToLocalPath(s3ModelPath, localModelGz)
             os.chdir(localModelDir)
             tar = tarfile.open("model.tar.gz")
             tar.extractall()
             tar.close()
-        except:
+        elif 'CheckpointConfig' in trainingJobInfo:
             try:
-                print("Error obtaining model, will try checkpoint location")
+                print("ModelArtifacts not available -, will try checkpoint location")
                 checkpointConfig = trainingJobInfo['CheckpointConfig']
                 checkpointS3Uri = checkpointConfig['S3Uri']
                 s3CheckpointPath = checkpointS3Uri + '/model.pth'
@@ -156,6 +155,14 @@ def handler(event, context):
                     'body': 'Could not obtain model'
                 }
                 return response
+        else:
+            print("Neither model nor checkpoint available")
+            response = {
+                'statusCode': 400,
+                'body': 'Could not obtain model or checkpoint'
+            }
+            return response
+            
 
     localTrainScript = os.path.join(localModelDir, 'bioimstrain.py')
     if os.path.isfile(localTrainScript):
@@ -243,7 +250,7 @@ def handler(event, context):
 
     response = {
         'statusCode': 200,
-        'body': ea64
+        'body': 'success'
     }
     
     return response

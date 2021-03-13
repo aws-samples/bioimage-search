@@ -58,6 +58,8 @@ const DISTANCE = "distance";
 const IMT_EMBEDDING = "embedding";
 const IMT_TAGARR = "tagArr";
 
+const EMBEDDINGS_PER_MESSAGE = 50;
+
 
 /////////////////////////////////////////////////
 
@@ -262,23 +264,38 @@ async function processTrainPlate(trainId: any, plateId: any) {
     }
   }
   console.log("embeddingInfo count="+embeddingInfo.length);
-  const plateEmbedding = {
-    trainId: trainId,
-    plateId: plateId,
-    data: embeddingInfo
+  var embeddingCount=0;
+  var embeddingData = [];
+  for (let entry of embeddingInfo) {
+    embeddingData.push(entry)
+    if (embeddingData.length==EMBEDDINGS_PER_MESSAGE) {
+      await uploadEmbeddings(trainId, plateId, embeddingData)
+      embeddingData = []
+    }
   }
-  const messageId = su.generate()
-  const sqsParams = {
-    MessageBody: createPlateEmbeddingStringMessage(plateEmbedding),
-    MessageGroupId: "BioimsSearch",
-    MessageDeduplicationId: messageId,
-    QueueUrl: MANAGEMENT_QUEUE_URL,
-  };
-  await sqs.sendMessage(sqsParams).promise();
+  if (embeddingData.length>0) {
+    await uploadEmbeddings(trainId, plateId, embeddingData)
+  }
   const response = {
-    sqsMessageDeduplicationId: messageId
+    sqsMessageDeduplicationId: 'multiple'
   }
   return response;
+}
+
+async function uploadEmbeddings(trainId: any, plateId: any, embeddings: any) {
+    const plateEmbedding = {
+      trainId: trainId,
+      plateId: plateId,
+      data: embeddings
+    }
+    const messageId = su.generate()
+    const sqsParams = {
+      MessageBody: createPlateEmbeddingStringMessage(plateEmbedding),
+      MessageGroupId: "BioimsSearch",
+      MessageDeduplicationId: messageId,
+      QueueUrl: MANAGEMENT_QUEUE_URL,
+    };
+    await sqs.sendMessage(sqsParams).promise();
 }
 
 async function processEmbeddingPlate(embeddingName: any, plateId: any) {

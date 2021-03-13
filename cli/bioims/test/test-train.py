@@ -387,6 +387,10 @@ trainClient = bioims.client('train')
 
 # To create fresh image processing artifacts before doing filter series
 #r = trainClient.train('bbbc021-2')
-r = trainClient.train('bbbc021-2', '', '', 'false')
+# r = trainClient.train('bbbc021-2', '', '', 'false')
+# print(r)
+
+r = trainClient.train('bbbc021-3', '', '', 'false')
 print(r)
+
 
