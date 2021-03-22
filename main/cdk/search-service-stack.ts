@@ -26,8 +26,8 @@ export class SearchServiceStack extends cdk.Stack {
     super(app, id, props);
 
     this.searchTaskDefinition = new ecs.FargateTaskDefinition(this, 'BioimsSearchTaskDef', {
-      memoryLimitMiB: 1024,
-      cpu: 512,
+      memoryLimitMiB: 2048,
+      cpu: 1024,
     });
 
     const searchContainer = this.searchTaskDefinition.addContainer("BioimsSearchContainer", {

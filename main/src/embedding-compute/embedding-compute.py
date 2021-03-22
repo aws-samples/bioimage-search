@@ -195,7 +195,7 @@ def handler(event, context):
     #
     ##########################################################################
 
-    print("v5")
+    print("v6")
 
     if data.shape[0] > 0:
         min=np.min(data)
