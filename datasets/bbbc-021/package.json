@@ -10,23 +10,21 @@
     "cdk": "cdk"
   },
   "devDependencies": {
-    "@aws-cdk/assert": "^1.64.0",
-    "@types/node": "^14.6.0",
-    "aws-cdk": "^1.64.0",
-    "ts-node": "^8.10.2",
-    "typescript": "~3.9.7"
+    "@aws-cdk/assert": "^1.94.1",
+    "@types/node": "^14.8.0",
+    "aws-cdk": "^1.94.1",
+    "ts-node": "^9.1.1",
+    "typescript": "~4.2.3"
   },
   "dependencies": {
-    "@aws-cdk/aws-cloudformation": "^1.64.0",
-    "@aws-cdk/aws-codebuild": "^1.64.0",
-    "@aws-cdk/aws-ec2": "^1.64.0",
-    "@aws-cdk/aws-lambda": "^1.64.0",
-    "@aws-cdk/core": "^1.64.0",
-    "@aws-cdk/custom-resources": "^1.64.0",
-    "aws-sdk": "^2.739.0",
-    "source-map-support": "^0.5.19",
-    "update": "^0.7.4",
-    "uuid": "^8.3.0",
-    "crypto-random-string": "^3.3.0"
+    "@aws-cdk/aws-cloudformation": "^1.94.1",
+    "@aws-cdk/aws-codebuild": "^1.94.1",
+    "@aws-cdk/aws-ec2": "^1.94.1",
+    "@aws-cdk/aws-lambda": "^1.94.1",
+    "@aws-cdk/core": "^1.94.1",
+    "@aws-cdk/custom-resources": "^1.94.1",
+    "aws-sdk": "^2.869.0",
+    "uuid": "^8.3.2",
+    "crypto-random-string": "^3.3.1"
   }
 }

@@ -109,7 +109,7 @@ export class Bbbc021Stack extends cdk.Stack {
                             'cat upload.sh',
 
                             'chmod +x upload.sh',
-                            'cat files.txt | xargs -n 1 -P 2 ./upload.sh',
+                            'cat files.txt | xargs -n 1 -P 5 ./upload.sh',
 
                             'echo "Metafiles=(\'BBBC021_v1_image.csv\' \'BBBC021_v1_compound.csv\' \'BBBC021_v1_moa.csv\')" >> uploadMeta.sh',
                             'echo "for i in \"\\\${Metafiles[@]}\"; do" >> uploadMeta.sh',
@@ -128,7 +128,8 @@ export class Bbbc021Stack extends cdk.Stack {
             environment: {
                 environmentVariables: {
                     "BBBC021_BUCKET" : { value: bbbc021Bucket.bucketName }                
-                }
+                },
+                computeType: codebuild.ComputeType.LARGE
             },
             timeout: cdk.Duration.minutes(480),
             role: codebuildRole2
@@ -142,7 +143,7 @@ export class Bbbc021Stack extends cdk.Stack {
             const aws = require('aws-sdk');
             const codebuild = new aws.CodeBuild()
             
-            console.log("triggerHandler event start - check1")
+            console.log("triggerHandler event start")
             console.log(event)
             console.log("triggerHandler event end")
             
