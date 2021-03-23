@@ -9,6 +9,8 @@ import ecs = require("@aws-cdk/aws-ecs");
 
 export interface ResourcePermissionsStackProps extends cdk.StackProps {
   dataBucket: s3.Bucket;
+  bbbc021BucketName: string,
+  resourceBucketName: string,
   batchInstanceRole: iam.Role;
   configurationLambdaArn: string;
   labelLambdaArn: string;
@@ -132,15 +134,12 @@ export class ResourcePermissionsStack extends cdk.Stack {
     
     // EXTERNAL RESOURCES
 
-    this.addBucketResourceReadOnly("bioimagesearchbbbc021stack-bbbc021bucket544c3e64-10ecnwo51127", this.bioimageSearchManagedPolicy);
-    this.addBucketResourceReadOnly("bioimagesearchbbbc021stack-bbbc021bucket544c3e64-10ecnwo51127", this.externalResourcesPolicy);
+    this.addBucketResourceReadOnly(props.bbbc021BucketName, this.bioimageSearchManagedPolicy);
+    this.addBucketResourceReadOnly(props.bbbc021BucketName, this.externalResourcesPolicy);
 
-    this.addBucketResourceFullPermissions("bioimage-search-input", this.bioimageSearchManagedPolicy);
-    this.addBucketResourceFullPermissions("bioimage-search-input", this.externalResourcesPolicy);
+    this.addBucketResourceFullPermissions(props.resourceBucketName, this.bioimageSearchManagedPolicy);
+    this.addBucketResourceFullPermissions(props.resourceBucketName, this.externalResourcesPolicy);
 
-    this.addBucketResourceFullPermissions("bioimage-search-output", this.bioimageSearchManagedPolicy);
-    this.addBucketResourceFullPermissions("bioimage-search-output", this.externalResourcesPolicy);
-    
     // BATCH
     
 //            assumedBy: new iam.ServicePrincipal('batch.amazonaws.com'),
@@ -362,7 +361,7 @@ export class ResourcePermissionsStack extends cdk.Stack {
     batchInstancePolicy.addStatements(cloudFormationPolicyStatement);
     batchInstancePolicy.addStatements(dataBucketPolicyStatement);
     batchInstancePolicy.addStatements(invokeLambdaPolicyStatement);
-    this.addBucketResourceReadOnly("bioimagesearchbbbc021stack-bbbc021bucket544c3e64-10ecnwo51127", batchInstancePolicy);
+    this.addBucketResourceReadOnly(props.bbbc021BucketName, batchInstancePolicy);
 
     props.batchInstanceRole.attachInlinePolicy(batchInstancePolicy);
     

@@ -34,6 +34,11 @@ const dynamodb = new Dynamodb({
     credentials: credentials
 });
 
+// Buckets to be created by the user and configured here:
+const RESOURCE_BUCKET = "bioims-resource-1";
+const DATA_BUCKET = "bioims-data-1";
+const BBBC021_BUCKET = "bioimagesearchbbbc021stack-bbbc021bucket544c3e64-ugln15rb234b";
+
 (async() => {
 
 const dynamoTables = await dynamodb.listTables().promise();
@@ -41,7 +46,9 @@ const dynamoTableNames = dynamoTables!.TableNames
 
 const app = new cdk.App();
 
-const baseStack = new BaseStack(app, 'BioimageSearchBaseStack');
+const baseStack = new BaseStack(app, 'BioimageSearchBaseStack', {
+    dataBucketName: DATA_BUCKET,
+})
 
 const lustreStack = new LustreStack(app, 'BioimageSearchLustreStack', {
     bioimsVpc: baseStack.vpc,
@@ -146,6 +153,8 @@ const searchServiceStack = new SearchServiceStack(app, 'BioimageSearchServiceSta
 
 const resourcePermissionsStack = new ResourcePermissionsStack(app, 'BioimageSearchResourcePermissionsStack', {
     dataBucket: baseStack.dataBucket,
+    bbbc021BucketName: BBBC021_BUCKET,
+    resourceBucketName: RESOURCE_BUCKET,
     batchInstanceRole: batchSetupStack.batchInstanceRole,
     configurationLambdaArn: configurationStack.configurationLambdaArn,
     labelLambdaArn: labelStack.labelLambdaArn,
