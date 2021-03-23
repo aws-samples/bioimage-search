@@ -10,9 +10,9 @@ const TRAIN_CONFIGURATION_LAMBDA_ARN = process.env.TRAIN_CONFIGURATION_LAMBDA_AR
 const TRAIN_SFN_ARN = process.env.TRAIN_SFN_ARN || "";
 const TRAIN_BUILD_LAMBDA_ARN = process.env.TRAIN_BUILD_LAMBDA || ""
 
-async function startTraining(trainId: any) {
+async function startTraining(trainId: any, useSpot: any) {
   const executionName = "Train-" + trainId + "-" + su.generate();
-  const inputStr = `{ "trainId" : \"${trainId}\" }`;
+  const inputStr = `{ "trainId" : \"${trainId}\", "useSpot" : \"${useSpot}\" }`;
   console.log("inputStr=", inputStr);
   var params = {
     stateMachineArn: TRAIN_SFN_ARN,
@@ -103,6 +103,7 @@ export const handler = async (event: any = {}): Promise<any> => {
         const filterBucket = event.filterBucket || "";
         const filterKey = event.filterKey || "";
         const executeProcessPlate = event.executeProcessPlate || "";
+        const useSpot = event.useSpot || "true";
         const training = {
           "embeddingName" : event.embeddingName,
           "trainId" : trainId,
@@ -112,7 +113,7 @@ export const handler = async (event: any = {}): Promise<any> => {
           "executeProcessPlate" : executeProcessPlate,
         }
         const trainingResponse = await createTraining(training);
-        const response = await startTraining(trainId);
+        const response = await startTraining(trainId, useSpot);
         return { statusCode: 200, body: JSON.stringify(response) };
       } catch (error) {
         console.log("Error=");

@@ -181,7 +181,8 @@ export class TrainStack extends cdk.Stack {
     
     const trainComputeInput= new sfn.Pass(this, "Train Compute Input", {
       parameters: {
-        trainId: sfn.JsonPath.stringAt("$.trainId")
+        trainId: sfn.JsonPath.stringAt("$.trainId"),
+        useSpot: sfn.JsonPath.stringAt("$.useSpot")
       }
     });
     

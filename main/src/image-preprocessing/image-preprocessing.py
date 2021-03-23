@@ -24,7 +24,7 @@ import bioims
 
 print("Args=")
 print(sys.argv[1:])
-print("Done args")
+print("==")
 
 
 # """

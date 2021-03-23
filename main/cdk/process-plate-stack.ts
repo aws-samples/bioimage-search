@@ -151,16 +151,6 @@ export class ProcessPlateStack extends cdk.Stack {
       outputPath: '$.Payload'
     });
     
-      // maxConcurrency: 0,
-      // parameters: {
-      //   wellMethodArn: sfn.JsonPath.stringAt('$.embeddingInfo.Payload.body.Item.wellMethodArn'),
-      //   'wellId.$' : "$$.Map.Item.Value",
-      //   plateMessageId: sfn.JsonPath.stringAt("$.plateMessageId")
-      // },
-      // itemsPath: '$.wellList.Payload.body',
-      // resultPath: '$.wellMapResult',
-
-    
     const artifactMap = new sfn.Map(this, "Artifact Map", {
       maxConcurrency: 0,
       parameters: {

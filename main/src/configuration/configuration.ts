@@ -9,52 +9,6 @@ const LATEST = "LATEST";
 const DEFAULT_TRAIN_ID = "DefaultTrainId";
 const DDB_MAX_BATCH = 25;
 
-/*
-
-Request format:
-
-getAll():
-    {
-        method: 'getAll',
-    }
-    
-getParameter(key):
-    {
-        method: 'getParameter',
-        key: key
-    }
-    
-setParameter(key, value):
-    {
-        method: 'setParameter',
-        key: key,
-        value: value
-    }
-    
-getHistory(key):
-    {
-        method: 'getHistory',
-        key: key
-    }
-
-getDefaultTrainId():
-    {
-        method: 'getDefaultTrainId'
-    }
-    
-setDefaultTrainId():
-    {
-        method: 'setDefaultTrainId',
-        trainId: trainId
-    }
-    
-deleteKey(key):
-  {
-    method: 'deleteKey',
-    key: key
-  }
-
-*/
 
 async function getParameter(key: any) {
   const params = {

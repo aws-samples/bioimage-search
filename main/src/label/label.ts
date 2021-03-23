@@ -9,65 +9,6 @@ const DESCRIPTION_ATTRIBUTE = "description";
 const ORIGIN = "origin";
 const DDB_MAX_BATCH = 25;
 
-/*
-
-Request format:
-
-createCategory(category, description):
-    {
-        method: 'createCategory',
-        category: category,
-        description: description
-    }
-    
-updateCategoryDescription(category, description):
-    {
-        method: 'updateCategoryDescription',
-        category: category,
-        description: description
-    }
-    
-deleteCategory(category):
-    {
-        method: 'deleteCategory',
-        category: category
-    }
-    
-createLabel(category, label):
-    {
-        method: 'createLabel',
-        category: category,
-        label: label
-    }
-    
-// NOTE: this does not change the previous assigned index
-updateLabel(category, oldlabel, newlabel):
-    {
-        method: 'updateLabel',
-        category: category,
-        oldlabel: oldlabel,
-        newlabel: newlabel
-    }
-    
-getIndex(category, label):
-    {
-        method: 'getIndex',
-        category: category,
-        label: label
-    }
-    
-listCategories():
-    {
-        method: 'listCategories'        
-    }
-
-listLabels(category):
-    {
-        method: 'listLabels',
-        category: category
-    }
-    
-*/
 
 async function createCategory(category: any, description: any) {
   const item = {

@@ -12,33 +12,11 @@ const SORT_KEY = process.env.SORT_KEY || "";
 const LATEST = "LATEST";
 const DDB_MAX_BATCH = 25;
 
-/*
-  PARTITION_KEY is compound key:
-  
-    <type_id>#<train_id>
-    
-  SORT_KEY is 's3key'
-  
-  Annotation is list 
-
-*/
 
 const CREATE_TIMESTAMP_ATTRIBUTE = "createTimestamp";
 const DESCRIPTION_ATTRIBUTE = "description";
 const ANNOTATION_ATTRIBUTE = "annotation";
 
-/*
-  Methods:
-  
-  createArtifact(artifact)
-  
-  getArtifacts(contextId, trainId)
-  
-  addAnnotation(contextId, trainId, artifact)
-  
-  deleteArtifacts(contextId, trainId)
-
-*/
 
 async function createArtifact(artifact1: any) {
   const timestamp = Date.now().toString()

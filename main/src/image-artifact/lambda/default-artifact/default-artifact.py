@@ -33,31 +33,6 @@ def handler(event, context):
     print("trainId={}".format(trainId))
     print("key={}".format(key))
     print("dataBucket={}".format(dataBucket))
-
-    # if event['Item']:
-    #     item = event['Item']
-    #     imageId = item['imageId']
-    # else:
-    #     imageId = event['imageId']
-    
-    # print("imageId={}".format(imageId))
-    
-    # strBytes = imageId.encode('utf-8')
-    
-    # imageIdAsInt = int.from_bytes(strBytes, byteorder='big', signed=False)
-    
-    # print("imageIdAsInt=", imageIdAsInt)
-    
-    # random.seed(imageIdAsInt)
-    
-    # # This is to deal with CLoudFormation API throttling for DescribeStack
-    # waitSeconds = random.uniform(0.0, 60.0)
-    
-    # print("waitSeconds=", waitSeconds)
-    
-    # time.sleep(waitSeconds)    
-    
-    # print("finished waiting")
     
 ######################################    
 

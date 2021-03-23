@@ -9,42 +9,6 @@ const DETAIL_ATTRIBUTE = "detail";
 const LATEST = "LATEST";
 const DDB_MAX_BATCH = 25;
 
-/*
-
-Request format:
-
-getMessage(messageId):
-    {
-        method: 'getMessage',
-        messageId: messageId
-    }
-    
-createMessage(message):
-    {
-        method: 'createMessage',
-        message: message
-    }
-    
-listMessage(messageId):
-    {
-        method: 'listMessages',
-        messageId: messageId
-    }
-
-addMessage(messageId, message):
-    {
-        method: 'addMessage',
-        messageId: messageId,
-        message: message
-    }
-    
-deleteMessage(messageId):
-  {
-    method: 'deleteMessage',
-    mesageId: messageId
-  }
-
-*/
 
 async function getMessage(messageId: any) {
   const params = {

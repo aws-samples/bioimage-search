@@ -41,64 +41,6 @@ const TRAINING_MESSAGE_ID_ATTRIBUTE = "messageId";
 //const MODEL_BUCKET_ATTRIBUTE = "modelBucket";
 //const MODEL_KEY_ATTRIBUTE = "modelKey"
 
-/*
-
-  createEmbedding(embedding):
-  {
-    method: 'createEmbedding',
-    embedding: embedding
-  }
-  
-  deleteEmbedding(embeddingName):
-  {
-    method: 'deleteEmbedding',
-    embeddingName: embeddingName
-  }
-  
-  getEmbedding(embeddingName):
-  {
-    method: 'getEmbedding',
-    embeddingName: embeddingName
-  }
-
-  Example test:
-  
-  {
-    "method": "createEmbedding",
-    "embedding": {
-      "embeddingName1" : "embeddingName1",
-      "image-method-arn" : "testImageMethodArn1",
-      "image-post-method-arn" : "testImagePostMethodArn1",
-      "input-height" : 1000,
-      "input-width" : 1000,
-      "input-depth" : 1,
-      "input-channels" : 3,
-      "roi-height" : 128,
-      "roi-width" : 128,
-      "roi-depth" : 1,
-      "embedding-vector-length" : 1024
-    }
-  }
-
-  createTraining(training):
-  {
-    method: 'createTraining',
-    training: training
-  }
-  
-  deleteTraining(training):
-  {
-    method: 'deleteTraining',
-    trainId: trainId
-  }
-  
-  updateTraining(training):
-  {
-     method: 'updateTraining',
-     training: training
-  }
-
-*/
 
 function validateTraining(training: any): boolean {
   if (

@@ -81,6 +81,10 @@ def getS3TextObjectWriteToPath(bucket, key, path):
 
 def handler(event, context):
     trainId = event['trainId']
+    useSpotArg = event['useSpot']
+    useSpot=True
+    if useSpotArg.lower()=='false':
+        useSpot=False
     uniqueId = su.uuid()
     trainingConfigurationClient = bioims.client('training-configuration')
     trainInfo = trainingConfigurationClient.getTraining(trainId)
@@ -112,7 +116,8 @@ def handler(event, context):
     
     trainingHyperparameters['train_list_file'] = trainListArtifactKey
 
-    estimator = PyTorch(entry_point=localTrainingScript,
+    if useSpot:
+        estimator = PyTorch(entry_point=localTrainingScript,
                     role=sagemaker_role,
                     framework_version=py_version,
                     instance_count=1,
@@ -121,13 +126,6 @@ def handler(event, context):
                     image_name='763104351884.dkr.ecr.us-east-1.amazonaws.com/pytorch-training:1.6.0-gpu-py36-cu101-ubuntu16.04',
                     subnets=fsxInfo['subnetIds'],
                     security_group_ids=sgIds,
-                    # hyperparameters={
-                    #     'train_list_file': trainListArtifactKey,
-                    #     'epochs': 15,
-                    #     'backend': 'gloo',
-                    #     'seed': 1,
-                    #     'batch_size': 1
-                    # },
                     hyperparameters = trainingHyperparameters,
                     train_use_spot_instances=True,
                     train_max_wait=100000,
@@ -135,7 +133,22 @@ def handler(event, context):
                     checkpoint_s3_uri = checkpoint_s3_uri,
                     debugger_hook_config=False
                 )
-                
+    else:
+              estimator = PyTorch(entry_point=localTrainingScript,
+                    role=sagemaker_role,
+                    framework_version=py_version,
+                    instance_count=1,
+                    instance_type=instance_type,
+                    py_version='py36',
+                    image_name='763104351884.dkr.ecr.us-east-1.amazonaws.com/pytorch-training:1.6.0-gpu-py36-cu101-ubuntu16.04',
+                    subnets=fsxInfo['subnetIds'],
+                    security_group_ids=sgIds,
+                    hyperparameters = trainingHyperparameters,
+                    train_use_spot_instances=False,
+                    checkpoint_s3_uri = checkpoint_s3_uri,
+                    debugger_hook_config=False
+                )
+                    
     trainingConfigurationClient.updateTraining(trainId, 'sagemakerJobName', jobName)
 
     estimator.fit(file_system_input, wait=False, job_name=jobName)
