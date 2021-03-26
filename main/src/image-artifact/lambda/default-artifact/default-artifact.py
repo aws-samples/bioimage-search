@@ -135,9 +135,19 @@ def handler(event, context):
         input_arr = []
         input_shape = []
         for input_key in input_keys:
-            fileObject = s3c.get_object(Bucket=input_bucket, Key=input_key)
-            file_stream = fileObject['Body']
-            im = Image.open(file_stream)
+            retries=3
+            while retries > 0:
+                try:
+                    print("Loading {} {} remaining tries {}".format(input_bucket, input_key, retries))
+                    fileObject = s3c.get_object(Bucket=input_bucket, Key=input_key)
+                    file_stream = fileObject['Body']
+                    im = Image.open(file_stream)
+                    break
+                except:
+                    time.sleep(1)
+                    retries -= 1
+            if retries==0:
+                raise Exception("Ran out of retries for accessing {} {}".format(input_bucket, input_key))
             pix = np.array(im)
             input_shape.append(pix.shape)
             input_arr.append(pix)
