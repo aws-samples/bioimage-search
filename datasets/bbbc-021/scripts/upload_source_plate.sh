@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Usage: cat plate_list.txt | xargs -n 2 -P 5 ./upload_source_plate.sh
+# Usage: cat plate_list.txt | xargs -n 1 -P 4 ./upload_source_plate.sh
 # Note: -P can be increased, but Lambda limits should be monitored.
 
 # These should be filled-in for each deployment:

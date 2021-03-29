@@ -127,7 +127,7 @@ export class TrainStack extends cdk.Stack {
     });
     
     const plateWait = new sfn.Wait(this, "Plate Wait", {
-      time: sfn.WaitTime.duration(cdk.Duration.seconds(30))
+      time: sfn.WaitTime.duration(cdk.Duration.seconds(240))
     });
     
     const plateStatusInput = new sfn.Pass(this, "Plate Status Input", {
@@ -170,7 +170,8 @@ export class TrainStack extends cdk.Stack {
     
     const trainBuildInput = new sfn.Pass(this, "Train Build Input", {
       parameters: {
-        trainId: sfn.JsonPath.stringAt("$.trainId")
+        trainId: sfn.JsonPath.stringAt("$.trainId"),
+        useSpot: sfn.JsonPath.stringAt("$.useSpot")
       }
     });
     
@@ -197,7 +198,7 @@ export class TrainStack extends cdk.Stack {
     /////////////////////////////////
     
     const trainWait = new sfn.Wait(this, "Train Wait", {
-      time: sfn.WaitTime.duration(cdk.Duration.seconds(30))
+      time: sfn.WaitTime.duration(cdk.Duration.seconds(240))
     });
     
     const trainStatusInput = new sfn.Pass(this, "Train Status Input", {
@@ -254,7 +255,7 @@ export class TrainStack extends cdk.Stack {
       "Train StateMachine",
       {
         definition: trainStepFunctionDef,
-        timeout: cdk.Duration.hours(24),
+        timeout: cdk.Duration.hours(48),
         logs: {
           destination: trainLogGroup,
           level: sfn.LogLevel.ALL,

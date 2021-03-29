@@ -90,6 +90,8 @@ export class TrainingConfigurationStack extends cdk.Stack {
           SORT_KEY: "trainId",
           TRAIN_INDEX: "trainIdIndex",
         },
+        memorySize: 256,
+        timeout: cdk.Duration.minutes(2),
       }
     );
     

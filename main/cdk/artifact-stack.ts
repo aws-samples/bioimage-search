@@ -58,6 +58,8 @@ export class ArtifactStack extends cdk.Stack {
         SORT_KEY: "artifact",
         BUCKET: props.dataBucket.bucketName
       },
+      memorySize: 256,
+      timeout: cdk.Duration.minutes(1),
     });
 
     artifactTable.grantReadWriteData(this.artifactLambda);

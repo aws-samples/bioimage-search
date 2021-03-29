@@ -562,7 +562,7 @@ export function createTrainPlateVisitor(scope: cdk.Construct,
     // });
     
     const plateWait = new sfn.Wait(scope, (visitorName+"PlateWait"), {
-      time: sfn.WaitTime.duration(cdk.Duration.seconds(30))
+      time: sfn.WaitTime.duration(cdk.Duration.seconds(90))
     });
     
     const plateStatusInput = new sfn.Pass(scope, (visitorName+"PlateStatusInput"), {
@@ -652,7 +652,7 @@ export function createEmbeddingPlateVisitor(scope: cdk.Construct,
     });
 
     const plateWait = new sfn.Wait(scope, (visitorName+"PlateWait"), {
-      time: sfn.WaitTime.duration(cdk.Duration.seconds(30))
+      time: sfn.WaitTime.duration(cdk.Duration.seconds(90))
     });
     
     const plateStatusInput = new sfn.Pass(scope, (visitorName+"PlateStatusInput"), {

@@ -52,6 +52,8 @@ export class LabelStack extends cdk.Stack {
         PARTITION_KEY: "category",
         SORT_KEY: "label",
       },
+      memorySize: 256,
+      timeout: cdk.Duration.minutes(1),
     });
 
     labelTable.grantReadWriteData(labelLambda);

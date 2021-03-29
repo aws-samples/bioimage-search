@@ -6,104 +6,21 @@ import bioims
 
 trainingConfigurationClient = bioims.client('training-configuration')
 
-# embedding = {
-#     "embeddingName" : "bbbc021",
-#     "plateMethodArn" : "arn:aws:batch:us-east-1:580829821648:job-definition/platepreprocessingjobde-586209612f00161:18",
-#     "wellMethodArn" : "wellMethodArn-placeholder",
-#     "imageMethodArn" : "arn:aws:batch:us-east-1:580829821648:job-definition/imagepreprocessingjobde-af308e24979dc7d:15",
-#     "imagePostMethodArn" : "imagePostMethodArn-placeholder",
-#     "modelTrainingScriptBucket" : "bioimage-search-input",
-#     "modelTrainingScriptKey" : "bbbc021-train-script.py",
-#     "trainingInstanceType" : "ml.p2.xlarge",
-#     "trainingHyperparameters" : {
-#         'epochs': 15,
-#         'backend': 'gloo',
-#         'seed': 1,
-#         'batch_size': 1
-#     },
-#     "inputHeight" : 1024,
-#     "inputWidth" : 1280,
-#     "inputDepth" : 1,
-#     "inputChannels" : 3,
-#     "roiHeight" : 128,
-#     "roiWidth" : 128,
-#     "roiDepth" : 1,
-#     "embeddingVectorLength" : 32,
-#     "comments" : ""
-# }
+# To be filled-in for each new deployment
+plateMethodArn="arn:aws:batch:us-east-1:147147579088:job-definition/platepreprocessingjobde-1af70a04077a5e6:1"
+imageMethodArn="arn:aws:batch:us-east-1:147147579088:job-definition/imagepreprocessingjobde-91a668a4c3c759e:1"
 
-# r = trainingConfigurationClient.createEmbedding(embedding)
-# print(r)
-
-# embedding128 = {
-#     "embeddingName" : "bbbc021-128",
-#     "plateMethodArn" : "arn:aws:batch:us-east-1:580829821648:job-definition/platepreprocessingjobde-586209612f00161:18",
-#     "wellMethodArn" : "wellMethodArn-placeholder",
-#     "imageMethodArn" : "arn:aws:batch:us-east-1:580829821648:job-definition/imagepreprocessingjobde-af308e24979dc7d:15",
-#     "imagePostMethodArn" : "imagePostMethodArn-placeholder",
-#     "modelTrainingScriptBucket" : "bioimage-search-input",
-#     "modelTrainingScriptKey" : "bbbc021-128-train-script.py",
-#     "trainingInstanceType" : "ml.m5.4xlarge",
-#     "trainingHyperparameters" : {
-#         'epochs': 15,
-#         'backend': 'gloo',
-#         'seed': 1,
-#         'batch_size': 1
-#     },
-#     "inputHeight" : 1024,
-#     "inputWidth" : 1280,
-#     "inputDepth" : 1,
-#     "inputChannels" : 3,
-#     "roiHeight" : 128,
-#     "roiWidth" : 128,
-#     "roiDepth" : 1,
-#     "embeddingVectorLength" : 128,
-#     "comments" : ""
-# }
-
-# r = trainingConfigurationClient.createEmbedding(embedding128)
-# print(r)
-
-# embedding2 = {
-#     "embeddingName" : "bbbc021-2",
-#     "plateMethodArn" : "arn:aws:batch:us-east-1:580829821648:job-definition/platepreprocessingjobde-88682c862ac6a33:18",
-#     "wellMethodArn" : "wellMethodArn-placeholder",
-#     "imageMethodArn" : "arn:aws:batch:us-east-1:580829821648:job-definition/imagepreprocessingjobde-d267d186dc16884:21",
-#     "imagePostMethodArn" : "imagePostMethodArn-placeholder",
-#     "modelTrainingScriptBucket" : "bioimage-search-input",
-#     "modelTrainingScriptKey" : "bbbc021-2-train-script.py",
-#     "trainingInstanceType" : "ml.m5.4xlarge",
-#     "trainingHyperparameters" : {
-#         'epochs': 30,
-#         'backend': 'gloo',
-#         'seed': 1,
-#         'batch_size': 1
-#     },
-#     "inputHeight" : 1024,
-#     "inputWidth" : 1280,
-#     "inputDepth" : 1,
-#     "inputChannels" : 3,
-#     "roiHeight" : 128,
-#     "roiWidth" : 128,
-#     "roiDepth" : 1,
-#     "embeddingVectorLength" : 128,
-#     "comments" : ""
-# }
-
-# r = trainingConfigurationClient.createEmbedding(embedding2)
-# print(r)
-
-embedding3 = {
-    "embeddingName" : "bbbc021-3",
-    "plateMethodArn" : "arn:aws:batch:us-east-1:580829821648:job-definition/platepreprocessingjobde-88682c862ac6a33:18",
+embedding1 = {
+    "embeddingName" : "bbbc021-1",
+    "plateMethodArn" : plateMethodArn,
     "wellMethodArn" : "wellMethodArn-placeholder",
-    "imageMethodArn" : "arn:aws:batch:us-east-1:580829821648:job-definition/imagepreprocessingjobde-d267d186dc16884:21",
+    "imageMethodArn" : imageMethodArn,
     "imagePostMethodArn" : "imagePostMethodArn-placeholder",
-    "modelTrainingScriptBucket" : "bioimage-search-input",
-    "modelTrainingScriptKey" : "bbbc021-3-train-script.py",
-    "trainingInstanceType" : "ml.m5.4xlarge",
+    "modelTrainingScriptBucket" : "bioims-resource-1",
+    "modelTrainingScriptKey" : "bbbc021-1-train-script.py",
+    "trainingInstanceType" : "p3.2xlarge",
     "trainingHyperparameters" : {
-        'epochs': 20,
+        'epochs': 2,
         'backend': 'gloo',
         'seed': 1,
         'batch_size': 1
@@ -115,10 +32,10 @@ embedding3 = {
     "roiHeight" : 128,
     "roiWidth" : 128,
     "roiDepth" : 1,
-    "embeddingVectorLength" : 128,
+    "embeddingVectorLength" : 256,
     "comments" : ""
 }
 
-r = trainingConfigurationClient.createEmbedding(embedding3)
+r = trainingConfigurationClient.createEmbedding(embedding1)
 print(r)
 
