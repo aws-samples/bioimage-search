@@ -1055,8 +1055,9 @@ class TrainClient(BioimageSearchClient):
         return self._resources.getTrainLambdaArn()
     
     def train(self, embeddingName, filterBucket='', filterKey='', executeProcessPlate='true', useSpot='true'):
-        request = '{{ "method": "train", "embeddingName": "{}", "filterBucket": "{}", "filterKey": "{}", "executeProcessPlate": "{}", "useSpot": {} }}'.format(
+        request = '{{ "method": "train", "embeddingName": "{}", "filterBucket": "{}", "filterKey": "{}", "executeProcessPlate": "{}", "useSpot": "{}" }}'.format(
             embeddingName, filterBucket, filterKey, executeProcessPlate, useSpot)
+        print(request)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(

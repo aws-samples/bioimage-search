@@ -102,7 +102,7 @@ export const handler = async (event: any = {}): Promise<any> => {
         const messageId = await createMessage(`Begin messages for trainid=${trainId}`);
         const filterBucket = event.filterBucket || "";
         const filterKey = event.filterKey || "";
-        const executeProcessPlate = event.executeProcessPlate || "";
+        const executeProcessPlate = event.executeProcessPlate || "false";
         const useSpot = event.useSpot || "true";
         const training = {
           "embeddingName" : event.embeddingName,
