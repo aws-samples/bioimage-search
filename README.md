@@ -413,10 +413,10 @@ bioimage-search/datasets/bbbc-021/notebooks/bbbc021-moa-analysis.ipynb
 
 Modify these fields at the top of the notebook:
 
-EMBEDDING_NAME. 
-BASELINE_TRAIN_ID. 
-bioimsArtifactBucket (the ‘data’ bucket for the project, e.g., ‘bioims-data-1’). 
-bbbc021Bucket. 
+EMBEDDING_NAME  
+BASELINE_TRAIN_ID  
+bioimsArtifactBucket (the ‘data’ bucket for the project, e.g., ‘bioims-data-1’)  
+bbbc021Bucket  
 
 Step through the notebook. The steps are intended to check the validity of the state of the system before performing the final search step. The final search analysis step will take 1-2 hours to run using the default instance size of the Fargate search service, as specified in the Bioims
 
