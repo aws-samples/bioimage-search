@@ -86,23 +86,14 @@ Create a Cloud9 shell tab.
 
 ```
 cd bioimage-search
-
 bash install.sh
-
 cd main/scripts
-
 bash ./source-python.sh
-
 cd ../../..
-
 sudo pip3 install boto3
-
 source ./bioimage-search/main/scripts/source-env.sh
-
 cd bioimage-search/main
-
 rm package-lock.json
-
 npm install
 ```
 
@@ -118,11 +109,8 @@ Go to Cloud9 shell tab.
 
 ```
 cd bioimage-search/datasets/bbbc-021
-
 rm package-lock.json
-
 npm install
-
 ./deploy.sh
 ```
 
