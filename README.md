@@ -265,6 +265,8 @@ NOTES:
 
 * If something goes wrong with the training step (i.e., after the image processing phase has completed), the ‘executeProcessPlate’ flag should be set to ‘false’ to completely skip the image processing step, which has already completed successfully. For clarity, each time the training is re-run, the corresponding “trainId” row entry of the previous unsuccessful run(s) in the “BioimsTrainingConfiguration” table should be deleted (although this is not required for the new run to be processed). This can be done in the DynamoDB console.
 
+* Both for this training step, and also for the following multi-model MOA training step, if training needs to be re-run, the entry for the prior problematic training should be deleted from DynamoDB in the BioimsTrainingConfiguration table. This is not required but recommended.
+
 ### Compute Embeddings for Baseline Model
 
 ```
