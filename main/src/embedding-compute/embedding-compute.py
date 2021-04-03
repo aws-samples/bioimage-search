@@ -125,11 +125,14 @@ def handler(event, context):
     
     localModelDir = os.path.join('/tmp/',trainingJobName)
     localModelGz = os.path.join(localModelDir, 'model.tar.gz')
-    if os.path.isdir(localModelDir):
-        print("Local dir {} already exists, assuming model is present".format(localModelDir))
+    localModelPath = os.path.join(localModelDir, 'model.pth')
+    if os.path.isfile(localModelPath):
+        print("Using local model at location {}".format(localModelPath))
     else:
         print("Creating {} and downloading model.tar.gz".format(localModelDir))
-        os.mkdir(localModelDir)
+        if not os.path.isdir(localModelDir):
+            os.system("rm -r /tmp/*")
+            os.mkdir(localModelDir)
         if 'ModelArtifacts' in trainingJobInfo:
             modelArtifacts=trainingJobInfo['ModelArtifacts']
             s3ModelPath=modelArtifacts['S3ModelArtifacts']
@@ -139,30 +142,13 @@ def handler(event, context):
             tar = tarfile.open("model.tar.gz")
             tar.extractall()
             tar.close()
-        elif 'CheckpointConfig' in trainingJobInfo:
-            try:
-                print("ModelArtifacts not available -, will try checkpoint location")
-                checkpointConfig = trainingJobInfo['CheckpointConfig']
-                checkpointS3Uri = checkpointConfig['S3Uri']
-                s3CheckpointPath = checkpointS3Uri + '/model.pth'
-                localCheckpointPath = os.path.join(localModelDir, 'model.pth')
-                copyS3ObjectPathToLocalPath(s3CheckpointPath, localCheckpointPath)
-                print("Successfully retrieved checkpoint model")
-            except:
-                print("Error retrieving checkpoint model")
-                response = {
-                    'statusCode': 400,
-                    'body': 'Could not obtain model'
-                }
-                return response
         else:
-            print("Neither model nor checkpoint available")
+            print("Model not available")
             response = {
                 'statusCode': 400,
                 'body': 'Could not obtain model or checkpoint'
             }
             return response
-            
 
     localTrainScript = os.path.join(localModelDir, 'bioimstrain.py')
     if os.path.isfile(localTrainScript):
@@ -195,7 +181,7 @@ def handler(event, context):
     #
     ##########################################################################
 
-    print("v6")
+    print("v7")
 
     if data.shape[0] > 0:
         min=np.min(data)

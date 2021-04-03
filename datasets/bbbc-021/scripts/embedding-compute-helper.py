@@ -1,7 +1,6 @@
-# Usage: python get-trainlist-helper.py | xargs -n 3 -P 1 python ./embedding-compute-helper.py
-# Note: using  xargs to separate these steps has the advantage of renewing aws credentials on each call to 
-# avoid credential timeouts.
+# Usage: python get-trainlist-helper.py | xargs -n 3 -P 4 python ./embedding-compute-helper.py
 
+import os
 import sys
 import time
 import json
@@ -23,16 +22,24 @@ filterKey = sys.argv[3]
 print("{} {} {}".format(index, trainId, filterKey))
 
 executionInfo = embeddingClient.startComputeEmbedding(trainId)
+print(executionInfo)
 executionArn = executionInfo['executionArn']
+executionArnComponents=executionArn.split(":")
+executionId=executionArnComponents[-1]
+os.system("mkdir -p /tmp/{}".format(executionId))
+print(executionId)
+statusTmpFile="/tmp/{}/status".format(executionId)
 sfnFinished = False
 status = 'RUNNING'
+i = 0
 while not sfnFinished:
-    print("Waiting on {}".format(executionArn))
-    time.sleep(10)
-    response = sfn.describe_execution(executionArn=executionArn)
-    status = response['status']
-    print("status = {}".format(status))
-    if status == 'RUNNING':
-        sfnFinished = False
-    else:
-        sfnFinished = True
+    print("Waiting on {} {}".format(i, executionId))
+    time.sleep(60)
+    os.system("aws stepfunctions describe-execution --execution-arn {} > {}".format(executionArn, statusTmpFile))
+    with open(statusTmpFile, "r") as status_file:
+        status=status_file.read()
+        if "RUNNING" not in status:
+            sfnFinished = True
+            print("Execution {} ended with status=\n{}".format(executionId, status))
+    i+=1
+os.system("rm -r /tmp/{}".format(executionId))

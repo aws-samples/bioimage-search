@@ -7,7 +7,13 @@ import bioims
 
 trainingConfigurationClient = bioims.client('training-configuration')
 
-trainingList = trainingConfigurationClient.getEmbeddingTrainings('bbbc021-3')
+if len(sys.argv) < 2:
+    print("Usage: {} <embeddingName>".format(sys.argv[0]))
+    exit(1)
+
+embeddingName = sys.argv[1]
+
+trainingList = trainingConfigurationClient.getEmbeddingTrainings(embeddingName)
 
 filters = {}
 trainIds = []

@@ -37,7 +37,7 @@ export class EmbeddingStack extends cdk.Stack {
       "plateEmbeddingComputeFunction",
       {
         code: lambda.DockerImageCode.fromImageAsset("src/embedding-compute"),
-        memorySize: 3008,
+        memorySize: 6000,
         timeout: cdk.Duration.minutes(15),
         environment: {
           ARTIFACT_LAMBDA_ARN: props.artifactLambda.functionArn,
