@@ -15,7 +15,12 @@ This is a "Proof of Concept" project that provides an example architecture of:
 
 ## What is this Project Useful For?
 
-There are many situations where it is useful to ask, “How similar is A to B?”, where A and B can be almost anything that can be represented by a digital artifact, e.g., an image or video, a sound recording, or more structured data such as tables, graphs of connected entities, etc. This is in contrast to a classifier (a more conventional machine learning tool), which will take a digital artifact as input, and attempt to tell you what it is (which class it belongs to). Reasons why similarity is potentially more powerful and interesting than classification include (1) it can be used to infer multiple properties about completely novel things (2) more clearly detect novelty itself (3) provide a more nuanced measure of similarity to known classes (4) distinguish between different classes of novel objects, even if none of these classes as been used for training (i.e., known beforehand) (5) unlike classifier outputs, higher-order properties of similarity embeddings are preserved when they are concatenated into multi-embeddings.
+There are many situations where it is useful to ask, “How similar is A to B?”, where A and B can be almost anything that can be represented by a digital artifact, e.g., an image or video, a sound recording,
+or more structured data such as tables, graphs of connected entities, etc.
+This is in contrast to a classifier (a more conventional machine learning tool), which will take a digital artifact as input, and attempt to tell you what it is (which class it belongs to).
+Reasons why similarity is potentially more powerful and interesting than classification include (1) it can be used to infer multiple properties about completely novel things (2) more clearly detect 
+novelty itself (3) provide a more nuanced measure of similarity to known classes (4) distinguish between different classes of novel objects, even if none of these classes has been used for
+training (i.e., known beforehand) (5) unlike classifier outputs, higher-order properties of similarity embeddings are preserved when they are concatenated into multi-embeddings.
 
 A thought experiment to help understand the difference between a classifier and embedding would be to imagine being in John Pemberton’s drug store in 1886 in Columbus, GA, and asked to say whether his “Coca-Cola” was more similar to lemon, lime, or vanilla (classifier), vs “none of the above - this is new” (embedding).
 
