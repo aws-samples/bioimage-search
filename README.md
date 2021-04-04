@@ -41,7 +41,7 @@ This project provides an AWS architecture that can be used to support novel mole
 
 This project is designed to be operated at scale, supporting an arbitrary number of concurrent projects and researchers, permitting the sharing and mixing of subsets of imagery to perform different experiments with different ML models.
 
-An example dataset is included with the project, the well known “BBBC-021” imagery of Human MCF7 cell cultures, which has been featured in numerous machine learning and deep phenotyping research papers:
+An example dataset is referenced by the project, the well known “BBBC-021” imagery of Human MCF7 cell cultures, which has been featured in numerous machine learning and deep phenotyping research papers:
 https://bbbc.broadinstitute.org/BBBC021
 
 **We used image set BBBC021v1 (https://bbbc.broadinstitute.org/bbbc/BBBC021) [Caie et al., Molecular Cancer Therapeutics, 2010 (http://dx.doi.org/10.1158/1535-7163.MCT-09-1148)], available from the Broad Bioimag Benchmark Collection [Ljosa et al., Nature Methods, 2012 (http://dx.doi.org/10.1038/nmeth.2083)].**
