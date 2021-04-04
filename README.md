@@ -13,6 +13,34 @@ This is a "Proof of Concept" project that provides an example architecture of:
 
 ![architecture diagram](https://github.com/aws-samples/bioimage-search/blob/master/BioimageSearch-1.png?raw=true)
 
+## What is this Project Useful For?
+
+There are many situations where it is useful to ask, “How similar is A to B?”, where A and B can be almost anything that can be represented by a digital artifact, e.g., an image or video, a sound recording, or more structured data such as tables, graphs of connected entities, etc. This is in contrast to a classifier (a more conventional machine learning tool), which will take a digital artifact as input, and attempt to tell you what it is (which class it belongs to). Reasons why similarity is potentially more powerful and interesting than classification include (1) it can be used to infer multiple properties about completely novel things (2) more clearly detect novelty itself (3) provide a more nuanced measure of similarity to known classes (4) distinguish between different classes of novel objects, even if none of these classes as been used for training (i.e., known beforehand) (5) unlike classifier outputs, higher-order properties of similarity embeddings are preserved when they are concatenated into multi-embeddings.
+
+A thought experiment to help understand the difference between a classifier and embedding would be to imagine being in John Pemberton’s drug store in 1886 in Columbus, GA, and asked to say whether his “Coca-Cola” was more similar to lemon, lime, or vanilla (classifier), vs “none of the above - this is new” (embedding).
+
+Classifiers are typically trained by presenting examples of various classes as input/output pairs, and using mathematical techniques to gradually change the parameters of the ML model such that when the model is presented with a novel input it makes a best guess as to which class that input is most similar to. Similarity embeddings work differently, and depend on creating what is referred to as an “embedding in a vector space” - basically a set of ordered numbers (a vector) that doesn’t tell you anything except how similar an input is to other inputs embedded in the same vector space. An embedding (“similarity”) network “embeds” its input space into a compact vector space that makes it easy to ask, “How similar in input A to input B?”. Embedding networks are trained in an extremely simple way - by presenting pairs of inputs and telling the network whether it should consider the pairs members of the same class or not. The real-numbered vector output of the network will naturally create an embedding space that separates distinct classes. The distance between output vectors is typically measured by Euclidean distance, or more commonly, by Cosine distance. Embedding spaces can be arbitrary in size, but might range from 32 to 2048 in length, in practice. Because it is difficult to visualize high dimensional vector spaces, embedded datasets are often viewed using 2D-projection techniques such as t-SNE or UMAP.
+
+Molecular and cellular biology is a domain filled with interesting applications for embedding spaces. One reason is because its objects are very complex and high dimensional (genes, proteins, cells, tissues) in comparison to properties of interest, which can be much lower dimensional (e.g., does a pathological state get better or worse when compound A is applied to a cell culture?).
+
+A problem of particular importance to the Biotech industry is how to efficiently discover and measure the function of novel molecules. A powerful recent approach to this challenge, cellular deep phenotyping, is to use high-throughput, high-resolution imaging of cell cultures (or 3D organoids), each of which has been treated in a slightly different way with different combinations of compounds at different concentrations. Typically the cell cultures are grown in multi-well plates, each with hundreds or thousands of wells. A key related technology is the application of fluorescent molecular tags that can be engineered to bind to virtually any type of molecule in a cell with high specificity. Dozens of different fluorescent tags can be applied to the same samples simultaneously, each at a different wavelength, creating imagery with [ 4D (3D+time) * nD ] dimensions, where n is the number of tags. The resultant imagery from these high-throughput experiments is then used as input to train an embedding network. Because the mechanism of action (or “MOA”) of some of the applied molecules is known beforehand (from prior basic research), an embedding space for MOA can be created that be used to infer the properties of novel compounds with unknown MOA. This creates a “flywheel”, whereby interesting properties of select novel molecules can then be confirmed with other experimental methods, and added to the “known MOA” repertoire, increasing the resolving power of the updated embedding network, ad infinitum.
+
+This project provides an AWS architecture that can be used to support a novel molecule MOA discovery from imaging. It includes functionality for these steps:
+
+* Uploading plate imaging manifests
+* Multi-step image processing of plates, with hierarchical normalization at plate, well, and image levels
+* Selection of regions-of-interest (“ROI”) within individual images, using image processing techniques
+* Structuring and assembly of normalized, segmented ROI multi-channel imagery into machine learning training sets with corresponding chemical compound and MOA labels
+* Parallel training of “NSC” - not same compound - models to validate the ability of the test ML model to generalize across the compounds with known MOA (i.e., one ML model per compound with known MOA).
+* A Search Service that can be used to generate embeddings for query images and compute an ordered list of “nearest neighbor” images, from which the MOA of the query image can be inferred.
+
+This project is designed to be operated at scale, supporting an arbitrary number of concurrent projects and researchers, permitting the sharing and mixing of subsets of imagery to perform different experiments with different ML models.
+
+An example dataset is included with the project, the well known “BBBC-021” imagery of Human MCF7 cell cultures, which has been featured in numerous machine learning and deep phenotyping research papers:
+https://bbbc.broadinstitute.org/BBBC021
+
+**We used image set BBBC021v1 (https://bbbc.broadinstitute.org/bbbc/BBBC021) [Caie et al., Molecular Cancer Therapeutics, 2010 (http://dx.doi.org/10.1158/1535-7163.MCT-09-1148)], available from the Broad Bioimag Benchmark Collection [Ljosa et al., Nature Methods, 2012 (http://dx.doi.org/10.1038/nmeth.2083)].**
+
 ## Security
 
 See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
