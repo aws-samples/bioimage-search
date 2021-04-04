@@ -11,7 +11,7 @@ This is a "Proof of Concept" project that provides an example architecture of:
 * A design that can be efficiently scaled
 * An implementation with the AWS CDK
 
-![architecture diagram](https://github.com/aws-samples/bioimage-search/blob/master/BioimageSearch-1.png/BioimageSearch-1.png?raw=true)
+![architecture diagram](https://github.com/aws-samples/bioimage-search/blob/master/BioimageSearch-1.png?raw=true)
 
 ## Security
 
