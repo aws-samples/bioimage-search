@@ -1258,7 +1258,7 @@ class SearchClient(BioimageSearchClient):
             return response
 
     def searchByImageId(self, trainId, imageId):
-        request = '{{ "method": "searchByImageId", "trainId": "{}", "imageId": "{}" }}'.format(trainId, imageId)
+        request = '{{ "method": "searchByImageId", "trainId": "{}", "queryImageId": "{}" }}'.format(trainId, imageId)
         payload = bytes(request, encoding='utf-8')
         lambdaClient = boto3.client('lambda')
         response = lambdaClient.invoke(

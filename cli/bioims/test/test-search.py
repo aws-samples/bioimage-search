@@ -12,3 +12,7 @@ print(r)
 r = searchClient.startTagLoad('bbbc021-1')
 print(r)
 
+# trainId = 'hqTvRAmUVR5amUiAABqv85'
+# imageId = 'bgzxxYiiuKEYawB7wEX8pW'
+# r = searchClient.searchByImageId(trainId, imageId)
+# print(r)

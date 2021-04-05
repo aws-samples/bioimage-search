@@ -628,7 +628,7 @@ export const handler = async (event: any = {}): Promise<any> => {
     }
   } else if (event.method == "searchByImageId") {
     if (event.trainId &&
-        event.imageId) {
+        event.queryImageId) {
       try {
         const submitInfo = await submitSearch(event);
         const response = await waitForSearch(submitInfo.searchId, 100);
