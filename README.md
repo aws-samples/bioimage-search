@@ -46,6 +46,65 @@ https://bbbc.broadinstitute.org/BBBC021
 
 **We used image set BBBC021v1 (https://bbbc.broadinstitute.org/bbbc/BBBC021) [Caie et al., Molecular Cancer Therapeutics, 2010 (http://dx.doi.org/10.1158/1535-7163.MCT-09-1148)], available from the Broad Bioimag Benchmark Collection [Ljosa et al., Nature Methods, 2012 (http://dx.doi.org/10.1038/nmeth.2083)].**
 
+## Architecture and Design
+
+This project was motivated by requests from AWS customers for a high-throughput cell-culture deep-phenotyping Proof-of-Concept with the following objectives:
+
+* Can scale to billions of images while still being performant and cost-effective.
+* Offers realtime query capability for bioimage search, where a novel image is used to search for similar images.
+* Can support multiple researchers simultaneously, each experimenting with different image processing techniques and ML embedding models, while all sharing the same datasets and not “stepping on each other”.
+* Provides arbitrary tagging (ontologies) of imagery, that can in turn be used to filter and constrain searches.
+* Supports custom event telemetry (messages) that can be used for downstream or “side car” pipelines.
+* Permits advanced LIMS-like functionality for sample processing, such as multiple runs of the same plate.
+* Separates lab ID namespaces from compute ID namespaces, but maps the two together.
+* A flexible, loosely coupled service design that supports ROI selection using arbitrary computational steps, such as using ML to select specific cell types for ROIs.
+* Complete custom control over imaging dimensions and formats.
+* Complete custom control over the structure of the embedding space.
+* Complete custom control over the search algorithm (e.g., customized beyond cosine, Euclidean, etc.)
+* The ability to snapshot all DynamoDB tables to S3 for use with Athena (this is a native capability of DynamoDB: https://aws.amazon.com/blogs/aws/new-export-amazon-dynamodb-table-data-to-data-lake-amazon-s3/)
+
+A microservices architecture is created, where each microservice is composed from DynamoDB and Lambda. Services with long-running or multi-step processes also use StepFunctions, and may invoke Batch or SageMaker. Each microservice is deployed as a separate CloudFormation Stack, implemented with the AWS CDK. The project is entirely serverless, with the exception of the SearchService, which is vertically scaled by a Fargate task. Image processing is done using a combination of Lambda and Batch, and is intended to be flexible by permitting drop-in of ARNs (Amazon Resource Names) which can be either a Lambda function or a Batch job definition - the calling service will dynamically invoke either.
+
+Interaction with the project, whether manual or automated, is via a Python-based API that is structured similarly to a command line interface, it is referred to as the “Bioims CLI”. The choice of Python is motivated by its ease of use within Jupyter notebooks, another customer request.
+
+The project is implemented and deployed with the AWS CDK: https://docs.aws.amazon.com/cdk/api/latest/. An advantage of each microservice being implemented with a separate stack is that they can be independently updated in a fast, light-weight fashion, with the CDK maintaining integrity across the service dependency graph.
+
+Here is a summary of the project services and components:
+
+*Artifact* - All persistent objects, files, images, etc. created by the project are registered by the Artifact service. This is not limited to S3. All artifacts are associated with a context, such as a Plate, Well, or Image. This supports inventory management and discovery for other processes.
+
+*BatchSetup* - Sets up the Batch environment, including VPC, compute environments for SPOT, ON-DEMAND, and associated queues.
+
+*Configuration* - Configuration key:value parameters for the project, which are versioned and timestamped.
+
+*Embedding* - Once a model is trained, this service applies the model to all eligible imagery and computes the corresponding embeddings. For a given image, there could be hundreds or thousands of embeddings, each corresponding to a different model.
+
+*ImageArtifact* - Computes a standard 2D maximum intensity projections (MIPs) of all imagery into a common set of sizes and formats, to support human browsing of imagery with webapps or notebooks. These artifacts are not used as input to training, but are derived from source imagery for human usability.
+
+*ImageManagement* - The main service for managing imagery, this includes a large number of methods for CRUD operations on images and related labels, tags, and embeddings.
+
+*ImagePreprocessing* - Performs a series of image preprocessing steps on raw source imagery as it is transformed into ROI training data for ML models. Includes hierarchical normalization across Plates, Wells, Images and ROI segmentation.
+
+*Label* - Manages training labels for machine learning. Ensures uniqueness and provides a namespace (category) dimension.
+
+*Message* - A lightweight event telemetry service for maintaining state and context across multi-step processes. Can also be used for tracing, debugging, and performance monitoring.
+
+ *PlatePreprocessing* - Orchestration service for applying the ImagePreprocessing service to select subsets of imagery.
+
+*ProcessPlate* - Uploads plates and associated imagery into the project from laboratory (or arbitrary) source. The entrypoint for imagery into the system. Does validation and then calls the PlatePreprocessing service to begin image processing steps.
+
+*ResourcePermissions* - Sets up IAM permissions between actors, roles, and resources.
+
+*Search* - API for interacting with the SearchService, including loading search data and metadata, and initiating search queries. Also manages and provides access to search results.
+
+*SearchService* - The actual service that maintains an index of all embeddings in memory and computes searches in realtime on demand. Fronted by dual SQS queues for queries and management operations.
+
+*Tag* - Manages tags which can be applied to any entity in the system (Plate, Well, Image). Tags are useful to configuring searches to include or exclude subsets of imagery.
+
+*Train* - Manages ML training. Sets up and initiates training on SageMaker. Designed to support an arbitrary number of concurrent training sessions.
+
+*TrainingConfiguration* - Manages “Embeddings”, which are formal specifications that describe the geometry of how imagery and ML models are related, as well as hyperparameters used for training. Also manages “Trainings”, which are training sessions that create trained ML models for specific subsets of imagery associated with a particular training on an Embedding. A single Embedding might have hundreds or thousands of Trainings associated with it, each at a different time point or using different subsets of imagery (typically corresponding to different TAGs).
+
 ## Security
 
 See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
