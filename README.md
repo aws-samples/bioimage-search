@@ -403,7 +403,7 @@ This will upload lists to the resource s3 bucket at this location:
 
 ### Train MOA-specific Models
 
-If your account has Service Quota limits for SageMaker GPU instance types (e.g., ml.p3.2xlarge or ml.g4dn.4large), these are recommended for this project - they are about 5x faster per training unit for the default model in this project than CPU instances (note this factor tends to go up the more parameters and layers in the model, and vice-versa if the model is simpler).
+If your account has Service Quota limits for SageMaker GPU instance types (e.g., ml.p3.2xlarge or ml.g4dn.4xlarge), these are recommended for this project - they are about 5x faster per training unit for the default model in this project than CPU instances (note this factor tends to go up the more parameters and layers in the model, and vice-versa if the model is simpler).
 
 The instance type for training is specified in the “trainingInstanceType” field of the embedding, in the "BioimsTrainingConfiguration" table, in the row with trainId=‘origin’ for a particular embedding. The simplest way to train all models is to leave the “trainingInstanceType” field set to the preferred instance type, and run this compound command:
 
