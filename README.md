@@ -427,7 +427,9 @@ Create 3 terminal shells, one intended to be used for each group.
 
 Then, in each shell corresponding to a particular instance type, run something like this, making sure to advance <max entry> with each invocation:
 
+```
 python get-train-input-helper.py --bbbc021-bucket <bbbc021 bucket>  --bioims-resource-bucket <resource bucket> --embeddingName <embedding name> | head -n <max entry> | tail -n <entry window size> | xargs -n 3 -P <entry window size> python ./run-training-helper.py
+```
 
 NOTE: Each group will need to be launched (and manually re-launched to repeat) with adjusted “max entry” position, being sure to edit the “trainingInstanceType” entry in the “BioimsTrainingConfiguration” row each time before starting, so that these jobs are launched with the intended instance type specified (edits are relatively easy in the DynamoDB console).
 
