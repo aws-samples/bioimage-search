@@ -13,6 +13,10 @@ This is a "Proof of Concept" project that provides an example architecture of:
 
 ![architecture diagram](https://github.com/aws-samples/bioimage-search/blob/master/BioimageSearch-1.png?raw=true)
 
+## Blog - Under Construction
+
+Please use master branch for deployment
+
 ## What is this Project Useful For?
 
 There are many situations where it is useful to ask, “How similar is A to B?”, where A and B can be almost anything that can be represented by a digital artifact, e.g., an image or video, a sound recording,
