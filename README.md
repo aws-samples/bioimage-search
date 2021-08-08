@@ -1,3 +1,7 @@
+## Blog - Under Construction
+
+Please use master branch for deployment
+
 ## Bioimage Search
 
 NOTE: this project is in pre-release.
@@ -12,10 +16,6 @@ This is a "Proof of Concept" project that provides an example architecture of:
 * An implementation with the AWS CDK
 
 ![architecture diagram](https://github.com/aws-samples/bioimage-search/blob/master/BioimageSearch-1.png?raw=true)
-
-## Blog - Under Construction
-
-Please use master branch for deployment
 
 ## What is this Project Useful For?
 
