@@ -13,6 +13,10 @@ def getNoLabelKey(embeddingName, plateId, imageId):
     prefix = getTrainPrefixKey(embeddingName, plateId, imageId)
     return prefix + "-label.NONE"
 
+def getSubclassKey(embeddingName, plateId, imageId):
+    prefix = getTrainPrefixKey(embeddingName, plateId, imageId)
+    return prefix + "-subclass.npy"
+
 def getRoiKey(embeddingName, plateId, imageId):
     prefix = getTrainPrefixKey(embeddingName, plateId, imageId)
     return prefix + "-roi.json"

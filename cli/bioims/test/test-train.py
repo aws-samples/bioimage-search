@@ -6,11 +6,11 @@ import bioims
 
 trainClient = bioims.client('train')
 
-embeddingName='bbbc021-1'
+embeddingName='bbbc021'
 filterBucket=''
 filterKey=''
 executeProcessPlate='false'
-useSpot='true'
+useSpot='false'
 
 r = trainClient.train(embeddingName, filterBucket, filterKey, executeProcessPlate, useSpot)
 print(r)

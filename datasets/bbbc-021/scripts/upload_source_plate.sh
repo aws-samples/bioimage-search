@@ -4,8 +4,8 @@
 # Note: -P can be increased, but Lambda limits should be monitored.
 
 # These should be filled-in for each deployment:
-bbbc021Bucket=bioimagesearchbbbc021stack-bbbc021bucket544c3e64-ugln15rb234b
-resourceBucket=bioims-resource-1
+bbbc021Bucket=bioimagesearchbbbc021stack-bbbc021bucket544c3e64-10ecnwo51127
+resourceBucket=bioimage-search-input
 
 mkdir -p ~/tmp
 echo Processing $1

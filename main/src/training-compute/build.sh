@@ -13,5 +13,13 @@ pip install pandas
 cp -r venv/lib64/python3.8/site-packages/* .
 rm -r venv
 rm -r pip
+rm -r sagemaker/cli
+rm -r sagemaker/tensorflow
+rm -r sagemaker/chainer
+rm -r sagement/lineage
+rm -r pandas/tests
+rm -r pandas/_libs/tslibs
+rm -r pandas/plotting
+rm -r numpy/typing/tests
 cd ..
 deactivate

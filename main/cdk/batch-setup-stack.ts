@@ -5,6 +5,9 @@ import batch = require("@aws-cdk/aws-batch");
 
 import crs = require("crypto-random-string");
 
+export interface BatchSetupStackProps extends cdk.StackProps {
+}
+
 export class BatchSetupStack extends cdk.Stack {
   public batchInstanceRole: iam.Role;
   public batchVpc: ec2.Vpc;
@@ -13,8 +16,8 @@ export class BatchSetupStack extends cdk.Stack {
   public spotQueueOutput: cdk.CfnOutput
   public onDemandQueueOutput: cdk.CfnOutput
 
-  constructor(app: cdk.App, id: string) {
-    super(app, id);
+  constructor(app: cdk.App, id: string, props: BatchSetupStackProps) {
+    super(app, id, props);
 
     this.batchInstanceRole = new iam.Role(this, 'batchInstanceRole', {
         assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),

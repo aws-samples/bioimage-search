@@ -64,8 +64,10 @@ for dapiFile in dapiFiles:
     imageElement['sourceKey'] = ''
     imageElement['channelKeys'] = channelKeys
     imageElement['category'] = 'moa'
+    imageElement['subclassType'] = 'compound'
     if (bb1.getMoaByDapi(dapiFile)):
         imageElement['label'] = bb1.getMoaByDapi(dapiFile)
+    imageElement['subclass'] = bb1.getCompoundByDapi(dapiFile)
     imageElement['experiment'] = 'BBBC021_v1'
     
     images.append(imageElement)

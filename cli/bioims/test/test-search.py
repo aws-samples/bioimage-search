@@ -9,7 +9,7 @@ searchClient = bioims.client('search')
 r = searchClient.loadTagLabelMap();
 print(r)
 
-r = searchClient.startTagLoad('bbbc021-1')
+r = searchClient.startTagLoad('bbbc021')
 print(r)
 
 # trainId = 'hqTvRAmUVR5amUiAABqv85'
