@@ -203,35 +203,6 @@ def _train(args):
         print("Error - y_train and z_train must have same length")
         return
     
-    # class_idx_to_train_idxs = defaultdict(list)
-    # for y_train_idx, y in enumerate(y_train):
-    #     class_idx_to_train_idxs[y].append(y_train_idx)
-
-    # for classIndex in class_idx_to_train_idxs:
-    #     classList = class_idx_to_train_idxs[classIndex]
-    #     l3 = len(classList)
-    #     print("Class {} has {} members".format(classIndex, l3))
-
-    # class AnchorPositivePairs():
-    #     def __init__(self, num_batchs):
-    #         self.num_batchs = num_batchs
-
-    #     def __len__(self):
-    #         return self.num_batchs
-
-    #     def getitem(self):
-    #         x = np.empty((2, num_classes, channels, height_width, height_width), dtype=np.float32)
-    #         for class_idx in range(num_classes):
-    #             examples_for_class = class_idx_to_train_idxs[class_idx%num_classes]
-    #             anchor_idx = random.choice(examples_for_class)
-    #             positive_idx = random.choice(examples_for_class)
-    #             while positive_idx == anchor_idx:
-    #                 positive_idx = random.choice(examples_for_class)
-    #             x[0, class_idx] = (x_train[anchor_idx].astype(np.float32))/65535.0
-    #             x[1, class_idx] = (x_train[positive_idx].astype(np.float32))/65535.0
-            
-    #         return torch.tensor(x)
-    
     classDict = defaultdict(lambda: defaultdict(list))
     for i in range(y_train.shape[0]):
         y = y_train[i]
