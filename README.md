@@ -143,7 +143,7 @@ Using Cloud9 is optional, but convenient for working with or looking at the code
 NOTES:
 
 * Because this project involves long-running shell processes, it is recommended to, when creating the Cloud9 environment, use an “always on” or long timeout setting.
-* It is also recommended to go to Cloud9 Preferences and disable temporary credentions, and then use 'aws configure' to add IAM user credentials for use with the cli.
+* There are two options for supplying AWS credentials for Cloud9 shell processes: (1) Cloud9 default credentials, (2) EC2 instance IAM role credentials. By default, Cloud9 supplies credentials corresponding to the user/role that launched Cloud9. Due to the way the CDK accesses credentials, the Cloud9 default credentials need to be used when invoking CDK operations. Otherwise, you can disable Cloud9 credentials using Cloud9 Preferences toolbar, which will fall back on EC2 instance IAM role credentials, which will be needed for long-running shell processes that will otherwise timeout with the 15-minute limit for Cloud9 credentials.
 
 During setup, there is not an option to increase the disk size. This instance type should be a minimum of “t3.medium”, but it might be necessary to increase memory and therefore switch to a different instance type such as “t3.large”. This can be done at any time using these directions:
 https://docs.aws.amazon.com/cloud9/latest/user-guide/move-environment.html

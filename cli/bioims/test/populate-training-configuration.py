@@ -7,8 +7,9 @@ import bioims
 trainingConfigurationClient = bioims.client('training-configuration')
 
 # To be filled-in for each new deployment
-plateMethodArn="arn:aws:batch:us-east-1:580829821648:job-definition/platepreprocessingjobde-ff261d778b568c4:1"
-imageMethodArn="arn:aws:batch:us-east-1:580829821648:job-definition/imagepreprocessingjobde-db2957c2c6f42c5:4"
+plateMethodArn="arn:aws:batch:us-east-1:580829821648:job-definition/platepreprocessingjobde-f44b2d3675e9fc4:1"
+imageMethodArn="arn:aws:batch:us-east-1:580829821648:job-definition/imagepreprocessingjobde-c7df1aec5a8b940:1"
+
 embedding1 = {
     "embeddingName" : "bbbc021",
     "plateMethodArn" : plateMethodArn,

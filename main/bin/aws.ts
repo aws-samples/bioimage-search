@@ -48,100 +48,52 @@ const dynamoTableNames = dynamoTables!.TableNames
 const app = new cdk.App();
 
 const baseStack = new BaseStack(app, 'BioimageSearchBaseStack', {
-    env: {
-      account: process.env.CDK_DEFAULT_ACCOUNT,
-      region: process.env.CDK_DEFAULT_REGION,
-    },
     dataBucketName: DATA_BUCKET,
 })
 
 const lustreStack = new LustreStack(app, 'BioimageSearchLustreStack', {
-    env: {
-      account: process.env.CDK_DEFAULT_ACCOUNT,
-      region: process.env.CDK_DEFAULT_REGION,
-    },
     bioimsVpc: baseStack.vpc,
     dataBucket: baseStack.dataBucket
 })
 
 const batchSetupStack = new BatchSetupStack(app, 'BioimageSearchBatchSetupStack', {
-    env: {
-      account: process.env.CDK_DEFAULT_ACCOUNT,
-      region: process.env.CDK_DEFAULT_REGION,
-    },
 });
 
 const configurationStack = new ConfigurationStack(app, 'BioimageSearchConfigurationStack', {
-    env: {
-      account: process.env.CDK_DEFAULT_ACCOUNT,
-      region: process.env.CDK_DEFAULT_REGION,
-    },
     dynamoTableNames: dynamoTableNames
 })
 
 const labelStack = new LabelStack(app, 'BioimageSearchLabelStack', {
-    env: {
-      account: process.env.CDK_DEFAULT_ACCOUNT,
-      region: process.env.CDK_DEFAULT_REGION,
-    },
     dynamoTableNames: dynamoTableNames
 })
 
 const messageStack = new MessageStack(app, 'BioimageSearchMessageStack', {
-    env: {
-      account: process.env.CDK_DEFAULT_ACCOUNT,
-      region: process.env.CDK_DEFAULT_REGION,
-    },
     dynamoTableNames: dynamoTableNames
 })
 
 const artifactStack = new ArtifactStack(app, 'BioimageSearchArtifactStack', {
-    env: {
-      account: process.env.CDK_DEFAULT_ACCOUNT,
-      region: process.env.CDK_DEFAULT_REGION,
-    },
     dynamoTableNames: dynamoTableNames,
     dataBucket: baseStack.dataBucket
 })
 
 const imageArtifactStack = new ImageArtifactStack(app, 'BioimageSearchImageArtifactStack', {
-    env: {
-      account: process.env.CDK_DEFAULT_ACCOUNT,
-      region: process.env.CDK_DEFAULT_REGION,
-    },
     dataBucket: baseStack.dataBucket,
     configurationLambdaArn: configurationStack.configurationLambdaArn,
     artifactLambdaArn: artifactStack.artifactLambda.functionArn
 })
 
 const platePreprocessingStack = new PlatePreprocessingStack(app, 'BioimageSearchPlatePreprocessingStack', {
-    env: {
-      account: process.env.CDK_DEFAULT_ACCOUNT,
-      region: process.env.CDK_DEFAULT_REGION,
-    },
     batchInstanceRole: batchSetupStack.batchInstanceRole
 })
 
 const imagePreprocessingStack = new ImagePreprocessingStack(app, 'BioimageSearchImagePreprocessingStack', {
-    env: {
-      account: process.env.CDK_DEFAULT_ACCOUNT,
-      region: process.env.CDK_DEFAULT_REGION,
-    },
 });
 
 const trainingConfigurationStack = new TrainingConfigurationStack(app, 'BioimageSearchTrainingConfigurationStack', {
-    env: {
-      account: process.env.CDK_DEFAULT_ACCOUNT,
-      region: process.env.CDK_DEFAULT_REGION,
-    },
     dynamoTableNames: dynamoTableNames
 })
 
 const imageManagementStack = new ImageManagementStack(app, 'BioimageSearchImageManagementStack', {
-    env: {
-      account: process.env.CDK_DEFAULT_ACCOUNT,
-      region: process.env.CDK_DEFAULT_REGION,
-    },
     trainingConfigurationLambda: trainingConfigurationStack.trainingConfigurationLambda,
     messageLambda: messageStack.messageLambda,
     artifactLambda: artifactStack.artifactLambda,
@@ -149,10 +101,6 @@ const imageManagementStack = new ImageManagementStack(app, 'BioimageSearchImageM
 })
 
 const processPlateStack = new ProcessPlateStack(app, 'BioimageSearchProcessPlateStack', {
-    env: {
-      account: process.env.CDK_DEFAULT_ACCOUNT,
-      region: process.env.CDK_DEFAULT_REGION,
-    },
     messageLambda: messageStack.messageLambda,
     imageManagementLambda: imageManagementStack.imageManagementLambda,
     trainingConfigurationLambda: trainingConfigurationStack.trainingConfigurationLambda,
@@ -164,10 +112,6 @@ const processPlateStack = new ProcessPlateStack(app, 'BioimageSearchProcessPlate
 })
 
 const trainStack = new TrainStack(app, 'BioimageSearchTrainStack', {
-    env: {
-      account: process.env.CDK_DEFAULT_ACCOUNT,
-      region: process.env.CDK_DEFAULT_REGION,
-    },
     messageLambda: messageStack.messageLambda,
     imageManagementLambda: imageManagementStack.imageManagementLambda,
     trainingConfigurationLambda: trainingConfigurationStack.trainingConfigurationLambda,
@@ -177,10 +121,6 @@ const trainStack = new TrainStack(app, 'BioimageSearchTrainStack', {
 })
 
 const embeddingStack = new EmbeddingStack(app, 'BioimageSearchEmbeddingStack', {
-    env: {
-      account: process.env.CDK_DEFAULT_ACCOUNT,
-      region: process.env.CDK_DEFAULT_REGION,
-    },
     artifactLambda: artifactStack.artifactLambda,
     messageLambda: messageStack.messageLambda,
     imageManagementLambda: imageManagementStack.imageManagementLambda,
@@ -189,10 +129,6 @@ const embeddingStack = new EmbeddingStack(app, 'BioimageSearchEmbeddingStack', {
 })
 
 const searchStack = new SearchStack(app, 'BioimageSearchSearchStack', {
-    env: {
-      account: process.env.CDK_DEFAULT_ACCOUNT,
-      region: process.env.CDK_DEFAULT_REGION,
-    },
     trainingConfigurationLambda: trainingConfigurationStack.trainingConfigurationLambda,
     imageManagementLambda: imageManagementStack.imageManagementLambda,
     processPlateLambda: processPlateStack.processPlateLambda,
@@ -202,18 +138,10 @@ const searchStack = new SearchStack(app, 'BioimageSearchSearchStack', {
 })
 
 const tagStack = new TagStack(app, 'BioimageSearchTagStack', {
-    env: {
-      account: process.env.CDK_DEFAULT_ACCOUNT,
-      region: process.env.CDK_DEFAULT_REGION,
-    },
     dynamoTableNames: dynamoTableNames
 })
 
 const searchServiceStack = new SearchServiceStack(app, 'BioimageSearchServiceStack', {
-    env: {
-      account: process.env.CDK_DEFAULT_ACCOUNT,
-      region: process.env.CDK_DEFAULT_REGION,
-    },
     trainingConfigurationLambda: trainingConfigurationStack.trainingConfigurationLambda,
     imageManagementLambda: imageManagementStack.imageManagementLambda,
     processPlateLambda: processPlateStack.processPlateLambda,
@@ -227,10 +155,6 @@ const searchServiceStack = new SearchServiceStack(app, 'BioimageSearchServiceSta
 })
 
 const resourcePermissionsStack = new ResourcePermissionsStack(app, 'BioimageSearchResourcePermissionsStack', {
-    env: {
-      account: process.env.CDK_DEFAULT_ACCOUNT,
-      region: process.env.CDK_DEFAULT_REGION,
-    },
     dataBucket: baseStack.dataBucket,
     bbbc021BucketName: BBBC021_BUCKET,
     resourceBucketName: RESOURCE_BUCKET,
