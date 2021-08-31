@@ -40,6 +40,8 @@ public class App {
 	private static Map<String, int[]> tagMap = new HashMap<>();
 	private static Map<Integer, String> tagLabelMap = new HashMap<>();
 	
+	private int VERSION = 2;
+	
 	private SqsClient sqsClient = null;
 	private LambdaClient lambdaClient = null;
 	private ImageEmbedding[] hitArray = null;

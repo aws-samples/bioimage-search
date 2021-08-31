@@ -27,6 +27,7 @@ import { SearchServiceStack } from '../cdk/search-service-stack';
 import { TagStack } from '../cdk/tag-stack';
 
 const region = process.env.CDK_DEFAULT_REGION || "";
+const account = process.env.CDK_DEFAULT_ACCOUNT || "";
 
 const credentials = new SharedIniFileCredentials({profile: 'default'});
 const dynamodb = new Dynamodb({
@@ -35,9 +36,9 @@ const dynamodb = new Dynamodb({
 });
 
 // Buckets to be created by the user and configured here:
-const RESOURCE_BUCKET = "bioims-resource-1";
-const DATA_BUCKET = "bioims-data-1";
-const BBBC021_BUCKET = "bioimagesearchbbbc021stack-bbbc021bucket544c3e64-ugln15rb234b";
+const RESOURCE_BUCKET = "bioimage-search-input";
+const DATA_BUCKET = "bioimage-search-output";
+const BBBC021_BUCKET = "bioimagesearchbbbc021stack-bbbc021bucket544c3e64-10ecnwo51127";
 
 (async() => {
 
@@ -55,7 +56,8 @@ const lustreStack = new LustreStack(app, 'BioimageSearchLustreStack', {
     dataBucket: baseStack.dataBucket
 })
 
-const batchSetupStack = new BatchSetupStack(app, 'BioimageSearchBatchSetupStack');
+const batchSetupStack = new BatchSetupStack(app, 'BioimageSearchBatchSetupStack', {
+});
 
 const configurationStack = new ConfigurationStack(app, 'BioimageSearchConfigurationStack', {
     dynamoTableNames: dynamoTableNames
@@ -84,7 +86,8 @@ const platePreprocessingStack = new PlatePreprocessingStack(app, 'BioimageSearch
     batchInstanceRole: batchSetupStack.batchInstanceRole
 })
 
-const imagePreprocessingStack = new ImagePreprocessingStack(app, 'BioimageSearchImagePreprocessingStack');
+const imagePreprocessingStack = new ImagePreprocessingStack(app, 'BioimageSearchImagePreprocessingStack', {
+});
 
 const trainingConfigurationStack = new TrainingConfigurationStack(app, 'BioimageSearchTrainingConfigurationStack', {
     dynamoTableNames: dynamoTableNames

@@ -1,3 +1,7 @@
+## Blog - Under Construction
+
+Please use master branch for deployment
+
 ## Bioimage Search
 
 NOTE: this project is in pre-release.
@@ -139,6 +143,7 @@ Using Cloud9 is optional, but convenient for working with or looking at the code
 NOTES:
 
 * Because this project involves long-running shell processes, it is recommended to, when creating the Cloud9 environment, use an “always on” or long timeout setting.
+* There are two options for supplying AWS credentials for Cloud9 shell processes: (1) Cloud9 default credentials, (2) EC2 instance IAM role credentials. By default, Cloud9 supplies credentials corresponding to the user/role that launched Cloud9. Due to the way the CDK accesses credentials, the Cloud9 default credentials need to be used when invoking CDK operations. Otherwise, you can disable Cloud9 credentials using Cloud9 Preferences toolbar, which will fall back on EC2 instance IAM role credentials, which will be needed for long-running shell processes that will otherwise timeout with the 15-minute limit for Cloud9 credentials.
 
 During setup, there is not an option to increase the disk size. This instance type should be a minimum of “t3.medium”, but it might be necessary to increase memory and therefore switch to a different instance type such as “t3.large”. This can be done at any time using these directions:
 https://docs.aws.amazon.com/cloud9/latest/user-guide/move-environment.html
@@ -224,13 +229,15 @@ bioimage-search/main/bin/aws.ts
 
 Params to modify:
 
+```
 RESOURCE_BUCKET 
 DATA_BUCKET
 BBBC021_BUCKET
+```
 
-The RESOURCE_S3_BUCKET is an input landing zone for users to add resources for the system to use.
+The RESOURCE_BUCKET is an input landing zone for users to add resources for the system to use.
 
-The DATA_S3_BUCKET is entirely managed by the system (we also refer to it as the 'artifact' bucket).
+The DATA_BUCKET is entirely managed by the system (we also refer to it as the 'artifact' bucket).
 
 Also, the BBBC021_BUCKET should be configured, using the name auto-generated from the stack above.
 
@@ -280,6 +287,14 @@ python -m pip install -r requirements.txt
 
 This step will take about one hour using -P 4.
 
+First, edit this file and set 'bbbc021Bucket' and 'resourceBucket' to their correct S3 bucket names:
+
+```
+bioimage-search/datasets/bbbc-021/scripts/upload_source_plate.sh
+```
+
+Then, run the upload script:
+
 ```
 cd bioimage-search/datasets/bbbc-021/scripts
 cat plate_list.txt | xargs -n 1 -P 4 ./upload_source_plate.sh
@@ -308,18 +323,18 @@ cd bioimage-search/cli/bioims/test
 python ./populate-training-configuration.py
 ```
 
-### Copy training script to Resource Bucket
-
-```
-cd bioimage-search/datasets/bbbc-021/scripts
-aws s3 cp bbbc021-1-train-script.py s3://<name of resource bucket>
-```
-
 ### Populate Label Table
 
 ```
 cd bioimage-search/cli/bioims/test
 python populate-label.py
+```
+
+### Copy training script to Resource Bucket
+
+```
+cd bioimage-search/datasets/bbbc-021/scripts
+aws s3 cp bbbc021-1-train-script.py s3://<name of resource bucket>
 ```
 
 ### Compute image processing steps and train ‘baseline’ model
@@ -350,6 +365,8 @@ NOTES:
 * Both for this training step, and also for the following multi-model MOA training step, if training needs to be re-run, the entry for the prior problematic training should be deleted from DynamoDB in the BioimsTrainingConfiguration table. This is not required but recommended.
 
 ### Compute Embeddings for Baseline Model
+
+The trainId for below can be obtained from the DynamoDB console, from the BioimsTrainingConfiguration table.
 
 ```
 cd bioimage-search/datasets/bbbc-021/scripts
@@ -394,7 +411,7 @@ Example usage:
 
 ```
 cd bioimage-search/datasets/bbbc-021/scripts
-python generate_train_filters.py --bbbc021-bucket bioimagesearchbbbc021stack-bbbc021bucket544c3e64-ugln15rb234b --bioims-resource-bucket bioims-resource-1 —embeddingName bbbc021-1
+python generate_train_filters.py --bbbc021-bucket bioimagesearchbbbc021stack-bbbc021bucket544c3e64-ugln15rb234b --bioims-resource-bucket bioims-resource-1 —-embeddingName bbbc021-1
 ```
 
 This will upload lists to the resource s3 bucket at this location:
@@ -454,7 +471,7 @@ python get-trainlist-helper.py bbbc021-1 | xargs -n 3 -P 5 python ./embedding-up
 This will populate the BioimsTag table with tags for the bbbc021 dataset (bucket names are examples):
 
 ```
-python generate_tags.py --bbbc021-bucket bioimagesearchbbbc021stack-bbbc021bucket544c3e64-ugln15rb234b --bioims-resource-bucket bioims-resource-1 —embeddingName bbbc021-1
+python generate_tags.py --bbbc021-bucket bioimagesearchbbbc021stack-bbbc021bucket544c3e64-ugln15rb234b --bioims-resource-bucket bioims-resource-1 —-embeddingName bbbc021-1
 ```
 
 ### Apply Tags to Images
@@ -463,7 +480,7 @@ This applies tags to the BioimsImageManagement table:
 
 ```
 cd bioimage-search/datasets/bbbc-021/scripts
-python apply-tags.py --bbbc021-bucket bioimagesearchbbbc021stack-bbbc021bucket544c3e64-ugln15rb234b --bioims-resource-bucket bioims-resource-1 —embeddingName bbbc021-1
+python apply-tags.py --bbbc021-bucket bioimagesearchbbbc021stack-bbbc021bucket544c3e64-ugln15rb234b --bioims-resource-bucket bioims-resource-1 —-embeddingName bbbc021-1
 ```
 
 ### Upload Tags to Search Service

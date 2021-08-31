@@ -7,18 +7,18 @@ import bioims
 trainingConfigurationClient = bioims.client('training-configuration')
 
 # To be filled-in for each new deployment
-plateMethodArn="arn:aws:batch:us-east-1:147147579088:job-definition/platepreprocessingjobde-1af70a04077a5e6:1"
-imageMethodArn="arn:aws:batch:us-east-1:147147579088:job-definition/imagepreprocessingjobde-91a668a4c3c759e:1"
+plateMethodArn="arn:aws:batch:us-east-1:580829821648:job-definition/platepreprocessingjobde-f44b2d3675e9fc4:1"
+imageMethodArn="arn:aws:batch:us-east-1:580829821648:job-definition/imagepreprocessingjobde-c7df1aec5a8b940:1"
 
 embedding1 = {
-    "embeddingName" : "bbbc021-1",
+    "embeddingName" : "bbbc021",
     "plateMethodArn" : plateMethodArn,
     "wellMethodArn" : "wellMethodArn-placeholder",
     "imageMethodArn" : imageMethodArn,
     "imagePostMethodArn" : "imagePostMethodArn-placeholder",
-    "modelTrainingScriptBucket" : "bioims-resource-1",
+    "modelTrainingScriptBucket" : "bioimage-search-input",
     "modelTrainingScriptKey" : "bbbc021-1-train-script.py",
-    "trainingInstanceType" : "p3.2xlarge",
+    "trainingInstanceType" : "ml.g4dn.4xlarge",
     "trainingHyperparameters" : {
         'epochs': 2,
         'backend': 'gloo',

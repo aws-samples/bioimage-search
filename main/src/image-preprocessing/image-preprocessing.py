@@ -171,10 +171,12 @@ segmentationChannelName = 'dapi'
 trainKey   = bp.getTrainKey(args.embeddingName, imageInfo['plateId'], args.imageId)
 labelKey   = bp.getLabelKey(args.embeddingName, imageInfo['plateId'], args.imageId)
 noLabelKey = bp.getNoLabelKey(args.embeddingName, imageInfo['plateId'], args.imageId)
+subclassKey = bp.getSubclassKey(args.embeddingName, imageInfo['plateId'], args.imageId)
 roiKey     = bp.getRoiKey(args.embeddingName, imageInfo['plateId'], args.imageId)
 
 if (bi.s3ObjectExists(args.bucket, trainKey) and 
-    bi.s3ObjectExists(args.bucket, roiKey) and 
+    bi.s3ObjectExists(args.bucket, roiKey) and
+    bi.s3ObjectExists(args.bucket, subclassKey) and
     (bi.s3ObjectExists(args.bucket, labelKey) or bi.s3ObjectExists(args.bucket, noLabelKey))):
         print("All files exist - skipping")
         sys.exit(0)
@@ -184,6 +186,7 @@ height = int(imageInfo['height'])
 depth = int(imageInfo['depth'])
 
 labelIndex = -1
+subclassIndex = -1
 
 if isLabeled:
     labelDict = {}
@@ -191,6 +194,15 @@ if isLabeled:
     for lc in labelList:
         labelDict[lc[0]]=lc[1]
     labelIndex = int(labelDict[imageInfo['trainLabel']])
+
+    subclassDict = {}
+    subclassList = labelClient.listLabels(imageInfo['trainSubclassType'])
+    for ls in subclassList:
+        subclassDict[ls[0]]=ls[1]
+    subclassValue = imageInfo['trainSubclass']
+    cnws ="".join(subclassValue.split())
+    c2 = cnws.replace('/','-')
+    subclassIndex = int(subclassDict[c2])
 
 def getFlatFieldKeyForChannel(channelName):
     return bp.getFlatFieldKeyForChannel(imageInfo['plateId'], args.embeddingName, channelName)
@@ -399,4 +411,11 @@ if isLabeled:
 else:
     noLabelMessage = "No label data"
     s3c.put_object(Body=noLabelMessage, Bucket=args.bucket, Key=noLabelKey)
+    
+# Subclass output
+subclassNpy = np.zeros(count, dtype=np.int32)
+for s in range(count):
+    subclassNpy[s] = subclassIndex
+bi.writeNumpyToS3(subclassNpy, args.bucket, subclassKey)
+
     

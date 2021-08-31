@@ -36,8 +36,8 @@ export class PlatePreprocessingStack extends cdk.Stack {
               "Ref::embeddingName"
               ],
         },
-        retryAttempts: 1,
-        timeout: cdk.Duration.minutes(30)
+        retryAttempts: 2,
+        timeout: cdk.Duration.minutes(90)
     })
     
     this.platePreprocessingJobDefinitionArn = new cdk.CfnOutput(this, 'platePreprocessingJobDefinitionArn', { value: this.platePreprocessingJobDefinition.jobDefinitionArn} )

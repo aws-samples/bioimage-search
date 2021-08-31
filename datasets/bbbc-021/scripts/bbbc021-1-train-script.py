@@ -87,15 +87,19 @@ def load_training_data(prefixListPath):
     f = open(prefixListPath, "r")
     trainPathList = []
     labelPathList = []
+    subclassPathList = []
     x_list = []
     y_list = []
+    z_list = []
     
     for prefix in f:
         rprefix = prefix.rstrip()
         trainPath = sm_channel_prefix + rprefix + "-train.npy"
         labelPath = sm_channel_prefix + rprefix + "-label.npy"
+        subclassPath = sm_channel_prefix + rprefix + '-subclass.npy'
         trainPathList.append(trainPath)
         labelPathList.append(labelPath)
+        subclassPathList.append(subclassPath)
     f.close()
     
     pathListLength = len(trainPathList)
@@ -106,8 +110,17 @@ def load_training_data(prefixListPath):
         y_list.append(np.load(labelPath))
     print("Concatenating...")
     y_train = np.concatenate(y_list, axis=0)
-    print("Shape=")
     trainCount=y_train.shape[0]
+    print("Label count={}".format(trainCount))
+
+    for subclassPath in subclassPathList:
+        print("Loading {}".format(subclassPath))
+        z_list.append(np.load(subclassPath))
+    print("Concatenating...")
+    z_train = np.concatenate(z_list, axis=0)
+    subclassCount=z_train.shape[0]
+    print("Subclass count={}".format(subclassCount))
+
     ##########################################################################
     # Todo: create dynamic sizing model based on input dimensions.
     # This script assumes input with 4 dimensions. It assumes 2D rather then 3D data, with 3 channels:
@@ -138,13 +151,17 @@ def load_training_data(prefixListPath):
 
     x_shape = x_train.shape
     y_shape = y_train.shape
+    z_shape = z_train.shape
     print("x_shape=")
     print(x_shape)
     print("==")
     print("y_shape=")
     print(y_shape)
     print("==")
-    return x_train, y_train
+    print("z_shape=")
+    print(z_shape)
+    print("==")
+    return x_train, y_train, z_train
 
 def _train(args):
     
@@ -173,45 +190,54 @@ def _train(args):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     logger.info("Device Type: {}".format(device))
     
-    x_train, y_train = load_training_data(args.train_list_file)
+    x_train, y_train, z_train = load_training_data(args.train_list_file)
 
     x_train = x_train.reshape(-1, channels, height_width, height_width)
     
     xts = x_train.shape
-    print("x_train shape=")
+    print("x_train reshape=")
     print(xts)
     print("==")
     
-    class_idx_to_train_idxs = defaultdict(list)
-    for y_train_idx, y in enumerate(y_train):
-        class_idx_to_train_idxs[y].append(y_train_idx)
-
-    for classIndex in class_idx_to_train_idxs:
-        classList = class_idx_to_train_idxs[classIndex]
-        l3 = len(classList)
-        print("Class {} has {} members".format(classIndex, l3))
-
+    if y_train.shape[0] != z_train.shape[0]:
+        print("Error - y_train and z_train must have same length")
+        return
+    
+    classDict = defaultdict(lambda: defaultdict(list))
+    for i in range(y_train.shape[0]):
+        y = y_train[i]
+        z = z_train[i]
+        classDict[y][z].append(i)
+        
+    for ck, cv in classDict.items():
+        for sk, sv in cv.items():
+            sl = len(sv)
+            print("Class {} Subclass {} has {} members".format(ck, sk, sl))
+        
     class AnchorPositivePairs():
-        def __init__(self, num_batchs):
-            self.num_batchs = num_batchs
+        def __init__(self):
+            self.num_batches = 1
 
         def __len__(self):
-            return self.num_batchs
+            return self.num_batches
 
         def getitem(self):
             x = np.empty((2, num_classes, channels, height_width, height_width), dtype=np.float32)
             for class_idx in range(num_classes):
-                examples_for_class = class_idx_to_train_idxs[class_idx%num_classes]
-                anchor_idx = random.choice(examples_for_class)
-                positive_idx = random.choice(examples_for_class)
+                subclasses_for_class = classDict[class_idx]
+                slist = list(subclasses_for_class.values())
+                anchor_subclass_list = random.choice(slist)
+                positive_subclass_list = random.choice(slist)
+                anchor_idx = random.choice(anchor_subclass_list)
+                positive_idx = random.choice(positive_subclass_list)
                 while positive_idx == anchor_idx:
-                    positive_idx = random.choice(examples_for_class)
+                    positive_idx = random.choice(positive_subclass_list)
                 x[0, class_idx] = (x_train[anchor_idx].astype(np.float32))/65535.0
                 x[1, class_idx] = (x_train[positive_idx].astype(np.float32))/65535.0
             
             return torch.tensor(x)
-    
-    pairGenerator=AnchorPositivePairs(1000)
+
+    pairGenerator=AnchorPositivePairs()
     
     checkpointModelPath = os.path.join("/opt/ml/checkpoints", 'model.pth')
     if (os.path.exists(checkpointModelPath)):

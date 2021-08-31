@@ -127,7 +127,7 @@ export class ResourcePermissionsStack extends cdk.Stack {
         props.dataBucket.bucketArn + "/*",
       ],
     });
-
+    
     this.bioimageSearchManagedPolicy.addStatements(cloudFormationPolicyStatement);
     this.bioimageSearchManagedPolicy.addStatements(dataBucketPolicyStatement);
     this.bioimageSearchManagedPolicy.attachToUser(this.bioimageSearchUser);

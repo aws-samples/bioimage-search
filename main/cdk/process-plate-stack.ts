@@ -280,10 +280,10 @@ export class ProcessPlateStack extends cdk.Stack {
     const skippingPlateMessage = this.createSfnMessage("SkippingPlate", "No valid Arn for Plate processing - skipping");
     
     const processPlateBatch = new tasks.BatchSubmitJob (this, "PlateBatchJob", {
-      jobDefinition: batch.JobDefinition.fromJobDefinitionArn(this, "PlateBatchJobDefArn", sfn.JsonPath.stringAt('$.embeddingInfo.Payload.body.Item.plateMethodArn')),
+      jobDefinitionArn: sfn.JsonPath.stringAt('$.embeddingInfo.Payload.body.Item.plateMethodArn'),
       jobName: sfn.JsonPath.stringAt('$.plateId'),
 //      jobQueue: props.batchSpotQueue,
-      jobQueue: props.batchOnDemandQueue,
+      jobQueueArn: props.batchOnDemandQueue.jobQueueArn,
       payload: {
         type: sfn.InputType.OBJECT,
         value: {
@@ -377,10 +377,10 @@ export class ProcessPlateStack extends cdk.Stack {
     const processImageLambda = this.createSfnMessage("ImageLambda", "Placeholder Image Lambda Task");
     
     const processImageBatch = new tasks.BatchSubmitJob (this, "ImageBatchJob", {
-      jobDefinition: batch.JobDefinition.fromJobDefinitionArn(this, "ImageBatchJobDefArn", sfn.JsonPath.stringAt('$.imageMethodArn')),
+      jobDefinitionArn: sfn.JsonPath.stringAt('$.imageMethodArn'),
       jobName: sfn.JsonPath.stringAt('$.imageId'),
 //      jobQueue: props.batchSpotQueue,
-      jobQueue: props.batchOnDemandQueue,
+      jobQueueArn: props.batchOnDemandQueue.jobQueueArn,
       payload: {
         type: sfn.InputType.OBJECT,
         value: {

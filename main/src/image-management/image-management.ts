@@ -32,6 +32,8 @@ const SEARCH_READY_ATTRIBUTE = "searchReady";
 const MESSAGE_ID_ATTRIBUTE = "messageId";
 const TRAIN_CATEGORY_ATTRIBUTE = "trainCategory";
 const TRAIN_LABEL_ATTRIBUTE = "trainLabel";
+const TRAIN_SUBCLASS_TYPE_ATTRIBUTE = "trainSubclassType";
+const TRAIN_SUBCLASS_ATTRIBUTE = "trainSubclass";
 const EXPERIMENT_ATTRIBUTE = "experiment";
 const HEIGHT_ATTRIBUTE = "height";
 const WIDTH_ATTRIBUTE = "width";
@@ -269,6 +271,8 @@ async function populateSourcePlate(inputBucket: any, inputKey: any) {
         [TRAIN_CATEGORY_ATTRIBUTE]: image["category"],
       }),
       ...("label" in image && { [TRAIN_LABEL_ATTRIBUTE]: image["label"] }),
+      ...("subclassType" in image && { [TRAIN_SUBCLASS_TYPE_ATTRIBUTE]: image["subclassType"] }),
+      ...("subclass" in image && { [TRAIN_SUBCLASS_ATTRIBUTE]: image["subclass"] }),
       ...("experiment" in image && {
         [EXPERIMENT_ATTRIBUTE]: image["experiment"],
       }),

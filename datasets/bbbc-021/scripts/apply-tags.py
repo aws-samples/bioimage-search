@@ -57,7 +57,10 @@ height = embeddingInfo['inputHeight']
 depth = embeddingInfo['inputDepth']
 channels = embeddingInfo['inputChannels']
 
+print("list compatible plates: width={} height={} depth={} channels={}".format(width, height, depth, channels))
 plateList = imageClient.listCompatiblePlates(width, height, depth, channels)
+pl=len(plateList)
+print("found {} compatible plates".format(pl))
 
 tagList = tagClient.getAllTags()
 tagIdMap={}
