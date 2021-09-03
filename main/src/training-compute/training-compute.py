@@ -8,6 +8,8 @@ import sagemaker
 from sagemaker.pytorch import PyTorch
 from sagemaker.inputs import FileSystemInput
 
+VERSION=3
+
 MESSAGE_LAMBDA_ARN = os.environ['MESSAGE_LAMBDA_ARN']
 IMAGE_MANAGEMENT_LAMBDA_ARN = os.environ['IMAGE_MANAGEMENT_LAMBDA_ARN']
 TRAIN_CONFIGURATION_LAMBDA_ARN = os.environ['TRAIN_CONFIGURATION_LAMBDA_ARN']

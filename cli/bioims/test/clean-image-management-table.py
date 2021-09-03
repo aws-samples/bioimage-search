@@ -49,7 +49,7 @@ print("Found {} trainIds".format(trainCount))
 # corresponding to trainIds not on the keep list.
 
 totalRowsDeleted=0
-for imageId in allImageIds:
+for i, imageId in enumerate(allImageIds):
     imageResponse = table.query(KeyConditionExpression=Key('imageId').eq(imageId))
     imageItems = imageResponse['Items']
     while 'LastEvaluatedKey' in imageResponse:
@@ -67,5 +67,5 @@ for imageId in allImageIds:
             table.delete_item(Key=deleteKey)
             deleteCount+=1
     totalRowsDeleted+=deleteCount
-    print("For imageId={} found {} rows and deleted {} totalRowsDeleted={}".format(imageId, rowCount, deleteCount, totalRowsDeleted))
+    print("For {} of {} imageId={} found {} rows and deleted {} totalRowsDeleted={}".format(i, itemsLength, imageId, rowCount, deleteCount, totalRowsDeleted))
             

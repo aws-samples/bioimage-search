@@ -6,6 +6,7 @@ cp ../../../cli/bioims/src/bioims.py ./build
 cd build
 python3.8 -m venv venv
 source venv/bin/activate
+pip install psutil
 pip install shortuuid
 pip install numpy
 pip install sagemaker

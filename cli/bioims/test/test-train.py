@@ -9,7 +9,7 @@ trainClient = bioims.client('train')
 embeddingName='bbbc021'
 filterBucket=''
 filterKey=''
-executeProcessPlate='false'
+executeProcessPlate='true'
 useSpot='false'
 
 r = trainClient.train(embeddingName, filterBucket, filterKey, executeProcessPlate, useSpot)
